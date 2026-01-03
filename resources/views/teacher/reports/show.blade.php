@@ -42,7 +42,6 @@
                     </div>
                     <div>
                         <h2 class="text-xl font-bold text-gray-800">{{ $report->student->name }}</h2>
-                        <p class="text-gray-600">{{ $report->student->email }}</p>
                         @if($report->course)
                             <p class="text-sm text-gray-500 mt-1">
                                 <i class="fa-solid fa-book mr-1"></i>{{ $report->course->title }}

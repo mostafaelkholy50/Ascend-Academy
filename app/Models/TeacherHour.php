@@ -14,7 +14,6 @@ class TeacherHour extends Model
         'year',
         'month',
         'total_hours',
-        'hourly_rate',
         'total_salary',
         'notes',
         'is_paid',
@@ -27,7 +26,6 @@ class TeacherHour extends Model
             'year' => 'integer',
             'month' => 'integer',
             'total_hours' => 'decimal:2',
-            'hourly_rate' => 'decimal:2',
             'total_salary' => 'decimal:2',
             'is_paid' => 'boolean',
             'paid_at' => 'date',
@@ -77,11 +75,9 @@ class TeacherHour extends Model
     {
         return $this->is_paid;
     }
-
-    public function calculateTotalSalary(): float
-    {
-        return $this->total_hours * $this->hourly_rate;
-    }
+    
+    // calculateTotalSalary removed as hourly_rate is no longer on this table.
+    // Logic is handled in TeacherHourController.
 
     public function getMonthName(): string
     {
@@ -106,20 +102,5 @@ class TeacherHour extends Model
     public function getPeriod(): string
     {
         return $this->getMonthName() . ' ' . $this->year;
-    }
-
-    // ============================================
-    // Boot Method
-    // ============================================
-    protected static function boot()
-    {
-        parent::boot();
-
-        static::saving(function ($teacherHour) {
-            // Auto-calculate total_salary before saving
-            if ($teacherHour->isDirty(['total_hours', 'hourly_rate'])) {
-                $teacherHour->total_salary = $teacherHour->calculateTotalSalary();
-            }
-        });
     }
 }

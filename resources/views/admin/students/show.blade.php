@@ -146,7 +146,12 @@
 
             <!-- Enrolled Courses -->
             <div class="bg-white p-6 rounded-2xl shadow-sm">
-                <h2 class="text-xl font-bold text-gray-800 mb-6">Enrolled Courses ({{ $student->enrollments ? $student->enrollments->count() : 0 }})</h2>
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-xl font-bold text-gray-800">Enrolled Courses ({{ $student->enrollments ? $student->enrollments->count() : 0 }})</h2>
+                    <a href="{{ route('admin.enrollments.create', ['student_id' => $student->id]) }}" class="bg-vibrant-green text-white px-3 py-1.5 rounded-lg hover:bg-deep-blue transition text-sm">
+                        <i class="fa-solid fa-plus mr-1"></i>Add Enrollment
+                    </a>
+                </div>
 
                 @if($student->enrollments && $student->enrollments->count() > 0)
                     <div class="space-y-4">

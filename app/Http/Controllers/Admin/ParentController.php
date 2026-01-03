@@ -37,7 +37,8 @@ class ParentController extends Controller
      */
     public function create()
     {
-        return view('admin.parents.create');
+        $students = User::where('role', 'Student')->where('active', true)->get();
+        return view('admin.parents.create', compact('students'));
     }
 
     /**
@@ -45,31 +46,36 @@ class ParentController extends Controller
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
+        $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
-            'phone' => 'nullable|string|max:20',
             'password' => 'required|string|min:8|confirmed',
-            'active' => 'nullable|boolean',
+            'phone' => 'nullable|string|max:20',
+            'active' => 'boolean',
+            'children' => 'nullable|array',
+            'children.*' => 'exists:users,id',
         ]);
 
-        try {
-            $parent = User::create([
-                'name' => $validated['name'],
-                'email' => $validated['email'],
-                'phone' => $validated['phone'] ?? null,
-                'password' => Hash::make($validated['password']),
-                'role' => 'Parent',
-                'active' => $request->has('active') ? true : false,
-            ]);
+        $parent = User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+            'role' => 'Parent',
+            'phone' => $request->phone,
+            'active' => $request->has('active'),
+        ]);
 
-            return redirect()->route('admin.parents.show', $parent)
-                ->with('success', 'Parent created successfully!');
-
-        } catch (\Exception $e) {
-            return back()->withInput()
-                ->with('error', 'Failed to create parent: ' . $e->getMessage());
+        if ($request->filled('children')) {
+            $parent->children()->attach($request->children);
+            
+            // Also link the parent back to the children if needed (many-to-many is bidirectional in this logic)
+            // But typically 'children' table has parent_id and child_id.
+            // scope children() uses belongsToMany User 'children', 'parent_id', 'child_id'.
+            // So attach works.
         }
+
+        return redirect()->route('admin.parents.index')
+            ->with('success', 'Parent created successfully.');
     }
 
     /**
@@ -95,7 +101,7 @@ class ParentController extends Controller
             'birth_date' => 'nullable|date|before:today',
             'gender' => 'nullable|in:male,female',
             'level' => 'nullable|string|max:100',
-            'course_id' => 'nullable|exists:courses,id',
+            'level' => 'nullable|string|max:100',
         ]);
 
         try {
@@ -117,13 +123,13 @@ class ParentController extends Controller
             ]);
 
             // إضافة الطالب للكورس إذا تم تحديده
-            if ($request->filled('course_id')) {
-                $student->enrollments()->create([
-                    'course_id' => $request->course_id,
-                    'start_date' => now(),
-                    'status' => 'active',
-                ]);
-            }
+            // if ($request->filled('course_id')) {
+            //     $student->enrollments()->create([
+            //         'course_id' => $request->course_id,
+            //         'start_date' => now(),
+            //         'status' => 'active',
+            //     ]);
+            // }
 
             return back()->with('success', 'Student added successfully!');
 

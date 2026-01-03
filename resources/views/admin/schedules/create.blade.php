@@ -92,63 +92,78 @@
             </div>
         </div>
 
-        <!-- Step 3: Select Days -->
+        <!-- Step 3: Select Days & Times -->
         <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
             <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
                 <span class="w-8 h-8 bg-vibrant-green text-white rounded-full flex items-center justify-center mr-3 text-sm">3</span>
-                Select Days of Week
+                Select Days & Times
             </h2>
 
-            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+            <p class="text-sm text-gray-600 mb-4">
+                Select the days of the week and set a specific time for each day. Each day can have a different time.
+            </p>
+
+            <div class="space-y-3">
                 @foreach(['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] as $day)
-                    <label class="flex items-center p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-vibrant-green transition">
-                        <input type="checkbox" name="days[]" value="{{ $day }}" 
-                            {{ is_array(old('days')) && in_array($day, old('days')) ? 'checked' : '' }}
-                            class="w-5 h-5 text-vibrant-green focus:ring-vibrant-green rounded">
-                        <span class="ml-2 text-sm font-medium text-gray-700">{{ $day }}</span>
-                    </label>
+                    <div class="flex items-center gap-4 p-3 border-2 border-gray-200 rounded-lg hover:border-vibrant-green transition day-time-row">
+                        <label class="flex items-center cursor-pointer flex-1">
+                            <input type="checkbox" name="days[]" value="{{ $day }}" 
+                                {{ is_array(old('days')) && in_array($day, old('days')) ? 'checked' : '' }}
+                                class="w-5 h-5 text-vibrant-green focus:ring-vibrant-green rounded day-checkbox"
+                                data-day="{{ $day }}"
+                                onchange="toggleTimeInput('{{ $day }}')">
+                            <span class="ml-3 text-sm font-medium text-gray-700 w-24">{{ $day }}</span>
+                        </label>
+                        
+                        <div class="flex items-center gap-2 time-input-container" id="time-container-{{ $day }}" style="display: none;">
+                            <i class="fa-solid fa-clock text-vibrant-green"></i>
+                            <input type="time" 
+                                name="schedule_times[{{ $day }}]" 
+                                id="time-{{ $day }}"
+                                value="{{ old('schedule_times.' . $day, '17:00') }}"
+                                class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vibrant-green focus:border-transparent text-sm">
+                        </div>
+                    </div>
                 @endforeach
             </div>
+            
             @error('days')
                 <p class="text-red-500 text-xs mt-2">{{ $message }}</p>
             @enderror
+            @error('schedule_times')
+                <p class="text-red-500 text-xs mt-2">{{ $message }}</p>
+            @enderror
+
+            <div class="mt-4 p-3 bg-blue-50 rounded-lg">
+                <p class="text-sm text-blue-800">
+                    <i class="fa-solid fa-info-circle mr-1"></i>
+                    <strong>Tip:</strong> You can set different times for each day. For example, Monday at 4:00 PM, Wednesday at 6:00 PM, Friday at 5:00 PM.
+                </p>
+            </div>
         </div>
 
-        <!-- Step 4: Set Time -->
+        <!-- Step 4: Set Duration -->
         <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
             <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
                 <span class="w-8 h-8 bg-vibrant-green text-white rounded-full flex items-center justify-center mr-3 text-sm">4</span>
-                Set Time & Duration
+                Set Duration
             </h2>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <label for="start_time" class="block text-sm font-semibold text-gray-700 mb-2">
-                        Start Time <span class="text-red-500">*</span>
-                    </label>
-                    <input type="time" name="start_time" id="start_time" value="{{ old('start_time', '17:00') }}" required
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vibrant-green focus:border-transparent">
-                    @error('start_time')
-                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <div>
-                    <label for="duration_minutes" class="block text-sm font-semibold text-gray-700 mb-2">
-                        Duration <span class="text-red-500">*</span>
-                    </label>
-                    <select name="duration_minutes" id="duration_minutes" required
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vibrant-green focus:border-transparent">
-                        <option value="30" {{ old('duration_minutes') == 30 ? 'selected' : '' }}>30 minutes</option>
-                        <option value="45" {{ old('duration_minutes') == 45 ? 'selected' : '' }}>45 minutes</option>
-                        <option value="60" {{ old('duration_minutes', 60) == 60 ? 'selected' : '' }}>1 hour</option>
-                        <option value="90" {{ old('duration_minutes') == 90 ? 'selected' : '' }}>1.5 hours</option>
-                        <option value="120" {{ old('duration_minutes') == 120 ? 'selected' : '' }}>2 hours</option>
-                    </select>
-                    @error('duration_minutes')
-                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
+            <div>
+                <label for="duration_minutes" class="block text-sm font-semibold text-gray-700 mb-2">
+                    Session Duration <span class="text-red-500">*</span>
+                </label>
+                <select name="duration_minutes" id="duration_minutes" required
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vibrant-green focus:border-transparent">
+                    <option value="30" {{ old('duration_minutes') == 30 ? 'selected' : '' }}>30 minutes</option>
+                    <option value="45" {{ old('duration_minutes') == 45 ? 'selected' : '' }}>45 minutes</option>
+                    <option value="60" {{ old('duration_minutes', 60) == 60 ? 'selected' : '' }}>1 hour</option>
+                    <option value="90" {{ old('duration_minutes') == 90 ? 'selected' : '' }}>1.5 hours</option>
+                    <option value="120" {{ old('duration_minutes') == 120 ? 'selected' : '' }}>2 hours</option>
+                </select>
+                @error('duration_minutes')
+                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                @enderror
             </div>
         </div>
 
@@ -198,6 +213,7 @@
     </form>
 
     <script>
+        // Handle enrollment selection display
         document.getElementById('enrollment_id').addEventListener('change', function() {
             const option = this.options[this.selectedIndex];
             const infoDiv = document.getElementById('enrollmentInfo');
@@ -210,6 +226,32 @@
             } else {
                 infoDiv.classList.add('hidden');
             }
+        });
+
+        // Toggle time input visibility based on day checkbox
+        function toggleTimeInput(day) {
+            const checkbox = document.querySelector(`input[data-day="${day}"]`);
+            const timeContainer = document.getElementById(`time-container-${day}`);
+            const timeInput = document.getElementById(`time-${day}`);
+            
+            if (checkbox.checked) {
+                timeContainer.style.display = 'flex';
+                timeInput.required = true;
+            } else {
+                timeContainer.style.display = 'none';
+                timeInput.required = false;
+            }
+        }
+
+        // Initialize time inputs on page load (for old input values)
+        document.addEventListener('DOMContentLoaded', function() {
+            const checkboxes = document.querySelectorAll('.day-checkbox');
+            checkboxes.forEach(checkbox => {
+                if (checkbox.checked) {
+                    const day = checkbox.dataset.day;
+                    toggleTimeInput(day);
+                }
+            });
         });
     </script>
 </x-dashboard-layout>

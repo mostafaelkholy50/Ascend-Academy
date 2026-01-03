@@ -115,7 +115,7 @@ class Schedule extends Model
         if (!$this->ends_at) {
             return 0;
         }
-        return $this->starts_at->diffInHours($this->ends_at);
+        return $this->starts_at->diffInMinutes($this->ends_at) / 60;
     }
 
     public function getDurationInMinutes(): int

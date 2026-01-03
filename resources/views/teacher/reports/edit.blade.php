@@ -39,7 +39,7 @@
                     <option value="">Select a student</option>
                     @foreach($students as $student)
                         <option value="{{ $student->id }}" {{ old('student_id', $report->student_id) == $student->id ? 'selected' : '' }}>
-                            {{ $student->name }} - {{ $student->email }}
+                            {{ $student->name }} 
                         </option>
                     @endforeach
                 </select>
@@ -67,7 +67,18 @@
             <!-- Level -->
             <div>
                 <label for="level" class="block text-sm font-medium text-gray-700 mb-2">Current Level</label>
-                <input type="text" id="level" name="level" value="{{ old('level', $report->level) }}" placeholder="e.g., Intermediate, Juz 1" maxlength="100" class="w-full rounded-lg border-gray-300 focus:border-vibrant-green focus:ring focus:ring-vibrant-green focus:ring-opacity-50">
+                <select id="level" name="level" class="w-full rounded-lg border-gray-300 focus:border-vibrant-green focus:ring focus:ring-vibrant-green focus:ring-opacity-50">
+                    <option value="">Select Level</option>
+                    <option value="Qaida Nooraniya" {{ old('level', $report->level) == 'Qaida Nooraniya' ? 'selected' : '' }}>Qaida Nooraniya</option>
+                    <option value="Nazira (Reading)" {{ old('level', $report->level) == 'Nazira (Reading)' ? 'selected' : '' }}>Nazira (Reading)</option>
+                    <option value="Hifz (Memorization)" {{ old('level', $report->level) == 'Hifz (Memorization)' ? 'selected' : '' }}>Hifz (Memorization)</option>
+                    <option value="Tajweed Rules" {{ old('level', $report->level) == 'Tajweed Rules' ? 'selected' : '' }}>Tajweed Rules</option>
+                    <option value="Foundation" {{ old('level', $report->level) == 'Foundation' ? 'selected' : '' }}>Foundation</option>
+                    <option value="Beginner" {{ old('level', $report->level) == 'Beginner' ? 'selected' : '' }}>Beginner</option>
+                    <option value="Intermediate" {{ old('level', $report->level) == 'Intermediate' ? 'selected' : '' }}>Intermediate</option>
+                    <option value="Advanced" {{ old('level', $report->level) == 'Advanced' ? 'selected' : '' }}>Advanced</option>
+                    <option value="Ijazah" {{ old('level', $report->level) == 'Ijazah' ? 'selected' : '' }}>Ijazah</option>
+                </select>
             </div>
 
             <!-- Mastery Score -->

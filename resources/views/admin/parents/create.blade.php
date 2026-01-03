@@ -98,10 +98,37 @@
                     @enderror
                 </div>
 
+                <!-- Select Children -->
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">
+                        <i class="fa-solid fa-child text-orange-500 mr-1"></i>Select Children
+                        <span class="text-gray-500 font-normal">(Optional)</span>
+                    </label>
+                    <div class="border border-gray-300 rounded-xl p-4 max-h-48 overflow-y-auto">
+                        @if(isset($students) && $students->count() > 0)
+                            <div class="space-y-2">
+                                @foreach($students as $student)
+                                    <label class="flex items-center p-2 hover:bg-gray-50 rounded-lg cursor-pointer transition">
+                                        <input type="checkbox" name="children[]" value="{{ $student->id }}" 
+                                            {{ (is_array(old('children')) && in_array($student->id, old('children'))) ? 'checked' : '' }}
+                                            class="w-5 h-5 text-vibrant-green border-gray-300 rounded focus:ring-vibrant-green">
+                                        <div class="ml-3">
+                                            <p class="text-sm font-bold text-gray-800">{{ $student->name }}</p>
+                                            <p class="text-xs text-gray-500">{{ $student->email }}</p>
+                                        </div>
+                                    </label>
+                                @endforeach
+                            </div>
+                        @else
+                            <p class="text-sm text-gray-500 italic">No students available to select.</p>
+                        @endif
+                    </div>
+                </div>
+
                 <!-- Active Status -->
                 <div class="flex items-center">
                     <input type="checkbox" name="active" id="active" value="1" checked
-                           class="w-5 h-5 text-vibrant-green border-gray-300 rounded focus:ring-2 focus:ring-vibrant-green">
+                        class="w-5 h-5 text-vibrant-green border-gray-300 rounded focus:ring-2 focus:ring-vibrant-green">
                     <label for="active" class="ml-3 text-sm font-medium text-gray-700">
                         <i class="fa-solid fa-check-circle text-vibrant-green mr-1"></i>Active Account
                     </label>

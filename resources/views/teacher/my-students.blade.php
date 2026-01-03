@@ -18,9 +18,6 @@
                         </div>
                         <div class="flex-grow">
                             <h3 class="font-bold text-gray-800 text-lg">{{ $student->name }}</h3>
-                            <p class="text-sm text-gray-500">
-                                <i class="fa-solid fa-envelope mr-1"></i>{{ $student->email }}
-                            </p>
                         </div>
                     </div>
 

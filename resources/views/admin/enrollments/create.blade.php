@@ -55,21 +55,28 @@
                     @enderror
                 </div>
 
-                <!-- Course Selection -->
+                <!-- Courses Selection -->
                 <div>
-                    <label for="course_id" class="block text-sm font-semibold text-gray-700 mb-2">
-                        Course <span class="text-red-500">*</span>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        Courses <span class="text-red-500">*</span> <span class="text-xs text-gray-500 font-normal">(Select all that apply)</span>
                     </label>
-                    <select name="course_id" id="course_id" required
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vibrant-green focus:border-transparent">
-                        <option value="">Select a course</option>
-                        @foreach($courses as $course)
-                            <option value="{{ $course->id }}" {{ old('course_id', $selectedCourse) == $course->id ? 'selected' : '' }}>
-                                {{ $course->title }}
-                            </option>
-                        @endforeach
-                    </select>
-                    @error('course_id')
+                    <div class="border border-gray-300 rounded-lg p-4 max-h-60 overflow-y-auto bg-gray-50">
+                        @if($courses->count() > 0)
+                            <div class="space-y-2">
+                                @foreach($courses as $course)
+                                    <label class="flex items-center p-2 bg-white rounded-lg border border-gray-200 hover:border-vibrant-green hover:shadow-sm cursor-pointer transition">
+                                        <input type="checkbox" name="courses[]" value="{{ $course->id }}" 
+                                            {{ (is_array(old('courses')) && in_array($course->id, old('courses'))) || (isset($selectedCourse) && $selectedCourse == $course->id) ? 'checked' : '' }}
+                                            class="w-5 h-5 text-vibrant-green border-gray-300 rounded focus:ring-vibrant-green focus:ring-2">
+                                        <span class="ml-3 font-medium text-gray-800">{{ $course->title }}</span>
+                                    </label>
+                                @endforeach
+                            </div>
+                        @else
+                            <p class="text-sm text-gray-500 italic text-center py-2">No courses available.</p>
+                        @endif
+                    </div>
+                    @error('courses')
                         <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                     @enderror
                 </div>
@@ -83,7 +90,7 @@
                 Flexible Scheduling
             </h2>
             <p class="text-sm text-gray-600 mb-4">
-                <i class="fa-solid fa-info-circle"></i> Configure the student's schedule preferences
+                <i class="fa-solid fa-info-circle"></i> Configure the schedule preferences (Applied to EACH selected course)
             </p>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -130,14 +137,14 @@
                 Monthly Pricing
             </h2>
             <p class="text-sm text-gray-600 mb-4">
-                <i class="fa-solid fa-info-circle"></i> Set the monthly price for this enrollment. Payments will be tracked separately each month.
+                <i class="fa-solid fa-info-circle"></i> Set the monthly price for enrollment. (Applied to EACH selected course separately)
             </p>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
                 <!-- Admin Price -->
                 <div>
                     <label for="admin_price" class="block text-sm font-semibold text-gray-700 mb-2">
-                        Monthly Price <span class="text-red-500">*</span>
+                        Monthly Price (Per Course) <span class="text-red-500">*</span>
                     </label>
                     <input type="number" name="admin_price" id="admin_price" step="0.01" min="0" 
                         value="{{ old('admin_price') }}" required

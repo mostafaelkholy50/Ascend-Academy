@@ -17,6 +17,7 @@ class Enrollment extends Model
         // Flexible scheduling
         'days_per_week',
         'session_duration',
+        'schedule_pattern',
         // Admin pricing
         'admin_price',
         'currency',
@@ -28,6 +29,7 @@ class Enrollment extends Model
             'start_date' => 'date',
             'admin_price' => 'decimal:2',
             'days_per_week' => 'integer',
+            'schedule_pattern' => 'array',
         ];
     }
 
@@ -104,5 +106,56 @@ class Enrollment extends Model
 
         $symbol = $currencySymbols[$this->currency] ?? '$';
         return $symbol . number_format($price, 2);
+    }
+
+    // ============================================
+    // Schedule Pattern Methods
+    // ============================================
+    
+    /**
+     * Get the schedule pattern for this enrollment
+     * Returns array like: ['Monday' => '16:00', 'Wednesday' => '18:00']
+     */
+    public function getSchedulePattern(): ?array
+    {
+        return $this->schedule_pattern;
+    }
+
+    /**
+     * Set the schedule pattern for this enrollment
+     * @param array $pattern Array like: ['Monday' => '16:00', 'Wednesday' => '18:00']
+     */
+    public function setSchedulePattern(array $pattern): void
+    {
+        $this->schedule_pattern = $pattern;
+        $this->save();
+    }
+
+    /**
+     * Check if this enrollment has a schedule pattern
+     */
+    public function hasSchedulePattern(): bool
+    {
+        return !empty($this->schedule_pattern);
+    }
+
+    /**
+     * Get days from the schedule pattern
+     * Returns array like: ['Monday', 'Wednesday', 'Friday']
+     */
+    public function getScheduleDays(): array
+    {
+        if (!$this->hasSchedulePattern()) {
+            return [];
+        }
+        return array_keys($this->schedule_pattern);
+    }
+
+    /**
+     * Get time for a specific day from the pattern
+     */
+    public function getTimeForDay(string $day): ?string
+    {
+        return $this->schedule_pattern[$day] ?? null;
     }
 }

@@ -97,7 +97,8 @@ class ScheduleController extends Controller
             'teacher_id' => 'required|exists:users,id',
             'days' => 'required|array|min:1',
             'days.*' => 'in:Sunday,Monday,Tuesday,Wednesday,Thursday,Friday,Saturday',
-            'start_time' => 'required|date_format:H:i',
+            'schedule_times' => 'required|array|min:1',
+            'schedule_times.*' => 'required|date_format:H:i',
             'duration_minutes' => 'required|integer|min:15|max:240',
             'zoom_link' => 'nullable|url|max:500',
             'notes' => 'nullable|string|max:1000',
@@ -111,6 +112,25 @@ class ScheduleController extends Controller
             if ($enrollment->status !== 'active') {
                 return back()->with('error', 'Cannot create schedule for inactive enrollment.');
             }
+
+            // Validate that each selected day has a corresponding time
+            $days = $request->days;
+            $scheduleTimes = $request->schedule_times;
+            
+            foreach ($days as $day) {
+                if (!isset($scheduleTimes[$day])) {
+                    return back()->with('error', "Missing time for {$day}.")->withInput();
+                }
+            }
+
+            // Build schedule pattern from days and times
+            $schedulePattern = [];
+            foreach ($days as $day) {
+                $schedulePattern[$day] = $scheduleTimes[$day];
+            }
+
+            // Store the schedule pattern on the enrollment for future use
+            $enrollment->setSchedulePattern($schedulePattern);
 
             // Determine which month to create schedules for
             $targetMonth = $request->filled('month') 
@@ -126,8 +146,6 @@ class ScheduleController extends Controller
                 $monthStart = $enrollmentStart->copy();
             }
 
-            $daysOfWeek = $request->days;
-            $startTime = $request->start_time;
             $durationMinutes = (int) $request->duration_minutes;
 
             // Generate session dates for this month only
@@ -135,8 +153,12 @@ class ScheduleController extends Controller
             $currentDate = $monthStart->copy();
 
             while ($currentDate->lte($monthEnd)) {
-                if (in_array($currentDate->format('l'), $daysOfWeek)) {
-                    $sessionDates[] = $currentDate->copy();
+                $dayName = $currentDate->format('l');
+                if (in_array($dayName, $days)) {
+                    $sessionDates[] = [
+                        'date' => $currentDate->copy(),
+                        'time' => $scheduleTimes[$dayName],
+                    ];
                 }
                 $currentDate->addDay();
             }
@@ -147,8 +169,8 @@ class ScheduleController extends Controller
 
             // Check for conflicts before creating any schedules
             $conflicts = [];
-            foreach ($sessionDates as $sessionDate) {
-                $startsAt = Carbon::parse($sessionDate->format('Y-m-d') . ' ' . $startTime);
+            foreach ($sessionDates as $session) {
+                $startsAt = Carbon::parse($session['date']->format('Y-m-d') . ' ' . $session['time']);
                 $endsAt = $startsAt->copy()->addMinutes($durationMinutes);
 
                 // Check teacher conflict
@@ -174,8 +196,8 @@ class ScheduleController extends Controller
             // No conflicts, create all schedules
             $createdCount = 0;
             $firstSchedule = null;
-            foreach ($sessionDates as $sessionDate) {
-                $startsAt = Carbon::parse($sessionDate->format('Y-m-d') . ' ' . $startTime);
+            foreach ($sessionDates as $session) {
+                $startsAt = Carbon::parse($session['date']->format('Y-m-d') . ' ' . $session['time']);
                 $endsAt = $startsAt->copy()->addMinutes($durationMinutes);
 
                 $schedule = Schedule::create([
@@ -328,68 +350,88 @@ class ScheduleController extends Controller
                 return ['success' => true, 'count' => 0, 'message' => 'Schedules already exist for this month'];
             }
 
-            // Default settings
-            $startTime = '16:00'; // 4 PM default
-            $daysPerWeek = $enrollment->days_per_week ?? 3;
-            $daysOfWeek = self::getDefaultDaysForWeek($daysPerWeek);
+            // Priority 1: Use stored schedule pattern if available
+            $schedulePattern = null;
+            $daysOfWeek = [];
             
-            // Try to intelligent copy pattern from previous month
-            $lastSchedule = Schedule::where('enrollment_id', $enrollment->id)
-                ->latest('starts_at')
-                ->first();
-            
-            if ($lastSchedule) {
-                // 1. Copy Teacher
-                if (!$teacherId) {
-                    $teacherId = $lastSchedule->teacher_id;
+            if ($enrollment->hasSchedulePattern()) {
+                $schedulePattern = $enrollment->getSchedulePattern();
+                $daysOfWeek = array_keys($schedulePattern);
+            } else {
+                // Priority 2: Try to detect pattern from previous schedules
+                $lastSchedule = Schedule::where('enrollment_id', $enrollment->id)
+                    ->latest('starts_at')
+                    ->first();
+                
+                if ($lastSchedule) {
+                    // Look at the most recent full month of data to determine days and times
+                    $referenceMonth = $lastSchedule->starts_at->copy()->startOfMonth();
+                    $previousSchedules = Schedule::where('enrollment_id', $enrollment->id)
+                        ->whereYear('starts_at', $referenceMonth->year)
+                        ->whereMonth('starts_at', $referenceMonth->month)
+                        ->get();
+                    
+                    if ($previousSchedules->count() > 0) {
+                        // Build pattern from previous schedules
+                        $schedulePattern = [];
+                        foreach ($previousSchedules as $prevSchedule) {
+                            $dayName = $prevSchedule->starts_at->format('l');
+                            $time = $prevSchedule->starts_at->format('H:i');
+                            
+                            // Use the first occurrence of each day
+                            if (!isset($schedulePattern[$dayName])) {
+                                $schedulePattern[$dayName] = $time;
+                            }
+                        }
+                        $daysOfWeek = array_keys($schedulePattern);
+                    }
                 }
                 
-                // 2. Copy Start Time
-                $startTime = $lastSchedule->starts_at->format('H:i');
-                
-                // 3. Copy Days of Week pattern
-                // Look at the most recent full month of data to determine days
-                $referenceMonth = $lastSchedule->starts_at->copy()->startOfMonth();
-                $previousSchedules = Schedule::where('enrollment_id', $enrollment->id)
-                    ->whereYear('starts_at', $referenceMonth->year)
-                    ->whereMonth('starts_at', $referenceMonth->month)
-                    ->get();
-                
-                if ($previousSchedules->count() > 0) {
-                    $detectedDays = $previousSchedules->map(function($s) {
-                        return $s->starts_at->format('l');
-                    })->unique()->values()->toArray();
+                // Priority 3: Fall back to defaults
+                if (empty($schedulePattern)) {
+                    $daysPerWeek = $enrollment->days_per_week ?? 3;
+                    $daysOfWeek = self::getDefaultDaysForWeek($daysPerWeek);
+                    $defaultTime = '16:00'; // 4 PM default
                     
-                    
-                    // Always trust the detected days from history
-                    // This allows "smart copy" to work even if the user has fewer days than the enrollment setting
-                    if (count($detectedDays) > 0) {
-                        $daysOfWeek = $detectedDays;
+                    $schedulePattern = [];
+                    foreach ($daysOfWeek as $day) {
+                        $schedulePattern[$day] = $defaultTime;
                     }
                 }
             }
             
             // Fallback for teacher if still null
             if (!$teacherId) {
-                $teacher = User::where('role', 'Teacher')->where('active', true)->first();
-                if (!$teacher) {
-                    return ['success' => false, 'message' => 'No active teachers available'];
+                // Try to get teacher from last schedule
+                $lastSchedule = Schedule::where('enrollment_id', $enrollment->id)
+                    ->latest('starts_at')
+                    ->first();
+                
+                if ($lastSchedule) {
+                    $teacherId = $lastSchedule->teacher_id;
+                } else {
+                    $teacher = User::where('role', 'Teacher')->where('active', true)->first();
+                    if (!$teacher) {
+                        return ['success' => false, 'message' => 'No active teachers available'];
+                    }
+                    $teacherId = $teacher->id;
                 }
-                $teacherId = $teacher->id;
             }
             
             // Get duration from enrollment
             $durationMinutes = (int) ($enrollment->session_duration ?? 60);
-            
 
-
-            // Generate session dates for this month
+            // Generate session dates for this month using the pattern
             $sessionDates = [];
             $currentDate = $monthStart->copy();
 
             while ($currentDate->lte($monthEnd)) {
-                if (in_array($currentDate->format('l'), $daysOfWeek)) {
-                    $sessionDates[] = $currentDate->copy();
+                $dayName = $currentDate->format('l');
+                if (in_array($dayName, $daysOfWeek)) {
+                    $sessionDates[] = [
+                        'date' => $currentDate->copy(),
+                        'time' => $schedulePattern[$dayName],
+                    ];
                 }
                 $currentDate->addDay();
             }
@@ -401,13 +443,13 @@ class ScheduleController extends Controller
             // Create schedules
             $createdCount = 0;
             $firstSchedule = null;
-            foreach ($sessionDates as $sessionDate) {
-                $startsAt = Carbon::parse($sessionDate->format('Y-m-d') . ' ' . $startTime);
+            foreach ($sessionDates as $session) {
+                $startsAt = Carbon::parse($session['date']->format('Y-m-d') . ' ' . $session['time']);
                 $endsAt = $startsAt->copy()->addMinutes($durationMinutes);
 
                 // Skip if schedule already exists
                 $exists = Schedule::where('enrollment_id', $enrollment->id)
-                    ->whereDate('starts_at', $sessionDate)
+                    ->whereDate('starts_at', $session['date'])
                     ->exists();
                 
                 if ($exists) {

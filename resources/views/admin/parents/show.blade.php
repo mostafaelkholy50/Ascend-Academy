@@ -265,19 +265,21 @@
 
                         <div>
                             <label class="block text-sm font-semibold text-gray-600 mb-2">Level</label>
-                            <input type="text" name="level" placeholder="e.g., Beginner, Intermediate"
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vibrant-green">
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-600 mb-2">Enroll in Course</label>
-                            <select name="course_id" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vibrant-green">
-                                <option value="">Select Course (Optional)</option>
-                                @foreach($courses as $course)
-                                    <option value="{{ $course->id }}">{{ $course->title }}</option>
-                                @endforeach
+                            <select name="level" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vibrant-green">
+                                <option value="">Select Level (Optional)</option>
+                                <option value="Qaida Nooraniya">Qaida Nooraniya</option>
+                                <option value="Nazira (Reading)">Nazira (Reading)</option>
+                                <option value="Hifz (Memorization)">Hifz (Memorization)</option>
+                                <option value="Tajweed Rules">Tajweed Rules</option>
+                                <option value="Foundation">Foundation</option>
+                                <option value="Beginner">Beginner</option>
+                                <option value="Intermediate">Intermediate</option>
+                                <option value="Advanced">Advanced</option>
+                                <option value="Ijazah">Ijazah</option>
                             </select>
                         </div>
+
+
                     </div>
 
                     <div class="flex space-x-3 pt-4">

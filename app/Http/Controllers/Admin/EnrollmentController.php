@@ -59,7 +59,8 @@ class EnrollmentController extends Controller
     {
         $request->validate([
             'student_id' => 'required|exists:users,id',
-            'course_id' => 'required|exists:courses,id',
+            'courses' => 'required|array|min:1',
+            'courses.*' => 'exists:courses,id',
             'status' => 'nullable|in:active,completed,cancelled',
             // Flexible scheduling
             'days_per_week' => 'required|integer|min:1|max:7',
@@ -70,47 +71,63 @@ class EnrollmentController extends Controller
         ]);
 
         try {
-            // Check for duplicate enrollment (database has unique constraint on student_id + course_id)
-            $existingEnrollment = Enrollment::where('student_id', $request->student_id)
-                ->where('course_id', $request->course_id)
-                ->first();
+            $createdEnrollments = [];
+            $alreadyEnrolledCount = 0;
 
-            if ($existingEnrollment) {
-                $statusMessage = $existingEnrollment->status === 'active' 
-                    ? 'Student is already actively enrolled in this course.' 
-                    : "Student has a {$existingEnrollment->status} enrollment for this course. Please delete or modify the existing enrollment first.";
-                
-                return back()
-                    ->withInput()
-                    ->with('error', $statusMessage);
+            foreach ($request->courses as $courseId) {
+                // Check for duplicate enrollment (database has unique constraint on student_id + course_id)
+                $existingEnrollment = Enrollment::where('student_id', $request->student_id)
+                    ->where('course_id', $courseId)
+                    ->first();
+
+                if ($existingEnrollment) {
+                    $alreadyEnrolledCount++;
+                    continue; // Skip this course
+                }
+
+                $data = [
+                    'student_id' => $request->student_id,
+                    'course_id' => $courseId,
+                    'start_date' => now(), // Auto-set to current date
+                    'status' => $request->status ?? 'active',
+                    // Flexible scheduling
+                    'days_per_week' => $request->days_per_week,
+                    'session_duration' => $request->session_duration,
+                    // Admin pricing
+                    'admin_price' => $request->admin_price,
+                    'currency' => $request->currency,
+                ];
+
+                $enrollment = Enrollment::create($data);
+                $createdEnrollments[] = $enrollment;
+
+                // Automatically create the first month's payment record
+                \App\Models\EnrollmentPayment::create([
+                    'enrollment_id' => $enrollment->id,
+                    'month' => now()->startOfMonth(),
+                    'amount' => $enrollment->admin_price,
+                    'currency' => $enrollment->currency,
+                    'payment_status' => 'unpaid',
+                ]);
             }
 
-            $data = [
-                'student_id' => $request->student_id,
-                'course_id' => $request->course_id,
-                'start_date' => now(), // Auto-set to current date
-                'status' => $request->status ?? 'active',
-                // Flexible scheduling
-                'days_per_week' => $request->days_per_week,
-                'session_duration' => $request->session_duration,
-                // Admin pricing
-                'admin_price' => $request->admin_price,
-                'currency' => $request->currency,
-            ];
+            if (count($createdEnrollments) === 0 && $alreadyEnrolledCount > 0) {
+                return back()->with('error', 'Student is already enrolled in all selected courses.');
+            }
 
-            $enrollment = Enrollment::create($data);
+            $message = count($createdEnrollments) . ' enrollment(s) created successfully.';
+            if ($alreadyEnrolledCount > 0) {
+                $message .= " (Skipped $alreadyEnrolledCount duplicates)";
+            }
 
-            // Automatically create the first month's payment record
-            $firstPayment = \App\Models\EnrollmentPayment::create([
-                'enrollment_id' => $enrollment->id,
-                'month' => now()->startOfMonth(),
-                'amount' => $enrollment->admin_price,
-                'currency' => $enrollment->currency,
-                'payment_status' => 'unpaid',
-            ]);
+            // If single enrollment, redirect to show. If multiple, redirect to index.
+            if (count($createdEnrollments) === 1) {
+                return redirect()->route('admin.enrollments.show', $createdEnrollments[0]->id)
+                    ->with('success', $message);
+            }
 
-            return redirect()->route('admin.enrollments.show', $enrollment->id)
-                ->with('success', 'Student enrolled successfully! You can now create schedules for this enrollment.');
+            return redirect()->route('admin.enrollments.index')
+                ->with('success', $message);
 
         } catch (\Exception $e) {
             return back()->with('error', 'Failed to create enrollment: ' . $e->getMessage());

@@ -58,7 +58,6 @@ class StudentController extends Controller
             'gender' => 'nullable|in:male,female',
             'birth_date' => 'nullable|date|before:today',
             'parent_id' => 'nullable|exists:users,id',
-            'course_id' => 'nullable|exists:courses,id',
         ]);
 
         try {
@@ -78,15 +77,6 @@ class StudentController extends Controller
                 \App\Models\Children::create([
                     'parent_id' => $request->parent_id,
                     'child_id' => $student->id,
-                ]);
-            }
-
-            // Enroll in course if provided
-            if ($request->filled('course_id')) {
-                $student->enrollments()->create([
-                    'course_id' => $request->course_id,
-                    'start_date' => now(),
-                    'status' => 'active',
                 ]);
             }
 
