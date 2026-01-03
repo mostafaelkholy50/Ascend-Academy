@@ -15,7 +15,7 @@
     <meta property="og:description" content="Ascend Quran Academy offers expert online courses for Quran memorization (Hifz), Tajweed, Arabic language, and Islamic studies for all ages." />
     <meta property="og:image" content="{{asset('assets/images/Gemini_Generated_Image_pez0qlpez0qlpez0.png')}}" />
     <meta property="og:image:alt" content="Ascend Quran Academy Logo" />
-    <meta property="og:url" content="https://ascendquran.com" />
+    <meta property="og:url" content="https://ascend-quran-academy.com" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Ascend Quran Academy" />
 
