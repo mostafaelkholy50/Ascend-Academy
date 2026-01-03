@@ -22,6 +22,13 @@ use App\Http\Controllers\Admin\CourseController as AdminCourseController;
 
 Route::middleware('throttle:60,1')->group(function () {
     
+    Route::get('/test-mail', function () {
+    Mail::raw('This is a test email from Laravel!', function ($message) {
+        $message->to('mostafaelkholy4321@gmail.com') // غيرها بإيميلك الشخصي
+                ->subject('Test Email');
+    });
+    return 'Email sent!';
+});
 
 // ============================================
 // Public Pages
