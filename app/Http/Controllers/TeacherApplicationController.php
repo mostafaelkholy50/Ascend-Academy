@@ -26,7 +26,7 @@ class TeacherApplicationController extends Controller
 
         // Send email notification to admin
         try {
-            $adminEmail = env('ADMIN_EMAIL', 'admin@ascendacademy.com');
+            $adminEmail = env('ADMIN_EMAIL', 'ascend.quran@gmail.com');
             \Illuminate\Support\Facades\Notification::route('mail', $adminEmail)
                 ->notify(new \App\Notifications\NewTeacherApplicationNotification($application));
         } catch (\Exception $e) {
