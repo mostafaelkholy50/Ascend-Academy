@@ -25,7 +25,7 @@
                     </div>
                 </a>
 
-                <a href="mailto:ascend.qa@ascend-quran.com"
+                <a href="mailto:ascend.quran@gmail.com"
                     class="flex items-center space-x-4 p-4 bg-white rounded-lg shadow-sm border border-gray-100 max-w-sm hover:shadow-md transition duration-300">
                     <div class="p-3 rounded-full bg-yellow-100 text-yellow-600">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -35,7 +35,7 @@
                     </div>
                     <div>
                         <p class="text-sm text-gray-500 font-medium">Email Us</p>
-                        <p class="text-lg font-bold text-gray-800">ascend.qa@ascend-quran.com</p>
+                        <p class="text-lg font-bold text-gray-800">ascend.quran@gmail.com</p>
                     </div>
                 </a>
             </div>
