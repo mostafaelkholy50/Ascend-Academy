@@ -5,7 +5,7 @@
 
 ## Contact Information
 
-**Name:** {{ $inquiry->name }}  
+**Name:** {{ $inquiry->full_name }}  
 **Email:** {{ $inquiry->email }}  
 **Phone:** {{ $inquiry->phone ?? 'Not provided' }}
 
