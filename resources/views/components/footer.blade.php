@@ -108,3 +108,44 @@
         </div>
     </div>
 </footer>
+
+<!-- Intl Tel Input JS -->
+<script src="https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/js/intlTelInput.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const inputFields = document.querySelectorAll(".phone-input");
+        
+        inputFields.forEach(function(input) {
+            // Enforce numbers only on input
+            input.addEventListener('input', function(e) {
+                this.value = this.value.replace(/[^0-9]/g, '');
+            });
+
+            const iti = window.intlTelInput(input, {
+                initialCountry: "eg",
+                preferredCountries: ["eg", "us", "gb", "ca", "sa", "ae"],
+                separateDialCode: true,
+                dropdownContainer: document.body, // Fix for overflow: hidden
+                utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/js/utils.js",
+                autoPlaceholder: "aggressive",
+            });
+
+            // Update input value with full number on form submit
+            input.closest('form').addEventListener('submit', function(e) {
+                // Always get the full number if valid, or just the number if not
+                // using iti.getNumber() returns the full international number
+                if (iti.isValidNumber()) {
+                     input.value = iti.getNumber();
+                } else {
+                    // If they entered a valid-looking number but validation fails (e.g. length),
+                    // still try to send the full number including code so backend can see it.
+                    // getNumber() might return empty if really invalid, so checks are needed.
+                    const fullNumber = iti.getNumber();
+                    if(fullNumber) {
+                        input.value = fullNumber;
+                    }
+                }
+            });
+        });
+    });
+</script>

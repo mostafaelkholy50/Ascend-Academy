@@ -27,6 +27,24 @@
 
     <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+    
+    <!-- Intl Tel Input CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/css/intlTelInput.css">
+    <style>
+        .iti { width: 100%; }
+        .iti__flag { background-image: url("https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/img/flags.png"); }
+        @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+            .iti__flag { background-image: url("https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/img/flags@2x.png"); }
+        }
+        /* Fix for Tailwind overlap */
+        .iti__flag-container {
+             z-index: 20;
+        }
+        /* Ensure dropdown on body is visible */
+        .iti--container {
+            z-index: 9999 !important;
+        }
+    </style>
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 

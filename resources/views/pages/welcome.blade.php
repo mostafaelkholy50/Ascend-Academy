@@ -355,7 +355,7 @@
                         </div>
                         <div>
                             <input type="tel" name="phone" placeholder="Phone Number" value="{{ old('phone') }}"
-                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E90A0] placeholder-gray-500 text-sm"
+                                class="phone-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E90A0] placeholder-gray-500 text-sm"
                                 required>
                         </div>
                         <div class="grid grid-cols-2 gap-4">
