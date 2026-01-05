@@ -1,8 +1,14 @@
+{{-- إذا كان components.head لا يحتوي على هذا الميتا، أضفه هنا أو في الـ layout الرئيسي --}}
 @include('components.head')
+
+{{-- إضافة مهمة: csrf meta tag --}}
+<meta name="csrf-token" content="{{ csrf_token() }}">
+
 <style>
     body { font-family: 'Inter', sans-serif; }
     .gradient-bg { background: linear-gradient(180deg, #009FBC 0%, #ffffff 100%); }
 </style>
+
 <body class="min-h-screen flex items-center justify-center gradient-bg p-4">
     <div class="w-full max-w-md">
         <div class="bg-white bg-opacity-10 backdrop-blur-lg rounded-2xl p-8 shadow-xl border border-white border-opacity-20">
@@ -34,7 +40,6 @@
 
             <!-- Login Form -->
             <form method="POST" action="{{ route('login.store') }}">
-                @csrf
 
                 <div class="mb-5">
                     <label for="email" class="block text-sm text-white font-medium mb-2">Email Address*</label>
@@ -85,8 +90,11 @@
                     class="w-full py-3 px-4 bg-teal-700 hover:bg-teal-600 text-white font-semibold rounded-xl shadow-lg transition transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 focus:ring-offset-transparent">
                     Sign In
                 </button>
-            </form>
 
+                {{-- الحل الرئيسي: الـ CSRF في النهاية تمامًا --}}
+                @csrf
+
+            </form>
 
             <p class="mt-3 text-center">
                 <a href="{{ route('home') }}" class="text-sm text-gray-300 hover:text-white transition">
@@ -108,6 +116,15 @@
                 eyeIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />';
             }
         }
+
+        // حماية إضافية: تحديث التوكن عند الإرسال (اختياري لكن مفيد)
+        document.querySelector('form').addEventListener('submit', function() {
+            const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            const csrfInput = this.querySelector('input[name="_token"]');
+            if (csrfInput) {
+                csrfInput.value = token;
+            }
+        });
     </script>
 </body>
 </html>
