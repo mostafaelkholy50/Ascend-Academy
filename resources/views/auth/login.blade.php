@@ -1,23 +1,24 @@
-{{-- إذا كان components.head لا يحتوي على هذا الميتا، أضفه هنا أو في الـ layout الرئيسي --}}
 @include('components.head')
-
-{{-- إضافة مهمة: csrf meta tag --}}
-<meta name="csrf-token" content="{{ csrf_token() }}">
-
 <style>
-    body { font-family: 'Inter', sans-serif; }
-    .gradient-bg { background: linear-gradient(180deg, #009FBC 0%, #ffffff 100%); }
+    body {
+        font-family: 'Inter', sans-serif;
+    }
+
+    .gradient-bg {
+        background: linear-gradient(180deg, #009FBC 0%, #ffffff 100%);
+    }
 </style>
 
 <body class="min-h-screen flex items-center justify-center gradient-bg p-4">
     <div class="w-full max-w-md">
-        <div class="bg-white bg-opacity-10 backdrop-blur-lg rounded-2xl p-8 shadow-xl border border-white border-opacity-20">
+        <div
+            class="bg-white bg-opacity-10 backdrop-blur-lg rounded-2xl p-8 shadow-xl border border-white border-opacity-20">
 
             <!-- Logo -->
             <div class="text-center mb-6">
                 <a href="{{ route('home') }}">
                     <img src="{{ asset('assets/images/Gemini_Generated_Image_pez0qlpez0qlpez0.png') }}"
-                         alt="Ascend Quran Academy" class="h-16 w-auto mx-auto">
+                        alt="Ascend Quran Academy" class="h-16 w-auto mx-auto">
                 </a>
                 <h2 class="text-2xl font-bold text-white mt-4">Welcome Back!</h2>
                 <p class="text-gray-200 text-sm">Sign in to continue your learning journey</p>
@@ -40,6 +41,7 @@
 
             <!-- Login Form -->
             <form method="POST" action="{{ route('login.store') }}">
+                @csrf
 
                 <div class="mb-5">
                     <label for="email" class="block text-sm text-white font-medium mb-2">Email Address*</label>
@@ -68,10 +70,14 @@
                         <input type="password" id="password" name="password" required
                             class="block w-full pl-10 pr-10 py-3 bg-white bg-opacity-20 border border-white border-opacity-30 rounded-xl text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-cyan-300 focus:border-transparent transition"
                             placeholder="••••••••" />
-                        <button type="button" onclick="togglePassword()" class="absolute inset-y-0 right-0 pr-3 flex items-center">
-                            <svg id="eye-icon" class="w-5 h-5 text-gray-400 hover:text-white transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        <button type="button" onclick="togglePassword()"
+                            class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                            <svg id="eye-icon" class="w-5 h-5 text-gray-400 hover:text-white transition" fill="none"
+                                stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                             </svg>
                         </button>
                     </div>
@@ -90,11 +96,8 @@
                     class="w-full py-3 px-4 bg-teal-700 hover:bg-teal-600 text-white font-semibold rounded-xl shadow-lg transition transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 focus:ring-offset-transparent">
                     Sign In
                 </button>
-
-                {{-- الحل الرئيسي: الـ CSRF في النهاية تمامًا --}}
-                @csrf
-
             </form>
+
 
             <p class="mt-3 text-center">
                 <a href="{{ route('home') }}" class="text-sm text-gray-300 hover:text-white transition">
@@ -116,15 +119,22 @@
                 eyeIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />';
             }
         }
-
-        // حماية إضافية: تحديث التوكن عند الإرسال (اختياري لكن مفيد)
-        document.querySelector('form').addEventListener('submit', function() {
-            const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-            const csrfInput = this.querySelector('input[name="_token"]');
-            if (csrfInput) {
-                csrfInput.value = token;
-            }
-        });
+    </script>
+    <script>
+        // Auto-refresh CSRF token every 5 minutes
+        setInterval(function () {
+            fetch('/refresh-csrf')
+                .then(response => response.json())
+                .then(data => {
+                    document.querySelector('meta[name="csrf-token"]').setAttribute('content', data.token);
+                    const csrfInput = document.querySelector('input[name="_token"]');
+                    if (csrfInput) {
+                        csrfInput.value = data.token;
+                    }
+                })
+                .catch(error => console.log('CSRF refresh failed:', error));
+        }, 300000); // كل 5 دقايق
     </script>
 </body>
+
 </html>

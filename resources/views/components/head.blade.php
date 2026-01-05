@@ -24,6 +24,28 @@
     <meta name="twitter:title" content="Ascend Quran Academy - Learn Quran & Arabic Online" />
     <meta name="twitter:description" content="Expert online Quran memorization, Tajweed, and Arabic courses for kids and adults." />
     <meta name="twitter:image" content="{{asset('assets/images/Gemini_Generated_Image_pez0qlpez0qlpez0.png')}}" />
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+<script>
+    // Prevent form submission if CSRF expired
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.querySelector('form');
+        form.addEventListener('submit', function(e) {
+            const token = document.querySelector('meta[name="csrf-token"]').content;
+            const tokenInput = document.querySelector('input[name="_token"]');
+            
+            if (!token || token === '') {
+                e.preventDefault();
+                alert('Session expired. Page will reload.');
+                location.reload();
+                return false;
+            }
+            
+            if (tokenInput) {
+                tokenInput.value = token;
+            }
+        });
+    });
+</script>
 
     <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
