@@ -37,14 +37,14 @@ class NewInquiryNotification extends Notification implements ShouldQueue
     {
         $typeLabels = [
             'trial' => 'Free Trial Request',
-            'contact' => 'Contact Inquiry',
-            'registration' => 'Registration Inquiry',
+            'contact' => 'Contact Message',
+            'registration' => 'Registration Form',
         ];
 
-        $typeLabel = $typeLabels[$this->inquiry->type] ?? 'New Inquiry';
+        $typeLabel = $typeLabels[$this->inquiry->type] ?? 'Registration';
 
         return (new MailMessage)
-            ->subject('New Inquiry: ' . $typeLabel)
+            ->subject('New Registration: ' . $typeLabel)
             ->markdown('emails.new-inquiry', [
                 'inquiry' => $this->inquiry,
                 'typeLabel' => $typeLabel,

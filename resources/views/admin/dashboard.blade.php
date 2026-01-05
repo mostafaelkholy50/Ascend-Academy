@@ -2,7 +2,7 @@
     @php $user = auth()->user(); @endphp
 
     <!-- Hero Welcome -->
-    <x-dashboard.hero-welcome :user="$user" :message="'You have ' . $newInquiries . ' pending inquiries and ' . $recentEnrollments->count() . ' new enrollments.'" />
+    <x-dashboard.hero-welcome :user="$user" :message="'You have ' . $newInquiries . ' pending registrations and ' . $recentEnrollments->count() . ' new enrollments.'" />
 
     <div class="flex flex-col lg:flex-row gap-4 md:gap-6">
         <div class="flex-grow space-y-4 md:space-y-6">
@@ -18,7 +18,7 @@
                 <x-dashboard.stat-card icon="fa-chalkboard-teacher" title="Teachers" :value="number_format($totalTeachers)" color="purple" />
                 </a>
                 <a href="{{route('admin.inquiries.index')}}">
-                <x-dashboard.stat-card icon="fa-envelope" title="New Inquiries" :value="number_format($newInquiries)" color="red" />
+                <x-dashboard.stat-card icon="fa-envelope" title="New Registrations" :value="number_format($newInquiries)" color="red" />
                 </a>
             </div>
 
@@ -67,7 +67,7 @@
 
             <!-- Recent Inquiries -->
             <section>
-                <x-dashboard.section-header title="Recent Inquiries" linkText="View All" linkHref="{{ route('admin.inquiries.index') }}" />
+                <x-dashboard.section-header title="Recent Registrations" linkText="View All" linkHref="{{ route('admin.inquiries.index') }}" />
                 @if($recentInquiries->count() > 0)
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                         @foreach($recentInquiries->take(2) as $inquiry)
@@ -94,7 +94,7 @@
                 @else
                     <div class="bg-white p-8 rounded-2xl shadow-sm text-center text-gray-500">
                         <i class="fa-solid fa-inbox text-4xl mb-3 text-gray-300"></i>
-                        <p>No recent inquiries</p>
+                        <p>No recent registrations</p>
                     </div>
                 @endif
             </section>
@@ -144,7 +144,7 @@
                         <i class="fa-solid fa-graduation-cap mr-2"></i>Manage Enrollments
                     </a>
                     <a href="{{ route('admin.inquiries.index') }}" class="block w-full bg-blue-500 text-white px-4 py-2.5 rounded-lg hover:bg-blue-600 transition text-center text-sm">
-                        <i class="fa-solid fa-inbox mr-2"></i>View Inquiries
+                        <i class="fa-solid fa-inbox mr-2"></i>View Registrations
                     </a>
                     <a href="{{ route('admin.parents.index') }}" class="block w-full bg-purple-500 text-white px-4 py-2.5 rounded-lg hover:bg-purple-600 transition text-center text-sm">
                         <i class="fa-solid fa-users mr-2"></i>Manage Parents

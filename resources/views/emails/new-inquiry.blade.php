@@ -1,5 +1,5 @@
 @component('mail::message')
-# New Inquiry Received
+# New Registration Received
 
 **Type:** {{ $typeLabel }}
 
@@ -9,14 +9,26 @@
 **Email:** {{ $inquiry->email }}  
 **Phone:** {{ $inquiry->phone ?? 'Not provided' }}
 
-@if($inquiry->message)
-## Message
+@if($inquiry->join_date)
+**Joining Date:** {{ $inquiry->join_date->format('M d, Y') }}  
+@endif
+**Age:** {{ $inquiry->age }}  
+**Gender:** {{ ucfirst($inquiry->gender) }}  
+**Location:** {{ $inquiry->city_state }}, {{ $inquiry->country }}
 
-{{ $inquiry->message }}
+## Course Preferences
+**Course Needed:** {{ $inquiry->courses_needed }}  
+**Sessions Per Week:** {{ $inquiry->sessions_per_week }}  
+**Study Hours:** {{ $inquiry->study_hours }}  
+**Available Days:** {{ is_array($inquiry->available_days) ? implode(', ', $inquiry->available_days) : $inquiry->available_days }}
+
+@if($inquiry->referrer)
+**Referrer:** {{ $inquiry->referrer }}
 @endif
 
-@if($inquiry->preferred_contact_time)
-**Preferred Contact Time:** {{ $inquiry->preferred_contact_time }}
+@if($inquiry->message)
+## Notes
+{{ $inquiry->message }}
 @endif
 
 @component('mail::button', ['url' => route('admin.inquiries.index')])

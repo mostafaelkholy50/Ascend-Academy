@@ -88,7 +88,7 @@
                             </a>
                             <a href="{{ route('get-started') }}"
                                class="group relative inline-flex items-center justify-center px-5 py-2.5 text-sm font-bold text-white transition-all duration-200 bg-[#1E90A0] font-pj rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#1E90A0] hover:bg-[#157a8a] shadow-lg hover:shadow-xl hover:-translate-y-0.5">
-                                <span>Get Started</span>
+                                <span>Registration Now</span>
                                 <svg class="w-4 h-4 ml-2 transition-transform duration-200 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
                                 </svg>
@@ -161,7 +161,7 @@
                                 Log in
                             </a>
                             <a href="{{ route('get-started') }}" class="flex justify-center items-center px-4 py-3 border border-transparent shadow-md text-base font-bold rounded-lg text-white bg-[#1E90A0] hover:bg-[#157a8a] hover:-translate-y-0.5 transition-all">
-                                Get Started
+                                Registration Now
                             </a>
                         </div>
                     @endauth

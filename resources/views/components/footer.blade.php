@@ -79,14 +79,14 @@
             <!-- CTA Section -->
             <div class="lg:col-span-3">
                 <div class="bg-white/10 rounded-2xl p-6 backdrop-blur-sm border border-white/10">
-                    <h5 class="text-lg font-bold mb-3 text-white">Get Started</h5>
+                    <h5 class="text-lg font-bold mb-3 text-white">Registration Now</h5>
                     <p class="text-teal-50 text-sm mb-6">
-                        Ready to begin your Quran learning journey? Book your free trial today.
+                        Ready to begin your Quran learning journey? Register now.
                     </p>
                     <div class="space-y-3">
                         <a href="{{ route('get-started') }}"
                             class="block w-full bg-yellow-400 text-[#1E90A0] font-bold py-3 px-4 rounded-lg hover:bg-yellow-300 transition duration-300 shadow-lg text-sm text-center transform hover:-translate-y-0.5">
-                            Start Free Trial
+                            Register Now
                         </a>
                         <a href="{{ route('contact') }}"
                             class="block w-full bg-transparent border-2 border-white/30 text-white font-semibold py-3 px-4 rounded-lg hover:bg-white hover:text-[#1E90A0] transition duration-300 text-sm text-center">

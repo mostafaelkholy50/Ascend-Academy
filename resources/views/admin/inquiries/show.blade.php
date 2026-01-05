@@ -48,36 +48,64 @@
                     <div>
                         <label class="text-sm font-semibold text-gray-600">Location</label>
                         <p class="text-gray-800">
-                            {{ $inquiry->city ?? 'N/A' }}{{ $inquiry->country ? ', ' . $inquiry->country : '' }}
+                            {{ $inquiry->city_state ?? $inquiry->city ?? 'N/A' }}{{ $inquiry->country ? ', ' . $inquiry->country : '' }}
                         </p>
                     </div>
                 </div>
             </div>
 
-            <!-- Child Information -->
-            @if($inquiry->child_name)
-                <div class="bg-white p-6 rounded-2xl shadow-sm">
-                    <h2 class="text-xl font-bold text-gray-800 mb-4">Student Information</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="text-sm font-semibold text-gray-600">Student Name</label>
-                            <p class="text-gray-800">{{ $inquiry->child_name }}</p>
-                        </div>
-                        <div>
-                            <label class="text-sm font-semibold text-gray-600">Age</label>
-                            <p class="text-gray-800">{{ $inquiry->child_age ?? 'N/A' }}</p>
-                        </div>
-                        <div>
-                            <label class="text-sm font-semibold text-gray-600">Gender</label>
-                            <p class="text-gray-800">{{ ucfirst($inquiry->child_gender ?? 'N/A') }}</p>
-                        </div>
-                        <div>
-                            <label class="text-sm font-semibold text-gray-600">Preferred Course</label>
-                            <p class="text-gray-800">{{ $inquiry->preferred_course ?? 'Not specified' }}</p>
+            <!-- Registration Details -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">Registration Details</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-sm font-semibold text-gray-600">Age</label>
+                        <p class="text-gray-800">{{ $inquiry->age ?? 'N/A' }}</p>
+                    </div>
+                    <div>
+                        <label class="text-sm font-semibold text-gray-600">Gender</label>
+                        <p class="text-gray-800">{{ ucfirst($inquiry->gender ?? 'N/A') }}</p>
+                    </div>
+                    <div>
+                        <label class="text-sm font-semibold text-gray-600">Date of Joining</label>
+                        <p class="text-gray-800">{{ $inquiry->join_date ? $inquiry->join_date->format('M d, Y') : 'N/A' }}</p>
+                    </div>
+                    <div>
+                        <label class="text-sm font-semibold text-gray-600">Referrer</label>
+                        <p class="text-gray-800">{{ $inquiry->referrer ?? 'N/A' }}</p>
+                    </div>
+                </div>
+
+                <h3 class="text-lg font-bold text-gray-800 mt-6 mb-3 border-t pt-4">Course Preferences</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-sm font-semibold text-gray-600">Course Needed</label>
+                        <p class="text-gray-800">{{ $inquiry->courses_needed ?? 'N/A' }}</p>
+                    </div>
+                    <div>
+                        <label class="text-sm font-semibold text-gray-600">Sessions Per Week</label>
+                        <p class="text-gray-800">{{ $inquiry->sessions_per_week ?? 'N/A' }}</p>
+                    </div>
+                    <div>
+                        <label class="text-sm font-semibold text-gray-600">Study Hours</label>
+                        <p class="text-gray-800">{{ $inquiry->study_hours ?? 'N/A' }}</p>
+                    </div>
+                    <div class="col-span-1 md:col-span-2">
+                        <label class="text-sm font-semibold text-gray-600">Available Days</label>
+                        <div class="flex flex-wrap gap-2 mt-1">
+                            @if(is_array($inquiry->available_days))
+                                @foreach($inquiry->available_days as $day)
+                                    <span class="px-2 py-1 bg-teal-50 text-teal-700 rounded text-xs font-medium border border-teal-100">{{ $day }}</span>
+                                @endforeach
+                            @elseif($inquiry->available_days)
+                                <span class="text-gray-800">{{ $inquiry->available_days }}</span>
+                            @else
+                                <span class="text-gray-500">Not specified</span>
+                            @endif
                         </div>
                     </div>
                 </div>
-            @endif
+            </div>
 
             <!-- Message -->
             @if($inquiry->message)

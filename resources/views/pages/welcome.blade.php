@@ -341,52 +341,118 @@
 
                     <form action="{{ route('inquiry.store') }}" method="POST" class="space-y-5">
                         @csrf
-                        <input type="hidden" name="type" value="trial">
+                        <input type="hidden" name="type" value="registration">
 
-                        <div>
-                            <input type="text" name="full_name" placeholder="Your Full Name *" required
-                                value="{{ old('full_name') }}"
-                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E90A0] placeholder-gray-500 text-sm">
+                        <div class="space-y-4">
+                            <!-- Personal & Contact -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <input type="text" name="full_name" placeholder="Full Name *" required value="{{ old('full_name') }}"
+                                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E90A0] text-sm">
+                                </div>
+                                <div>
+                                    <input type="email" name="email" placeholder="Email Address *" required value="{{ old('email') }}"
+                                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E90A0] text-sm">
+                                </div>
+                                <div>
+                                    <input type="tel" name="phone" placeholder="Phone Number *" value="{{ old('phone') }}" required
+                                        class="phone-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E90A0] text-sm">
+                                </div>
+                                <div>
+                                    <select name="gender" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E90A0] text-sm text-gray-500">
+                                        <option value="">Select Gender *</option>
+                                        <option value="male" {{ old('gender') == 'male' ? 'selected' : '' }}>Male</option>
+                                        <option value="female" {{ old('gender') == 'female' ? 'selected' : '' }}>Female</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <input type="number" name="age" placeholder="Age *" required value="{{ old('age') }}" min="3" max="100"
+                                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E90A0] text-sm">
+                                </div>
+                                <div>
+                                    <select name="country" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E90A0] text-sm text-gray-500">
+                                        <option value="">Select Country *</option>
+                                        <option value="United States" {{ old('country') == 'United States' ? 'selected' : '' }}>United States</option>
+                                        <option value="United Kingdom" {{ old('country') == 'United Kingdom' ? 'selected' : '' }}>United Kingdom</option>
+                                        <option value="Canada" {{ old('country') == 'Canada' ? 'selected' : '' }}>Canada</option>
+                                        <option value="Australia" {{ old('country') == 'Australia' ? 'selected' : '' }}>Australia</option>
+                                        <option value="Egypt" {{ old('country') == 'Egypt' ? 'selected' : '' }}>Egypt</option>
+                                        <option value="Saudi Arabia" {{ old('country') == 'Saudi Arabia' ? 'selected' : '' }}>Saudi Arabia</option>
+                                        <option value="UAE" {{ old('country') == 'UAE' ? 'selected' : '' }}>UAE</option>
+                                        <option value="Qatar" {{ old('country') == 'Qatar' ? 'selected' : '' }}>Qatar</option>
+                                        <option value="Kuwait" {{ old('country') == 'Kuwait' ? 'selected' : '' }}>Kuwait</option>
+                                        <option value="Other" {{ old('country') == 'Other' ? 'selected' : '' }}>Other</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <input type="text" name="city_state" placeholder="City/State *" required value="{{ old('city_state') }}"
+                                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E90A0] text-sm">
+                                </div>
+                                <div>
+                                    <input type="text" name="referrer" placeholder="How did you hear about us? *" required value="{{ old('referrer') }}"
+                                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E90A0] text-sm">
+                                </div>
+                            </div>
+
+                            <!-- Course & Schedule -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <select name="courses_needed" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E90A0] text-sm text-gray-500">
+                                        <option value="">Course Needed *</option>
+                                        <option value="Quran Memorization" {{ old('courses_needed') == 'Quran Memorization' ? 'selected' : '' }}>Quran Memorization</option>
+                                        <option value="Tajweed" {{ old('courses_needed') == 'Tajweed' ? 'selected' : '' }}>Tajweed</option>
+                                        <option value="Arabic Language" {{ old('courses_needed') == 'Arabic Language' ? 'selected' : '' }}>Arabic Language</option>
+                                        <option value="Islamic Studies" {{ old('courses_needed') == 'Islamic Studies' ? 'selected' : '' }}>Islamic Studies</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <select name="sessions_per_week" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E90A0] text-sm text-gray-500">
+                                        <option value="">Sessions Per Week *</option>
+                                        <option value="1 Session" {{ old('sessions_per_week') == '1 Session' ? 'selected' : '' }}>1 Session</option>
+                                        <option value="2 Sessions" {{ old('sessions_per_week') == '2 Sessions' ? 'selected' : '' }}>2 Sessions</option>
+                                        <option value="3 Sessions" {{ old('sessions_per_week') == '3 Sessions' ? 'selected' : '' }}>3 Sessions</option>
+                                        <option value="4 Sessions" {{ old('sessions_per_week') == '4 Sessions' ? 'selected' : '' }}>4 Sessions</option>
+                                        <option value="5 Sessions" {{ old('sessions_per_week') == '5 Sessions' ? 'selected' : '' }}>5 Sessions</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <select name="study_hours" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E90A0] text-sm text-gray-500">
+                                    <option value="">Best Study Hours *</option>
+                                    <option value="Morning (8AM - 12PM)" {{ old('study_hours') == 'Morning (8AM - 12PM)' ? 'selected' : '' }}>Morning (8AM - 12PM)</option>
+                                    <option value="Afternoon (12PM - 4PM)" {{ old('study_hours') == 'Afternoon (12PM - 4PM)' ? 'selected' : '' }}>Afternoon (12PM - 4PM)</option>
+                                    <option value="Evening (4PM - 8PM)" {{ old('study_hours') == 'Evening (4PM - 8PM)' ? 'selected' : '' }}>Evening (4PM - 8PM)</option>
+                                    <option value="Night (8PM - Midnight)" {{ old('study_hours') == 'Night (8PM - Midnight)' ? 'selected' : '' }}>Night (8PM - Midnight)</option>
+                                    <option value="Flexible" {{ old('study_hours') == 'Flexible' ? 'selected' : '' }}>Flexible</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Available Days *</label>
+                                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                    @foreach(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] as $day)
+                                        <label class="flex items-center space-x-2 cursor-pointer bg-gray-50 p-2 rounded border border-gray-200 hover:bg-gray-100">
+                                            <input type="checkbox" name="available_days[]" value="{{ $day }}" 
+                                                {{ in_array($day, old('available_days', [])) ? 'checked' : '' }}
+                                                class="rounded text-[#1E90A0] focus:ring-[#1E90A0]">
+                                            <span class="text-xs text-gray-700">{{ $day }}</span>
+                                        </label>
+                                    @endforeach
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Date of Joining *</label>
+                                <input type="date" name="join_date" required value="{{ old('join_date') }}"
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E90A0] text-sm text-gray-500">
+                            </div>
+
+                            <button type="submit"
+                                class="w-full bg-[#1E90A0] text-white font-semibold py-3 rounded-lg hover:bg-teal-700 transition duration-300 shadow-md">
+                                Submit Registration
+                            </button>
                         </div>
-                        <div>
-                            <input type="email" name="email" placeholder="Your Email Address *" required
-                                value="{{ old('email') }}"
-                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E90A0] placeholder-gray-500 text-sm">
-                        </div>
-                        <div>
-                            <input type="tel" name="phone" placeholder="Phone Number" value="{{ old('phone') }}"
-                                class="phone-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E90A0] placeholder-gray-500 text-sm"
-                                required>
-                        </div>
-                        <div class="grid grid-cols-2 gap-4">
-                            <select name="child_age"
-                                class="w-full border border-gray-300 text-gray-700 py-3 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E90A0] text-sm">
-                                <option value="" disabled {{ old('child_age') ? '' : 'selected' }}>Student Age</option>
-                                <option value="3-5 years" {{ old('child_age') == '3-5 years' ? 'selected' : '' }}>3-5
-                                    years</option>
-                                <option value="6-9 years" {{ old('child_age') == '6-9 years' ? 'selected' : '' }}>6-9
-                                    years</option>
-                                <option value="10-13 years" {{ old('child_age') == '10-13 years' ? 'selected' : '' }}>
-                                    10-13 years</option>
-                                <option value="14+ years" {{ old('child_age') == '14+ years' ? 'selected' : '' }}>14+
-                                    years</option>
-                                <option value="Adult" {{ old('child_age') == 'Adult' ? 'selected' : '' }}>Adult</option>
-                            </select>
-                            <select name="preferred_course"
-                                class="w-full border border-gray-300 text-gray-700 py-3 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E90A0] text-sm">
-                                <option value="" disabled {{ old('preferred_course') ? '' : 'selected' }}>Preferred
-                                    Course</option>
-                                <option value="Quran Memorization" {{ old('preferred_course') == 'Quran Memorization' ? 'selected' : '' }}>Quran Memorization</option>
-                                <option value="Tajweed" {{ old('preferred_course') == 'Tajweed' ? 'selected' : '' }}>
-                                    Tajweed</option>
-                                <option value="Arabic Language" {{ old('preferred_course') == 'Arabic Language' ? 'selected' : '' }}>Arabic Language</option>
-                                <option value="Islamic Studies" {{ old('preferred_course') == 'Islamic Studies' ? 'selected' : '' }}>Islamic Studies</option>
-                            </select>
-                        </div>
-                        <button type="submit"
-                            class="w-full bg-[#1E90A0] text-white font-semibold py-3 rounded-lg hover:bg-teal-700 transition duration-300 shadow-md">
-                            Request Free Trial
-                        </button>
                     </form>
 
                     <p class="text-center mt-4 text-sm text-gray-500">

@@ -3,8 +3,9 @@
     <i class="fa-solid fa-th-large mr-3 text-base"></i> Dashboard
 </a>
 
-<a href="{{ route('admin.inquiries.index') }}" class="flex items-center px-4 py-2.5 rounded-xl {{ request()->routeIs('admin.inquiries.*') ? 'bg-white/20 backdrop-blur-sm font-medium' : 'hover:bg-white/10 opacity-80 hover:opacity-100' }} transition">
-    <i class="fa-solid fa-inbox mr-3 text-base"></i> Inquiries
+<a href="{{ route('admin.inquiries.index') }}"
+   class="flex items-center px-4 py-2.5 rounded-xl {{ request()->routeIs('admin.inquiries.*') ? 'bg-white/20 backdrop-blur-sm font-medium' : 'hover:bg-white/10 opacity-80 hover:opacity-100' }} transition">
+    <i class="fa-solid fa-clipboard-question mr-3 text-base"></i> Registrations
     @php
         $pendingCount = \App\Models\Inquiry::where('status', 'pending')->count();
     @endphp

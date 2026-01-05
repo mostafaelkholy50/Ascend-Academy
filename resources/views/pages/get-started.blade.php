@@ -129,88 +129,175 @@
 
                     <form action="{{ route('inquiry.store') }}" method="POST" class="space-y-5">
                         @csrf
-                        <input type="hidden" name="type" value="trial">
+                        <input type="hidden" name="type" value="registration">
 
-                        <!-- Parent Info -->
-                        <div class="space-y-4">
-                            <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Your Information</h3>
-
+                        <div class="space-y-6">
+                            <!-- Personal Info -->
                             <div>
-                                <label for="full_name" class="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
-                                <input type="text" id="full_name" name="full_name" required value="{{ old('full_name') }}"
-                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1E90A0] focus:border-[#1E90A0] transition"
-                                    placeholder="Your full name">
-                            </div>
-
-                            <div>
-                                <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email *</label>
-                                <input type="email" id="email" name="email" required value="{{ old('email') }}"
-                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1E90A0] focus:border-[#1E90A0] transition"
-                                    placeholder="your@email.com">
-                            </div>
-
-                            <div>
-                                <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-                                <input type="tel" id="phone" name="phone" value="{{ old('phone') }}"
-                                    class="phone-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1E90A0] focus:border-[#1E90A0] transition"
-                                    placeholder="+1 234 567 8900">
-                            </div>
-                        </div>
-
-                        <!-- Child Info -->
-                        <div class="space-y-4 pt-4 border-t border-gray-200">
-                            <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Student Information (Optional)</h3>
-
-                            <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label for="child_name" class="block text-sm font-medium text-gray-700 mb-1">Student Name</label>
-                                    <input type="text" id="child_name" name="child_name" value="{{ old('child_name') }}"
-                                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1E90A0] focus:border-[#1E90A0] transition"
-                                        placeholder="Child's name">
-                                </div>
-                                <div>
-                                    <label for="child_age" class="block text-sm font-medium text-gray-700 mb-1">Age</label>
-                                    <select id="child_age" name="child_age"
-                                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1E90A0] focus:border-[#1E90A0] transition">
-                                        <option value="">Select age</option>
-                                        <option value="3-5 years" {{ old('child_age') == '3-5 years' ? 'selected' : '' }}>3-5 years</option>
-                                        <option value="6-9 years" {{ old('child_age') == '6-9 years' ? 'selected' : '' }}>6-9 years</option>
-                                        <option value="10-13 years" {{ old('child_age') == '10-13 years' ? 'selected' : '' }}>10-13 years</option>
-                                        <option value="14-17 years" {{ old('child_age') == '14-17 years' ? 'selected' : '' }}>14-17 years</option>
-                                        <option value="18+ Adult" {{ old('child_age') == '18+ Adult' ? 'selected' : '' }}>18+ Adult</option>
-                                    </select>
+                                <h3 class="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">Personal Information</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                    <div>
+                                        <label for="full_name" class="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
+                                        <input type="text" id="full_name" name="full_name" required value="{{ old('full_name') }}"
+                                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1E90A0] focus:border-[#1E90A0] transition"
+                                            placeholder="Your full name">
+                                    </div>
+                                    <div>
+                                        <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                                        <input type="email" id="email" name="email" required value="{{ old('email') }}"
+                                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1E90A0] focus:border-[#1E90A0] transition"
+                                            placeholder="your@email.com">
+                                    </div>
+                                    <div>
+                                        <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">Phone Number *</label>
+                                        <input type="tel" id="phone" name="phone" required value="{{ old('phone') }}"
+                                            class="phone-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1E90A0] focus:border-[#1E90A0] transition"
+                                            placeholder="+1 234 567 8900">
+                                    </div>
+                                    <div>
+                                        <label for="gender" class="block text-sm font-medium text-gray-700 mb-1">Gender *</label>
+                                        <select id="gender" name="gender" required
+                                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1E90A0] focus:border-[#1E90A0] transition">
+                                            <option value="">Select Gender</option>
+                                            <option value="male" {{ old('gender') == 'male' ? 'selected' : '' }}>Male</option>
+                                            <option value="female" {{ old('gender') == 'female' ? 'selected' : '' }}>Female</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="age" class="block text-sm font-medium text-gray-700 mb-1">How old are you? *</label>
+                                        <input type="number" id="age" name="age" required value="{{ old('age') }}" min="3" max="100"
+                                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1E90A0] focus:border-[#1E90A0] transition"
+                                            placeholder="Ex: 25">
+                                    </div>
                                 </div>
                             </div>
 
+                            <!-- Location Info -->
                             <div>
-                                <label for="preferred_course" class="block text-sm font-medium text-gray-700 mb-1">Preferred Course</label>
-                                <select id="preferred_course" name="preferred_course"
-                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1E90A0] focus:border-[#1E90A0] transition">
-                                    <option value="">Select a course</option>
-                                    <option value="Quran Memorization" {{ old('preferred_course') == 'Quran Memorization' ? 'selected' : '' }}>Quran Memorization</option>
-                                    <option value="Tajweed" {{ old('preferred_course') == 'Tajweed' ? 'selected' : '' }}>Tajweed & Recitation</option>
-                                    <option value="Arabic Language" {{ old('preferred_course') == 'Arabic Language' ? 'selected' : '' }}>Arabic Language</option>
-                                    <option value="Islamic Studies" {{ old('preferred_course') == 'Islamic Studies' ? 'selected' : '' }}>Islamic Studies</option>
-                                    <option value="Not Sure" {{ old('preferred_course') == 'Not Sure' ? 'selected' : '' }}>Not Sure Yet</option>
-                                </select>
+                                <h3 class="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">Location</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                    <div>
+                    <label for="country" class="block text-sm font-medium text-gray-700 mb-1">Country *</label>
+                    <select id="country" name="country" required
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1E90A0] focus:border-[#1E90A0] transition">
+                        <option value="">Select Country</option>
+                        <option value="United States" {{ old('country') == 'United States' ? 'selected' : '' }}>United States</option>
+                        <option value="United Kingdom" {{ old('country') == 'United Kingdom' ? 'selected' : '' }}>United Kingdom</option>
+                        <option value="Canada" {{ old('country') == 'Canada' ? 'selected' : '' }}>Canada</option>
+                        <option value="Australia" {{ old('country') == 'Australia' ? 'selected' : '' }}>Australia</option>
+                        <option value="Egypt" {{ old('country') == 'Egypt' ? 'selected' : '' }}>Egypt</option>
+                        <option value="Saudi Arabia" {{ old('country') == 'Saudi Arabia' ? 'selected' : '' }}>Saudi Arabia</option>
+                        <option value="UAE" {{ old('country') == 'UAE' ? 'selected' : '' }}>UAE</option>
+                        <option value="Qatar" {{ old('country') == 'Qatar' ? 'selected' : '' }}>Qatar</option>
+                        <option value="Kuwait" {{ old('country') == 'Kuwait' ? 'selected' : '' }}>Kuwait</option>
+                        <option value="Other" {{ old('country') == 'Other' ? 'selected' : '' }}>Other</option>
+                    </select>
+                </div>
+                                    <div>
+                                        <label for="city_state" class="block text-sm font-medium text-gray-700 mb-1">City/State *</label>
+                                        <input type="text" id="city_state" name="city_state" required value="{{ old('city_state') }}"
+                                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1E90A0] focus:border-[#1E90A0] transition"
+                                            placeholder="Your City or State">
+                                    </div>
+                                </div>
                             </div>
 
+                            <!-- Course Preferences -->
                             <div>
-                                <label for="message" class="block text-sm font-medium text-gray-700 mb-1">Additional Notes</label>
-                                <textarea id="message" name="message" rows="3"
-                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1E90A0] focus:border-[#1E90A0] transition resize-none"
-                                    placeholder="Any specific requirements or questions?">{{ old('message') }}</textarea>
+                                <h3 class="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">Course Preferences</h3>
+                                <div class="grid grid-cols-1 gap-5">
+                                    <div>
+                                        <label for="courses_needed" class="block text-sm font-medium text-gray-700 mb-1">What courses do you need to join? *</label>
+                                        <select id="courses_needed" name="courses_needed" required
+                                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1E90A0] focus:border-[#1E90A0] transition">
+                                            <option value="">Select a Course</option>
+                                            <option value="Quran Memorization" {{ old('courses_needed') == 'Quran Memorization' ? 'selected' : '' }}>Quran Memorization</option>
+                                            <option value="Tajweed" {{ old('courses_needed') == 'Tajweed' ? 'selected' : '' }}>Tajweed & Recitation</option>
+                                            <option value="Arabic Language" {{ old('courses_needed') == 'Arabic Language' ? 'selected' : '' }}>Arabic Language</option>
+                                            <option value="Islamic Studies" {{ old('courses_needed') == 'Islamic Studies' ? 'selected' : '' }}>Islamic Studies</option>
+                                            <option value="Ijazah Program" {{ old('courses_needed') == 'Ijazah Program' ? 'selected' : '' }}>Ijazah Program</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                        <div>
+                                            <label for="sessions_per_week" class="block text-sm font-medium text-gray-700 mb-1">Sessions per week *</label>
+                                            <select id="sessions_per_week" name="sessions_per_week" required
+                                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1E90A0] focus:border-[#1E90A0] transition">
+                                                <option value="">Select Frequency</option>
+                                                <option value="1 Session" {{ old('sessions_per_week') == '1 Session' ? 'selected' : '' }}>1 Session</option>
+                                                <option value="2 Sessions" {{ old('sessions_per_week') == '2 Sessions' ? 'selected' : '' }}>2 Sessions</option>
+                                                <option value="3 Sessions" {{ old('sessions_per_week') == '3 Sessions' ? 'selected' : '' }}>3 Sessions</option>
+                                                <option value="4 Sessions" {{ old('sessions_per_week') == '4 Sessions' ? 'selected' : '' }}>4 Sessions</option>
+                                                <option value="5 Sessions" {{ old('sessions_per_week') == '5 Sessions' ? 'selected' : '' }}>5 Sessions</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label for="study_hours" class="block text-sm font-medium text-gray-700 mb-1">Best study hours *</label>
+                                            <select id="study_hours" name="study_hours" required
+                                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1E90A0] focus:border-[#1E90A0] transition">
+                                                <option value="">Select Time Preference</option>
+                                                <option value="Morning (8AM - 12PM)" {{ old('study_hours') == 'Morning (8AM - 12PM)' ? 'selected' : '' }}>Morning (8AM - 12PM)</option>
+                                                <option value="Afternoon (12PM - 4PM)" {{ old('study_hours') == 'Afternoon (12PM - 4PM)' ? 'selected' : '' }}>Afternoon (12PM - 4PM)</option>
+                                                <option value="Evening (4PM - 8PM)" {{ old('study_hours') == 'Evening (4PM - 8PM)' ? 'selected' : '' }}>Evening (4PM - 8PM)</option>
+                                                <option value="Night (8PM - Midnight)" {{ old('study_hours') == 'Night (8PM - Midnight)' ? 'selected' : '' }}>Night (8PM - Midnight)</option>
+                                                <option value="Flexible" {{ old('study_hours') == 'Flexible' ? 'selected' : '' }}>Flexible</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Available Days *</label>
+                                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                            @foreach(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] as $day)
+                                                <label class="flex items-center space-x-2 cursor-pointer bg-gray-50 p-2 rounded border border-gray-200 hover:bg-gray-100">
+                                                    <input type="checkbox" name="available_days[]" value="{{ $day }}" 
+                                                        {{ in_array($day, old('available_days', [])) ? 'checked' : '' }}
+                                                        class="rounded text-[#1E90A0] focus:ring-[#1E90A0]">
+                                                    <span class="text-sm text-gray-700">{{ $day }}</span>
+                                                </label>
+                                            @endforeach
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label for="join_date" class="block text-sm font-medium text-gray-700 mb-1">When do you plan to join? *</label>
+                                        <input type="date" id="join_date" name="join_date" required value="{{ old('join_date') }}"
+                                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1E90A0] focus:border-[#1E90A0] transition">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Additional Info -->
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">Additional Details</h3>
+                                <div class="space-y-5">
+                                    <div>
+                                        <label for="referrer" class="block text-sm font-medium text-gray-700 mb-1">Who recommended us to you? *</label>
+                                        <input type="text" id="referrer" name="referrer" required value="{{ old('referrer') }}"
+                                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1E90A0] focus:border-[#1E90A0] transition"
+                                            placeholder="Friend, Social Media, Advertisement, etc.">
+                                    </div>
+                                    
+                                    <div>
+                                        <label for="message" class="block text-sm font-medium text-gray-700 mb-1">Any additional notes?</label>
+                                        <textarea id="message" name="message" rows="3"
+                                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1E90A0] focus:border-[#1E90A0] transition resize-none"
+                                            placeholder="Any specific requirements or questions?">{{ old('message') }}</textarea>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
-                        <button type="submit"
-                            class="w-full bg-[#1E90A0] text-white font-bold py-4 rounded-lg hover:bg-teal-700 transition duration-300 shadow-md text-lg">
-                            Request Free Trial
-                        </button>
-
-                        <p class="text-xs text-gray-500 text-center">
-                            By submitting, you agree to be contacted by our team regarding your request.
-                        </p>
+                        <div class="pt-4">
+                            <button type="submit"
+                                class="w-full bg-[#1E90A0] text-white font-bold py-4 rounded-lg hover:bg-teal-700 transition duration-300 shadow-md text-lg uppercase tracking-wide">
+                                Submit Registration
+                            </button>
+                            <p class="text-xs text-gray-500 text-center mt-3">
+                                By submitting, you agree to be contacted by our team regarding your registration.
+                            </p>
+                        </div>
                     </form>
                 </div>
             </div>

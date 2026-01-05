@@ -1,7 +1,9 @@
-<x-dashboard-layout title="Manage Inquiries">
-    <div class="mb-6 px-4 md:px-0">
-        <h1 class="text-xl md:text-2xl font-bold text-gray-800">Inquiries Management</h1>
-        <p class="text-gray-600 text-sm">Manage trial requests and contact inquiries</p>
+<x-dashboard-layout title="Registrations">
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-800">Registrations</h1>
+            <p class="text-sm text-gray-500 mt-1">Manage and track student registrations</p>
+        </div>
     </div>
 
     <div class="bg-white p-4 md:p-6 rounded-2xl shadow-sm mb-6 mx-2 md:mx-0">
@@ -93,7 +95,8 @@
                 <thead class="bg-gray-50 border-b border-gray-200">
                     <tr>
                         <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase">Name & Contact</th>
-                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase">Child Info</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase">Student Details</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase">Course Preference</th>
                         <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase">Type & Status</th>
                         <th class="px-6 py-4 text-center text-xs font-bold text-gray-600 uppercase">Actions</th>
                     </tr>
@@ -103,14 +106,35 @@
                         <tr class="hover:bg-gray-50 transition">
                             <td class="px-6 py-4">
                                 <div class="font-bold text-gray-800">{{ $inquiry->full_name }}</div>
-                                <div class="text-xs text-gray-500">{{ $inquiry->email }}</div>
+                                <div class="text-xs text-gray-500 mb-1">{{ $inquiry->email }}</div>
+                                @if($inquiry->phone)
+                                    <div class="text-xs text-gray-500"><i class="fa-solid fa-phone text-[10px] mr-1"></i>{{ $inquiry->phone }}</div>
+                                @endif
                             </td>
                             <td class="px-6 py-4">
-                                @if($inquiry->child_name)
-                                    <div class="text-sm text-gray-800 font-medium">{{ $inquiry->child_name }}</div>
-                                    <div class="text-[10px] text-gray-500 uppercase">{{ $inquiry->child_age }} yrs • {{ $inquiry->child_gender }}</div>
-                                @else
-                                    <span class="text-gray-400 text-xs italic">No child info</span>
+                                <div class="text-sm text-gray-800">
+                                    {{ $inquiry->age ?? $inquiry->child_age ?? 'N/A' }} yrs 
+                                    @if($inquiry->gender || $inquiry->child_gender)
+                                        • <span class="capitalize">{{ $inquiry->gender ?? $inquiry->child_gender }}</span>
+                                    @endif
+                                </div>
+                                @if($inquiry->city_state || $inquiry->country || $inquiry->city)
+                                    <div class="text-xs text-gray-500 mt-1">
+                                        <i class="fa-solid fa-location-dot text-[10px] mr-1"></i>
+                                        {{ $inquiry->city_state ?? $inquiry->city }}
+                                        @if($inquiry->country), {{ $inquiry->country }}@endif
+                                    </div>
+                                @endif
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="text-sm font-medium text-gray-800">{{ $inquiry->courses_needed ?? $inquiry->preferred_course ?? 'N/A' }}</div>
+                                @if($inquiry->sessions_per_week)
+                                    <div class="text-xs text-gray-500">{{ $inquiry->sessions_per_week }}</div>
+                                @endif
+                                @if($inquiry->join_date)
+                                    <div class="text-xs text-teal-600 mt-1 font-semibold">
+                                        Join: {{ $inquiry->join_date->format('M d, Y') }}
+                                    </div>
                                 @endif
                             </td>
                             <td class="px-6 py-4">
@@ -118,7 +142,11 @@
                                     <span class="w-fit px-2 py-0.5 rounded text-[10px] font-bold uppercase {{ $inquiry->type === 'trial' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700' }}">
                                         {{ $inquiry->type }}
                                     </span>
-                                    <span class="w-fit px-2 py-0.5 rounded text-[10px] font-bold uppercase {{ $inquiry->status === 'pending' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700' }}">
+                                    <span class="w-fit px-2 py-0.5 rounded text-[10px] font-bold uppercase 
+                                        {{ $inquiry->status === 'pending' ? 'bg-yellow-100 text-yellow-700' : '' }}
+                                        {{ $inquiry->status === 'contacted' ? 'bg-blue-100 text-blue-700' : '' }}
+                                        {{ $inquiry->status === 'converted' ? 'bg-green-100 text-green-700' : '' }}
+                                        {{ $inquiry->status === 'cancelled' ? 'bg-red-100 text-red-700' : '' }}">
                                         {{ $inquiry->status }}
                                     </span>
                                 </div>
@@ -131,7 +159,7 @@
                                     @if($inquiry->status === 'pending')
                                         <form action="{{ route('admin.inquiries.convert', $inquiry->id) }}" method="POST">
                                             @csrf
-                                            <button type="submit" class="p-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition">
+                                            <button type="submit" class="p-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition" title="Convert to Parent">
                                                 <i class="fa-solid fa-user-plus"></i>
                                             </button>
                                         </form>

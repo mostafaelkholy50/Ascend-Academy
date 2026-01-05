@@ -23,6 +23,16 @@ class Inquiry extends Model
         'message',
         'status',
         'admin_notes',
+        // New Fields
+        'join_date',
+        'age',
+        'study_hours',
+        'courses_needed',
+        'sessions_per_week',
+        'available_days',
+        'referrer',
+        'gender',
+        'city_state',
     ];
 
     protected function casts(): array
@@ -30,6 +40,8 @@ class Inquiry extends Model
         return [
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
+            'join_date' => 'date',
+            'available_days' => 'array',
         ];
     }
 
