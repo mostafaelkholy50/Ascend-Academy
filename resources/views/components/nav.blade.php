@@ -19,6 +19,7 @@
                         ['our-programs', 'Programs'],
                         ['our-teachers', 'Teachers'],
                         ['courses', 'Courses'],
+                        ['news', 'News'],
                         ['contact', 'Contact']
                     ] as [$route, $label])
                         <a href="{{ route($route) }}"
@@ -120,6 +121,7 @@
                     ['our-programs', 'Our Programs', 'fa-book-open'],
                     ['our-teachers', 'Our Teachers', 'fa-chalkboard-user'],
                     ['courses', 'Courses', 'fa-graduation-cap'],
+                    ['news', 'News', 'fa-newspaper'],
                     ['teacher-application.create', 'Teach With Us', 'fa-briefcase'],
                     ['contact', 'Contact', 'fa-envelope']
                 ] as [$route, $label, $icon])

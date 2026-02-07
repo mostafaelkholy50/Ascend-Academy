@@ -9,6 +9,7 @@
     <!-- Favicon -->
     <link rel="icon" href="{{asset('assets/images/Gemini_Generated_Image_pez0qlpez0qlpez0.png')}}" type="image/png" />
     <link rel="apple-touch-icon" href="{{asset('assets/images/Gemini_Generated_Image_pez0qlpez0qlpez0.png')}}" />
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
 
     <!-- Open Graph Tags -->
     <meta property="og:title" content="Ascend Quran Academy - Learn Quran & Arabic Online" />

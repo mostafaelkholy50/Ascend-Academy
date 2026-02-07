@@ -28,6 +28,10 @@ class HomeController extends Controller
 
         // ندمجهم مع بعض في متغير واحد
         $teachers = $maleTeachers->merge($femaleTeachers);
-        return view('pages.welcome', compact('courses', 'teachers'));
+
+        // Get latest 3 published news
+        $latestNews = \App\Models\News::published()->latest('published_at')->take(3)->get();
+
+        return view('pages.welcome', compact('courses', 'teachers', 'latestNews'));
     }
 }

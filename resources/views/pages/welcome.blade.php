@@ -279,6 +279,76 @@
         </div>
     </section>
 
+    <!-- News Section -->
+    <section class="py-24 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="mb-12 text-center">
+                <h3 class="inline-block text-3xl md:text-4xl font-extrabold text-gray-900 border-b-4 border-teal-500 pb-1">
+                    Latest News & Updates
+                </h3>
+                <p class="text-gray-600 mt-3 text-lg max-w-2xl mx-auto">
+                    Stay informed with our latest announcements and educational insights
+                </p>
+            </div>
+
+            @if($latestNews && $latestNews->count() > 0)
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+                    @foreach($latestNews as $newsItem)
+                        <article class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden group hover:shadow-xl transition-all duration-300">
+                            <!-- News Image -->
+                            <div class="relative h-48 overflow-hidden bg-gradient-to-br from-teal-400 to-blue-500">
+                                @if($newsItem->image)
+                                    <img src="{{ asset('storage/' . $newsItem->image) }}" 
+                                         alt="{{ $newsItem->title }}" 
+                                         class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">
+                                @else
+                                    <div class="w-full h-full flex items-center justify-center">
+                                        <i class="fa-solid fa-newspaper text-6xl text-white opacity-50"></i>
+                                    </div>
+                                @endif
+                                <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300"></div>
+                            </div>
+
+                            <!-- News Content -->
+                            <div class="p-6">
+                                <div class="flex items-center text-xs text-gray-500 mb-3">
+                                    <i class="fa-solid fa-calendar mr-2"></i>
+                                    {{ $newsItem->published_at->format('F d, Y') }}
+                                </div>
+                                <h4 class="text-xl font-bold text-gray-900 mb-3 group-hover:text-[#1E90A0] transition-colors">
+                                    {{ $newsItem->title }}
+                                </h4>
+                                <p class="text-gray-600 text-sm mb-4 line-clamp-3">
+                                    {!! $newsItem->getExcerpt(120) !!}
+                                </p>
+                                <a href="{{ route('news.show', $newsItem->slug) }}" 
+                                   class="inline-flex items-center text-[#1E90A0] font-semibold hover:text-teal-700 transition-colors">
+                                    Read More
+                                    <svg class="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                    </svg>
+                                </a>
+                            </div>
+                        </article>
+                    @endforeach
+                </div>
+
+                <!-- View All Button -->
+                <div class="mt-12 text-center">
+                    <a href="{{ route('news') }}" 
+                       class="inline-block bg-teal-600 hover:bg-teal-700 text-white px-10 py-4 rounded-lg transition duration-300 font-bold text-lg shadow-lg">
+                        <i class="fa-solid fa-newspaper mr-2"></i>View All News
+                    </a>
+                </div>
+            @else
+                <div class="text-center py-12">
+                    <i class="fa-solid fa-newspaper text-6xl text-gray-300 mb-4"></i>
+                    <p class="text-gray-500 text-lg">No news available at the moment.</p>
+                </div>
+            @endif
+        </div>
+    </section>
+
     <!-- Trial Form Section -->
     <section id="trial-form" class="py-24 bg-white relative overflow-hidden">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
