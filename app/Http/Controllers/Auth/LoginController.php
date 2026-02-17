@@ -19,14 +19,30 @@ class LoginController extends Controller
 
         // Attempt to log the user in
         if (auth()->attempt($credentials)) {
-            // Authentication passed...
-            if (auth()->user()->is_admin) {
+            $user = auth()->user();
+
+            // Auto-detect and set timezone for students/parents on first login
+            if (($user->isStudent() || $user->isParent())) {
+                $detectedTimezone = $request->input('timezone', 'Africa/Cairo');
+
+                // Validate timezone (basic check)
+                $validTimezones = \DateTimeZone::listIdentifiers();
+                if (in_array($detectedTimezone, $validTimezones)) {
+                    $user->update(['timezone' => $detectedTimezone]);
+                } else {
+                    // Fallback to Egypt timezone if invalid
+                    $user->update(['timezone' => 'Africa/Cairo']);
+                }
+            }
+
+            // Authentication passed - redirect to dashboard
+            if ($user->isAdmin()) {
                 return redirect()->intended(route('admin.dashboard'))->with('success', 'Login successful!');
-            } elseif (auth()->user()->is_teacher) {
+            } elseif ($user->isTeacher()) {
                 return redirect()->intended(route('teacher.dashboard'))->with('success', 'Login successful!');
-            } elseif (auth()->user()->is_student) {
+            } elseif ($user->isStudent()) {
                 return redirect()->intended(route('student.dashboard'))->with('success', 'Login successful!');
-            } elseif (auth()->user()->is_parent) {
+            } elseif ($user->isParent()) {
                 return redirect()->intended(route('parent.dashboard'))->with('success', 'Login successful!');
             }
         }

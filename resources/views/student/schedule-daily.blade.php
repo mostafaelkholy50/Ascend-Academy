@@ -55,11 +55,16 @@
                         $colors = ['green', 'blue', 'purple', 'orange', 'pink'];
                         $color = $colors[$loop->index % count($colors)];
                         $now = now();
-                        $startsAt = $schedule->starts_at;
-                        $endsAt = $schedule->ends_at;
-                        $minutesUntil = $now->diffInMinutes($startsAt, false);
-                        $isInProgress = $now->between($startsAt, $endsAt);
-                        $isPast = $now->greaterThan($endsAt);
+                        // Convert times to user timezone
+                        $startsAt = $schedule->getStartsAtInTimezone($userTimezone);
+                        $endsAt = $schedule->getEndsAtInTimezone($userTimezone);
+                        $startsAtOriginal = $schedule->starts_at;
+                        $endsAtOriginal = $schedule->ends_at;
+                        $minutesUntil = $now->diffInMinutes($startsAtOriginal, false);
+                        $isInProgress = $now->between($startsAtOriginal, $endsAtOriginal);
+                        $isPast = $now->greaterThan($endsAtOriginal);
+                        // Get timezone abbreviation
+                        $timezoneAbbr = $startsAt->format('T');
                     @endphp
                     
                     <div class="p-6 hover:bg-gray-50 transition {{ $isInProgress ? 'bg-yellow-50' : '' }}">
@@ -69,13 +74,16 @@
                                 <!-- Time Badge -->
                                 <div class="text-center min-w-[80px]">
                                     <div class="text-2xl font-bold text-{{ $color }}-600">
-                                        {{ $schedule->starts_at->format('g:i') }}
+                                        {{ $startsAt->format('g:i') }}
                                     </div>
                                     <div class="text-xs text-gray-500 uppercase">
-                                        {{ $schedule->starts_at->format('A') }}
+                                        {{ $startsAt->format('A') }}
                                     </div>
                                     <div class="text-xs text-gray-400 mt-1">
                                         {{ $schedule->getDurationInMinutes() }} min
+                                    </div>
+                                    <div class="text-xs text-blue-600 font-medium mt-1">
+                                        {{ $timezoneAbbr }}
                                     </div>
                                 </div>
 
@@ -98,7 +106,7 @@
                                                     <span class="text-sm font-medium text-gray-700">{{ $schedule->teacher->name }}</span>
                                                 </div>
                                                 <span class="text-sm text-gray-500">•</span>
-                                                <span class="text-sm text-gray-500">{{ $schedule->starts_at->format('g:i A') }} - {{ $schedule->ends_at->format('g:i A') }}</span>
+                                                <span class="text-sm text-gray-500">{{ $startsAt->format('g:i A') }} - {{ $endsAt->format('g:i A') }} {{ $timezoneAbbr }}</span>
                                             </div>
                                         </div>
 

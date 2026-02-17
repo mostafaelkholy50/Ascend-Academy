@@ -24,6 +24,7 @@ class User extends Authenticatable
         'avatar',
         'gender',
         'phone',
+        'timezone',
         'birth_date',
         'active',
         'hourly_rate',
@@ -170,5 +171,21 @@ class User extends Authenticatable
     public function isActive(): bool
     {
         return $this->active;
+    }
+
+    /**
+     * Get the timezone for the user.
+     * Teachers and Admins always use Egypt timezone.
+     * Students and Parents use their configured timezone or default to Egypt.
+     */
+    public function getUserTimezone(): string
+    {
+        // Teachers and Admins always use Egypt timezone
+        if ($this->isTeacher() || $this->isAdmin()) {
+            return 'Africa/Cairo';
+        }
+
+        // Students and Parents use their timezone or default to Egypt
+        return $this->timezone ?? 'Africa/Cairo';
     }
 }
