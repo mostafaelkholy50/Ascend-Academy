@@ -13,15 +13,39 @@ class AdminSeeder extends Seeder
      */
     public function run(): void
     {
-        // Create admin user if doesn't exist
-        User::firstOrCreate(
+        // 1. Create SuperAdmin user
+        $superAdmin = User::firstOrCreate(
+            ['email' => 'superadmin@ascend.com'],
+            [
+                'name' => 'Super Admin',
+                'password' => Hash::make('password'),
+                'role' => 'SuperAdmin',
+                'active' => true,
+            ]
+        );
+        $superAdmin->assignRole('SuperAdmin');
+
+        // 2. Create Regular Admin user
+        $admin = User::firstOrCreate(
             ['email' => 'admin@ascend.com'],
             [
-                'name' => 'Admin User',
+                'name' => 'Regular Admin',
                 'password' => Hash::make('password'),
                 'role' => 'Admin',
                 'active' => true,
             ]
         );
+        $admin->assignRole('Admin');
+        // 3. Create SchedulerManager user
+        $schedulerManager = User::firstOrCreate(
+            ['email' => 'scheduler@ascend.com'],
+            [
+                'name' => 'Scheduler Manager',
+                'password' => Hash::make('password'),
+                'role' => 'SchedulerManager',
+                'active' => true,
+            ]
+        );
+        $schedulerManager->assignRole('SchedulerManager');
     }
 }

@@ -5,23 +5,22 @@ namespace App\Http\Controllers\Admin;
 use App\Models\Course;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use App\Services\CourseService;
+use App\Http\Requests\Admin\StoreCourseRequest;
+use App\Http\Requests\Admin\UpdateCourseRequest;
 
 class CourseController extends Controller
 {
+    protected $courseService;
+
+    public function __construct(CourseService $courseService)
+    {
+        $this->courseService = $courseService;
+    }
+
     public function index(Request $request)
     {
-        $query = Course::withCount(['enrollments', 'schedules']);
-
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('title', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%");
-            });
-        }
-
-        $courses = $query->latest()->paginate(15);
-
+        $courses = $this->courseService->getIndexData($request);
         return view('admin.courses.index', compact('courses'));
     }
 
@@ -41,31 +40,13 @@ class CourseController extends Controller
         return view('admin.courses.create');
     }
 
-    public function store(Request $request)
+    public function store(StoreCourseRequest $request)
     {
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'required|string',
-            'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'is_free' => 'nullable|boolean',
-        ]);
-
         try {
-            $data = $request->only(['title', 'description']);
-            
-            // Set default values for removed fields
-            $data['level'] = 'Beginner';
-            $data['age_group'] = 'Adults';
-            $data['language'] = 'English';
-            $data['duration_weeks'] = 12; // Default duration
-            $data['is_free'] = $request->input('is_free', 0);
-            
-            // Handle photo upload
-            if ($request->hasFile('photo')) {
-                $data['photo'] = $request->file('photo')->store('courses', 'public');
-            }
-            
-            $course = Course::create($data);
+            $course = $this->courseService->storeCourse(
+                $request->validated(),
+                $request->file('photo')
+            );
 
             return redirect()->route('admin.courses.show', $course->id)
                 ->with('success', 'Course created successfully!');
@@ -80,39 +61,20 @@ class CourseController extends Controller
         return view('admin.courses.edit', compact('course'));
     }
 
-    public function update(Request $request, Course $course)
+    public function update(UpdateCourseRequest $request, Course $course)
     {
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'required|string',
-            'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'is_free' => 'nullable|boolean',
-        ]);
-
-        $data = $request->only(['title', 'description']);
-        
-        // Update is_free if provided
-        if ($request->has('is_free')) {
-            $data['is_free'] = $request->input('is_free', 0);
-        }
-        
-        // Handle photo upload
-        if ($request->hasFile('photo')) {
-            // Delete old photo if exists
-            if ($course->photo) {
-                \Storage::disk('public')->delete($course->photo);
-            }
-            $data['photo'] = $request->file('photo')->store('courses', 'public');
-        }
-        
-        $course->update($data);
+        $this->courseService->updateCourse(
+            $course,
+            $request->validated(),
+            $request->file('photo')
+        );
 
         return back()->with('success', 'Course updated successfully.');
     }
 
     public function destroy(Course $course)
     {
-        $course->delete();
+        $this->courseService->deleteCourse($course);
         return redirect()->route('admin.courses.index')
             ->with('success', 'Course deleted successfully.');
     }

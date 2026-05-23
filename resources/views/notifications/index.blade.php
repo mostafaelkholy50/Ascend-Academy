@@ -17,7 +17,7 @@
     <div class="bg-white rounded-xl shadow-sm">
         @forelse($notifications as $notification)
             <div class="border-b border-gray-100 last:border-0">
-                <a href="{{ $notification->data['url'] ?? '#' }}" class="block p-4 hover:bg-gray-50 transition">
+                <a href="{{ isset($notification->data['url']) ? url($notification->data['url']) : '#' }}" class="block p-4 hover:bg-gray-50 transition">
                     <div class="flex items-start gap-4">
                         @if(!$notification->read_at)
                             <div class="w-3 h-3 bg-vibrant-green rounded-full mt-1 flex-shrink-0"></div>

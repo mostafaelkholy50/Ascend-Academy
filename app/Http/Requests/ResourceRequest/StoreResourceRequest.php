@@ -20,7 +20,12 @@ class StoreResourceRequest extends FormRequest
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:1000'],
             'type' => ['required', Rule::in(['pdf', 'image', 'video', 'audio', 'link', 'other'])],
-            'file' => ['nullable', 'file', 'max:51200'], // 50MB
+            'file' => [
+                'required', 
+                'file', 
+                'max:51200', 
+                'mimes:pdf,jpg,jpeg,png,mp4,mp3,doc,docx,xls,xlsx,ppt,pptx,txt,zip'
+            ], 
             'external_url' => ['nullable', 'url', 'max:500'],
         ];
     }
@@ -32,6 +37,7 @@ class StoreResourceRequest extends FormRequest
             'title.required' => 'Please provide a title for the resource.',
             'type.required' => 'Please select a resource type.',
             'type.in' => 'Invalid resource type selected.',
+            'file.required' => 'Please upload a file for this resource.',
             'file.max' => 'File size must not exceed 50MB.',
             'external_url.url' => 'Please provide a valid URL.',
         ];

@@ -23,11 +23,17 @@ class PricingTier extends Model
     {
         return [
             'days_per_week' => 'integer',
+            'session_duration' => 'string',
             'price_cad' => 'decimal:2',
             'price_usd' => 'decimal:2',
             'price_gbp' => 'decimal:2',
             'is_active' => 'boolean',
         ];
+    }
+
+    public function setSessionDurationAttribute($value)
+    {
+        $this->attributes['session_duration'] = $value !== null ? (string) $value : null;
     }
 
     // ============================================

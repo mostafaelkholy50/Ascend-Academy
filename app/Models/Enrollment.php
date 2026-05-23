@@ -29,8 +29,14 @@ class Enrollment extends Model
             'start_date' => 'date',
             'admin_price' => 'decimal:2',
             'days_per_week' => 'integer',
+            'session_duration' => 'string',
             'schedule_pattern' => 'array',
         ];
+    }
+
+    public function setSessionDurationAttribute($value)
+    {
+        $this->attributes['session_duration'] = $value !== null ? (string) $value : null;
     }
 
     // ============================================

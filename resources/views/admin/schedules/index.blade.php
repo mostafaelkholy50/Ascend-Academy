@@ -6,10 +6,12 @@
                 <h1 class="text-2xl md:text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Schedule Management</h1>
                 <p class="text-sm text-gray-500 mt-1">Manage all course schedules and sessions</p>
             </div>
+            @can('manage schedules')
             <a href="{{ route('admin.schedules.create') }}" 
                 class="inline-flex items-center justify-center px-4 md:px-6 py-2.5 md:py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold hover:shadow-lg transition text-sm md:text-base">
                 <i class="fa-solid fa-plus mr-2"></i><span>Create New Schedule</span>
             </a>
+            @endcan
         </div>
     </div>
 
@@ -297,6 +299,7 @@
                                         <span>View Sessions</span>
                                         <i class="fa-solid fa-chevron-down transition-transform" id="icon-enrollment-{{ $enrollment->id }}"></i>
                                     </button>
+                                    @can('manage schedules')
                                     <form action="{{ route('admin.schedules.bulk-delete', $enrollment->id) }}" method="POST" 
                                         onsubmit="return confirm('Are you sure you want to delete ALL {{ $enrollment->schedules->count() }} sessions for this enrollment? This action cannot be undone!');">
                                         @csrf
@@ -307,6 +310,7 @@
                                             <span>Delete All</span>
                                         </button>
                                     </form>
+                                    @endcan
                                 </div>
                             </div>
                         </div>
@@ -372,10 +376,12 @@
                                                                     class="text-indigo-600 hover:text-indigo-800 transition font-medium" title="View">
                                                                     <i class="fa-solid fa-eye"></i>
                                                                 </a>
+                                                                @can('manage schedules')
                                                                 <a href="{{ route('admin.schedules.edit', $schedule->id) }}" 
                                                                     class="text-blue-600 hover:text-blue-800 transition font-medium" title="Edit">
                                                                     <i class="fa-solid fa-edit"></i>
                                                                 </a>
+                                                                @endcan
                                                                 @if($schedule->zoom_link)
                                                                     <a href="{{ $schedule->zoom_link }}" target="_blank"
                                                                         class="text-purple-600 hover:text-purple-800 transition font-medium" title="Join Zoom">

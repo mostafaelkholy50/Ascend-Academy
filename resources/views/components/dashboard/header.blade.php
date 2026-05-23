@@ -2,22 +2,17 @@
     $user = auth()->user();
     $unreadCount = $user->unreadNotifications()->count();
     $recentNotifications = $user->unreadNotifications()->take(5)->get();
+    
+    // Unify role prefix for routes
+    $rolePrefix = strtolower($user->role);
+    if ($rolePrefix === 'superadmin' || $rolePrefix === 'schedulermanager' || $rolePrefix === 'accountant' || $rolePrefix === 'qualitycontrol') {
+        $rolePrefix = 'admin';
+    }
 @endphp
 
 <header class="flex justify-between items-center mb-4 md:mb-6 flex-wrap gap-3 md:gap-4">
-    <!-- Search Bar - Hidden on mobile, visible on md+ -->
-    <div class="hidden md:block relative w-full md:w-80 lg:ml-0">
-        <input type="text" placeholder="Search..." class="w-full pl-10 pr-4 py-2.5 bg-white border-0 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-vibrant-green/30 shadow-sm">
-        <i class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
-    </div>
-
     <!-- Right Side Actions -->
     <div class="flex items-center gap-2 md:gap-4 ml-auto">
-        <!-- Search Icon for Mobile -->
-        <button class="md:hidden w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center hover:shadow-md transition">
-            <i class="fa-solid fa-search text-gray-600"></i>
-        </button>
-
         <!-- Notifications -->
         <div class="relative" x-data="{ open: false }">
             <button @click="open = !open" class="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center hover:shadow-md transition relative" style="pointer-events: auto; touch-action: manipulation;">
@@ -32,7 +27,7 @@
                 <div class="p-4 border-b border-gray-100 flex justify-between items-center">
                     <h3 class="font-semibold text-gray-800">Notifications</h3>
                     @if($unreadCount > 0)
-                        <form method="POST" action="{{ route(strtolower($user->role) . '.notifications.read-all') }}" class="inline">
+                        <form method="POST" action="{{ route($rolePrefix . '.notifications.read-all') }}" class="inline">
                             @csrf
                             <button type="submit" class="text-xs text-vibrant-green hover:underline">Mark all as read</button>
                         </form>
@@ -41,7 +36,7 @@
                 
                 <div class="max-h-80 overflow-y-auto">
                     @forelse($recentNotifications as $notification)
-                        <a href="{{ $notification->data['url'] ?? '#' }}" class="block px-4 py-3 hover:bg-gray-50 transition border-b border-gray-50">
+                        <a href="{{ isset($notification->data['url']) ? url($notification->data['url']) : '#' }}" class="block px-4 py-3 hover:bg-gray-50 transition border-b border-gray-50">
                             <div class="flex items-start gap-3">
                                 <div class="w-2 h-2 bg-vibrant-green rounded-full mt-2 flex-shrink-0"></div>
                                 <div class="flex-1 min-w-0">
@@ -61,7 +56,7 @@
 
                 @if($recentNotifications->count() > 0)
                     <div class="p-3 border-t border-gray-100 text-center">
-                        <a href="{{ route(strtolower($user->role) . '.notifications.index') }}" class="text-sm text-vibrant-green hover:underline font-medium">View all notifications</a>
+                        <a href="{{ route($rolePrefix . '.notifications.index') }}" class="text-sm text-vibrant-green hover:underline font-medium">View all notifications</a>
                     </div>
                 @endif
             </div>
@@ -86,9 +81,6 @@
 
             <!-- Dropdown Menu -->
             <div x-show="open" @click.away="open = false" x-transition class="absolute right-2 md:right-6 top-16 mt-2 w-48 bg-white rounded-xl shadow-lg py-2 z-[100] border border-gray-100">
-                @php
-                    $rolePrefix = strtolower($user->role);
-                @endphp
                 
                 <a href="{{ route($rolePrefix . '.profile.show') }}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition">
                     <i class="fa-regular fa-user mr-3 text-gray-400"></i> My Profile

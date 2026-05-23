@@ -2,37 +2,28 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Inquiry;
-use Illuminate\Http\Request;
 use App\Http\Requests\InquiryRequest\StoreInquiryRequest;
+use App\Services\InquiryService;
+use Exception;
 
 class InquiryController extends Controller
 {
+    protected $service;
+
+    public function __construct(InquiryService $service)
+    {
+        $this->service = $service;
+    }
+
     public function store(StoreInquiryRequest $request)
     {
-        $validated = $request->validated();
-
-        $inquiry = Inquiry::create($validated);
-
-        // Send email notification to admin
         try {
-            $adminEmail = env('ADMIN_EMAIL', 'ascend.quran@gmail.com');
-            \Illuminate\Support\Facades\Notification::route('mail', $adminEmail)
-                ->notify(new \App\Notifications\NewInquiryNotification($inquiry));
-        } catch (\Exception $e) {
-            \Log::error('Failed to send inquiry notification: ' . $e->getMessage());
+            $message = $this->service->processInquiry($request->validated());
+
+            return $this->successResponse($message);
+        } catch (Exception $e) {
+            return $this->errorResponse('حدث خطأ أثناء إرسال طلبك، يرجى المحاولة مرة أخرى.');
         }
-
-        // Return different messages based on type
-        $messages = [
-            'trial' => 'Thank you! Your free trial request has been submitted. We will contact you within 24 hours.',
-            'contact' => 'Thank you for your message! We will get back to you within 24 hours.',
-            'registration' => 'Thank you for your interest! We will contact you shortly to complete your registration.',
-        ];
-
-        $message = $messages[$validated['type']] ?? $messages['contact'];
-
-        return back()->with('success', $message);
     }
 
     /**

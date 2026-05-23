@@ -40,9 +40,9 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('enrollments', function (Blueprint $table) {
-            $table->dropIndex(['enrollments_billing_cycle_start_index']);
-            $table->dropIndex(['enrollments_billing_cycle_end_index']);
-            $table->dropIndex(['enrollments_billing_cycle_start_billing_cycle_end_index']);
+            $table->dropIndex(['billing_cycle_start']);
+            $table->dropIndex(['billing_cycle_end']);
+            $table->dropIndex(['billing_cycle_start', 'billing_cycle_end']);
             
             $table->dropColumn([
                 'days_per_week',

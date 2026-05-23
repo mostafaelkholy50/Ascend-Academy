@@ -2,82 +2,96 @@
 
 namespace App\Http\Controllers\Student;
 
-use App\Models\Resource;
-use App\Models\Course;
-use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Auth;
+use App\Services\StudentResourceService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Exception;
 
 class ResourceController extends Controller
 {
-    /**
-     * Display a listing of resources assigned to the student
-     */
+    protected $service;
+
+    public function __construct(StudentResourceService $service)
+    {
+        $this->service = $service;
+    }
+
     public function index(Request $request)
     {
-        $student = Auth::user();
+        try {
+            $student = auth()->user();
+            
+            if ($student->role !== 'Student') {
+                abort(403);
+            }
 
-        $query = Resource::with(['teacher', 'course'])
-            ->where('student_id', $student->id)
-            ->latest();
+            $data = $this->service->getIndexData($student, $request);
 
-        // Filter by course
-        if ($request->filled('course_id')) {
-            $query->where('course_id', $request->course_id);
+            return view('student.resources.index', $data);
+            
+        } catch (Exception $e) {
+            if ($e instanceof \Symfony\Component\HttpKernel\Exception\HttpException) {
+                throw $e;
+            }
+            return $this->errorResponse('حدث خطأ أثناء تحميل المصادر. الرجاء المحاولة مرة أخرى.');
         }
-
-        // Filter by type
-        if ($request->filled('type')) {
-            $query->where('type', $request->type);
-        }
-
-        // Search by title
-        if ($request->filled('search')) {
-            $query->where('title', 'like', '%' . $request->search . '%');
-        }
-
-        $resources = $query->paginate(15);
-
-        // Get all courses the student is enrolled in
-        $courses = Course::whereHas('enrollments', function($q) use ($student) {
-            $q->where('student_id', $student->id);
-        })->orderBy('title')->get();
-
-        return view('student.resources.index', compact('resources', 'courses'));
     }
 
-    /**
-     * Display the specified resource
-     */
-    public function show(Resource $resource)
+    public function show($id)
     {
-        // Ensure student can only view their own resources
-        if ($resource->student_id !== Auth::id()) {
-            abort(403, 'Unauthorized action.');
+        try {
+            $student = auth()->user();
+            
+            if ($student->role !== 'Student') {
+                abort(403);
+            }
+
+            $resource = $this->service->getResource($student, $id);
+
+            return view('student.resources.show', compact('resource'));
+            
+        } catch (Exception $e) {
+            if ($e instanceof \Symfony\Component\HttpKernel\Exception\HttpException) {
+                throw $e;
+            }
+            return $this->errorResponse('حدث خطأ أثناء تحميل المصدر. الرجاء المحاولة مرة أخرى.');
         }
-
-        $resource->load(['teacher', 'course']);
-
-        return view('student.resources.show', compact('resource'));
     }
 
-    /**
-     * Open/view the resource file in browser
-     */
-    public function download(Resource $resource)
+    public function download($id)
     {
-        // Ensure student can only access their own resources
-        if ($resource->student_id !== Auth::id()) {
-            abort(403, 'Unauthorized action.');
-        }
+        try {
+            $student = auth()->user();
+            
+            if ($student->role !== 'Student') {
+                abort(403);
+            }
 
-        if (!$resource->file_path || !Storage::disk('public')->exists($resource->file_path)) {
-            return back()->with('error', 'File not found.');
-        }
+            $resource = $this->service->getResource($student, $id);
 
-        $filePath = Storage::disk('public')->path($resource->file_path);
-        
-        return response()->file($filePath);
+            if (!$resource->file_path || !Storage::disk('local')->exists($resource->file_path)) {
+                return back()->with('error', 'File not found or access denied.');
+            }
+
+            // Sanitize filename
+            $safeName = preg_replace('/[^a-zA-Z0-9\._-]/', '_', $resource->title);
+            $extension = pathinfo($resource->file_path, PATHINFO_EXTENSION);
+            if (!str_ends_with($safeName, '.' . $extension)) {
+                $safeName .= '.' . $extension;
+            }
+
+            return Storage::disk('local')->download($resource->file_path, $safeName, [
+                'Content-Type' => $resource->mime_type ?? 'application/octet-stream',
+                'X-Content-Type-Options' => 'nosniff',
+                'Content-Security-Policy' => "default-src 'none'",
+            ]);
+            
+        } catch (Exception $e) {
+            if ($e instanceof \Symfony\Component\HttpKernel\Exception\HttpException) {
+                throw $e;
+            }
+            return $this->errorResponse('حدث خطأ أثناء تحميل الملف. الرجاء المحاولة مرة أخرى.');
+        }
     }
 }

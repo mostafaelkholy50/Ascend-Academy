@@ -49,9 +49,9 @@
 
                         <!-- Quick Actions -->
                         <div class="pt-3 border-t border-gray-200">
-                            <a href="{{ route('teacher.reports.create', ['student_id' => $student->id]) }}" 
+                            <a href="{{ route('teacher.student-evaluations.create', ['student_id' => $student->id]) }}" 
                                class="block w-full text-center px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold hover:shadow-lg transition">
-                                <i class="fa-solid fa-file-lines mr-2"></i>Create Report
+                                <i class="fa-solid fa-file-lines mr-2"></i>Create Evaluation
                             </a>
                         </div>
                     </div>

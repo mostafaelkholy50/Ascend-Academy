@@ -27,7 +27,7 @@ class UpdateResourceRequest extends FormRequest
             'title' => 'required|string|max:255',
             'description' => 'nullable|string|max:1000',
             'type' => 'required|in:pdf,image,video,audio,link,other',
-            'file' => 'nullable|file|max:51200', // 50MB max
+            'file' => 'nullable|file|max:51200|mimes:pdf,jpg,jpeg,png,mp4,mp3,doc,docx,xls,xlsx,ppt,pptx,txt,zip',
             'external_url' => 'nullable|url|max:500',
         ];
     }

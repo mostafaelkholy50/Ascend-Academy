@@ -15,23 +15,23 @@ class CoursesController extends Controller
         
         $filterCounts = [
             'levels' => [
-                'Beginner' => Course::where('level', 'Beginner')->count(),
-                'Intermediate' => Course::where('level', 'Intermediate')->count(),
-                'Advanced' => Course::where('level', 'Advanced')->count(),
+                'Beginner' => $courses->where('level', 'Beginner')->count(),
+                'Intermediate' => $courses->where('level', 'Intermediate')->count(),
+                'Advanced' => $courses->where('level', 'Advanced')->count(),
             ],
             'age_groups' => [
-                'Kids' => Course::where('age_group', 'Kids')->count(),
-                'Teens' => Course::where('age_group', 'Teens')->count(),
-                'Adults' => Course::where('age_group', 'Adults')->count(),
+                'Kids' => $courses->where('age_group', 'Kids')->count(),
+                'Teens' => $courses->where('age_group', 'Teens')->count(),
+                'Adults' => $courses->where('age_group', 'Adults')->count(),
             ],
             'languages' => [
-                'English' => Course::where('language', 'English')->count(),
-                'Arabic' => Course::where('language', 'Arabic')->count(),
+                'English' => $courses->where('language', 'English')->count(),
+                'Arabic' => $courses->where('language', 'Arabic')->count(),
             ],
             'prices' => [
-                'All' => Course::count(),
-                'Free' => Course::where('is_free', true)->count(),
-                'Paid' => Course::where('is_free', false)->count(),
+                'All' => $courses->count(),
+                'Free' => $courses->where('is_free', true)->count(),
+                'Paid' => $courses->where('is_free', false)->count(),
             ],
         ];
         

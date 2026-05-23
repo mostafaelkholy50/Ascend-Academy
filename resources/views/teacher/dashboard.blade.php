@@ -84,8 +84,8 @@
                             <div class="w-full bg-gray-100 rounded-full h-1.5 mb-3">
                                 <div class="bg-vibrant-green h-1.5 rounded-full" style="width:{{ $student->progress }}%"></div>
                             </div>
-                            <a href="{{ route('teacher.reports.create', ['student_id' => $student->id]) }}" class="block w-full px-3 py-2 text-xs bg-vibrant-green text-white rounded-lg font-semibold hover:bg-deep-blue transition text-center">
-                                Create Report
+                            <a href="{{ route('teacher.student-evaluations.create', ['student_id' => $student->id]) }}" class="block w-full px-3 py-2 text-xs bg-vibrant-green text-white rounded-lg font-semibold hover:bg-deep-blue transition text-center">
+                                Create Evaluation
                             </a>
                         </div>
                     @endforeach
@@ -103,6 +103,12 @@
                         <span class="text-gray-600 text-sm">Hours Worked</span>
                         <span class="font-bold text-gray-800">{{ round($stats['this_month_hours'], 1) }} hrs</span>
                     </div>
+                    @if(isset($stats['bonus_hours']) && $stats['bonus_hours'] > 0)
+                        <div class="flex justify-between text-xs text-amber-600 -mt-1">
+                            <span><i class="fa-solid fa-gift mr-1"></i>Includes Evaluation Bonus</span>
+                            <span>+{{ $stats['bonus_hours'] }} hrs</span>
+                        </div>
+                    @endif
                     <div class="flex justify-between">
                         <span class="text-gray-600 text-sm">Rate</span>
                         <span class="font-bold text-gray-800">${{ $user->hourly_rate ?? 0 }}/hr</span>
@@ -115,18 +121,17 @@
                 </div>
             </section>
 
-            <!-- Students Needing Reports -->
+            <!-- Students Needing Evaluations -->
             @if($studentsNeedingReports->count() > 0)
                 <section class="bg-white p-5 rounded-2xl shadow-sm">
-                    <x-dashboard.section-header title="Pending Reports" linkText="View All" linkHref="{{ route('teacher.reports.index') }}" />
+                    <x-dashboard.section-header title="Pending Evaluations" linkText="View All" linkHref="{{ route('teacher.student-evaluations.index') }}" />
                     <div class="space-y-3">
-                        @foreach($studentsNeedingReports as $schedule)
+                        @foreach($studentsNeedingReports as $student)
                             <div class="p-3 bg-red-50 rounded-xl border border-red-100">
-                                <p class="text-sm font-medium text-gray-800">{{ $schedule->student->name }}</p>
-                                <p class="text-xs text-gray-500">{{ $schedule->course->title ?? 'Session' }}</p>
-                                <p class="text-xs text-red-500 mt-1">Completed: {{ $schedule->starts_at->format('M d') }}</p>
-                                <a href="{{ route('teacher.reports.create', ['student_id' => $schedule->student_id]) }}" class="block mt-2 text-xs text-center bg-vibrant-green text-white px-3 py-1 rounded-lg hover:bg-deep-blue transition font-semibold">
-                                    Create Report
+                                <p class="text-sm font-medium text-gray-800">{{ $student->name }}</p>
+                                <p class="text-xs text-gray-500">Needs evaluation for {{ now()->format('F') }}</p>
+                                <a href="{{ route('teacher.student-evaluations.create', ['student_id' => $student->id]) }}" class="block mt-2 text-xs text-center bg-vibrant-green text-white px-3 py-1 rounded-lg hover:bg-deep-blue transition font-semibold">
+                                    Evaluate
                                 </a>
                             </div>
                         @endforeach
@@ -134,23 +139,20 @@
                 </section>
             @endif
 
-            <!-- Recent Reports -->
+            <!-- Recent Evaluations -->
             @if($recentReports->count() > 0)
                 <section class="bg-white p-5 rounded-2xl shadow-sm">
-                    <x-dashboard.section-header title="Recent Reports" linkText="See all" linkHref="{{ route('teacher.reports.index') }}" />
+                    <x-dashboard.section-header title="Recent Evaluations" linkText="See all" linkHref="{{ route('teacher.student-evaluations.index') }}" />
                     <div class="space-y-3">
-                        @foreach($recentReports as $report)
-                            <a href="{{ route('teacher.reports.show', $report->id) }}" class="block p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition">
+                        @foreach($recentReports as $evaluation)
+                            <a href="{{ route('teacher.student-evaluations.show', $evaluation->id) }}" class="block p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition">
                                 <div class="flex items-center justify-between mb-1">
-                                    <p class="text-sm font-medium text-gray-800">{{ $report->student->name }}</p>
-                                    @if($report->mastery_score)
-                                        <span class="text-xs font-bold {{ $report->mastery_score >= 80 ? 'text-vibrant-green' : ($report->mastery_score >= 60 ? 'text-yellow-500' : 'text-red-500') }}">
-                                            {{ $report->mastery_score }}%
-                                        </span>
-                                    @endif
+                                    <p class="text-sm font-medium text-gray-800">{{ $evaluation->student->name }}</p>
+                                    <span class="text-xs font-bold text-vibrant-green">
+                                        {{ $evaluation->total_score }}/100
+                                    </span>
                                 </div>
-                                <p class="text-xs text-gray-500">{{ $report->course->title ?? 'General Report' }}</p>
-                                <p class="text-xs text-gray-400 mt-1">{{ $report->report_date->format('M d, Y') }}</p>
+                                <p class="text-xs text-gray-500">Evaluated on {{ $evaluation->evaluation_date->format('M d, Y') }}</p>
                             </a>
                         @endforeach
                     </div>

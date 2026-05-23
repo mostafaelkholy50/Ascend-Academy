@@ -5,24 +5,22 @@ namespace App\Http\Controllers\Admin;
 use App\Models\News;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Str;
+use App\Services\NewsService;
+use App\Http\Requests\Admin\StoreNewsRequest;
+use App\Http\Requests\Admin\UpdateNewsRequest;
 
 class NewsController extends Controller
 {
+    protected $newsService;
+
+    public function __construct(NewsService $newsService)
+    {
+        $this->newsService = $newsService;
+    }
+
     public function index(Request $request)
     {
-        $query = News::query();
-
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('title', 'like', "%{$search}%")
-                    ->orWhere('description', 'like', "%{$search}%");
-            });
-        }
-
-        $news = $query->latest()->paginate(15);
-
+        $news = $this->newsService->getIndexData($request);
         return view('admin.news.index', compact('news'));
     }
 
@@ -31,30 +29,13 @@ class NewsController extends Controller
         return view('admin.news.create');
     }
 
-    public function store(Request $request)
+    public function store(StoreNewsRequest $request)
     {
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'required|string',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'is_published' => 'nullable|boolean',
-        ]);
-
         try {
-            $data = $request->only(['title', 'description']);
-            $data['slug'] = Str::slug($request->title) . "-" . Str::random(5);
-            $data['is_published'] = $request->has('is_published') ? 1 : 0;
-
-            // Handle image upload
-            if ($request->hasFile('image')) {
-                $data['image'] = $request->file('image')->store('news', 'public');
-            }
-
-            if ($data['is_published']) {
-                $data['published_at'] = now();
-            }
-
-            $news = News::create($data);
+            $this->newsService->storeNews(
+                $request->validated(),
+                $request->file('image')
+            );
 
             return redirect()->route('admin.news.index')
                 ->with('success', 'News created successfully!');
@@ -74,50 +55,20 @@ class NewsController extends Controller
         return view('admin.news.edit', compact('news'));
     }
 
-    public function update(Request $request, News $news)
+    public function update(UpdateNewsRequest $request, News $news)
     {
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'required|string',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'is_published' => 'nullable|boolean',
-        ]);
-
-        $data = $request->only(['title', 'description']);
-
-        // Only regenerate slug if title has changed
-        if ($request->title !== $news->title) {
-            $data['slug'] = Str::slug($request->title) . "-" . Str::random(5);
-        }
-
-        $data['is_published'] = $request->has('is_published') ? 1 : 0;
-
-        // Handle image upload
-        if ($request->hasFile('image')) {
-            // Delete old image if exists
-            if ($news->image) {
-                \Storage::disk('public')->delete($news->image);
-            }
-            $data['image'] = $request->file('image')->store('news', 'public');
-        }
-
-        if ($data['is_published'] && !$news->published_at) {
-            $data['published_at'] = now();
-        }
-
-        $news->update($data);
+        $this->newsService->updateNews(
+            $news,
+            $request->validated(),
+            $request->file('image')
+        );
 
         return back()->with('success', 'News updated successfully.');
     }
 
     public function destroy(News $news)
     {
-        // Delete image if exists
-        if ($news->image) {
-            \Storage::disk('public')->delete($news->image);
-        }
-
-        $news->delete();
+        $this->newsService->deleteNews($news);
         return redirect()->route('admin.news.index')
             ->with('success', 'News deleted successfully.');
     }

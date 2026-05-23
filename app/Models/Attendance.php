@@ -18,6 +18,8 @@ class Attendance extends Model
         'student_present',
         'teacher_present',
         'remark',
+        'student_report',
+        'teacher_report',
     ];
 
     protected function casts(): array

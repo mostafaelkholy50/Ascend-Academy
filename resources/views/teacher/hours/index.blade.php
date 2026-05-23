@@ -46,6 +46,12 @@
                 <i class="fa-solid fa-clock text-2xl opacity-80"></i>
             </div>
             <p class="text-3xl font-bold">{{ number_format($totalHours, 2) }}</p>
+            @if(isset($bonusHours) && $bonusHours > 0)
+                <div class="flex items-center text-xs opacity-90 mt-1">
+                    <i class="fa-solid fa-gift mr-1"></i>
+                    <span>Includes {{ number_format($bonusHours, 1) }} hrs Evaluation Bonus</span>
+                </div>
+            @endif
             <p class="text-xs opacity-80 mt-1">{{ $date->format('F Y') }}</p>
         </div>
 
@@ -129,6 +135,39 @@
                                 </td>
                             </tr>
                         @endforeach
+
+                        @if(isset($bonusHours) && $bonusHours > 0)
+                            <tr class="bg-amber-50">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    -
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div class="h-8 w-8 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center text-white font-bold text-xs mr-3">
+                                            <i class="fa-solid fa-gift"></i>
+                                        </div>
+                                        <div class="text-sm font-medium text-gray-900">Evaluation Bonus</div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    Bonus for completing evaluations
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    -
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    -
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-3 py-1 bg-amber-100 text-amber-800 rounded-full text-xs font-semibold">
+                                        {{ number_format($bonusHours, 2) }} hrs
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-vibrant-green">
+                                    ${{ number_format($bonusHours * $hourlyRate, 2) }}
+                                </td>
+                            </tr>
+                        @endif
                     </tbody>
                 </table>
             </div>

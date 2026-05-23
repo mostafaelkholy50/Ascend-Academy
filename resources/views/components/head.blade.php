@@ -9,7 +9,6 @@
     <!-- Favicon -->
     <link rel="icon" href="{{asset('assets/images/Gemini_Generated_Image_pez0qlpez0qlpez0.png')}}" type="image/png" />
     <link rel="apple-touch-icon" href="{{asset('assets/images/Gemini_Generated_Image_pez0qlpez0qlpez0.png')}}" />
-    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
 
     <!-- Open Graph Tags -->
     <meta property="og:title" content="Ascend Quran Academy - Learn Quran & Arabic Online" />
@@ -29,21 +28,23 @@
 <script>
     // Prevent form submission if CSRF expired
     document.addEventListener('DOMContentLoaded', function() {
-        const form = document.querySelector('form');
-        form.addEventListener('submit', function(e) {
-            const token = document.querySelector('meta[name="csrf-token"]').content;
-            const tokenInput = document.querySelector('input[name="_token"]');
-            
-            if (!token || token === '') {
-                e.preventDefault();
-                alert('Session expired. Page will reload.');
-                location.reload();
-                return false;
-            }
-            
-            if (tokenInput) {
-                tokenInput.value = token;
-            }
+        document.querySelectorAll('form').forEach(function(form) {
+            form.addEventListener('submit', function(e) {
+                const tokenMeta = document.querySelector('meta[name="csrf-token"]');
+                const token = tokenMeta ? tokenMeta.content : null;
+                const tokenInput = form.querySelector('input[name="_token"]');
+                
+                if (!token || token === '') {
+                    e.preventDefault();
+                    alert('Session expired. Page will reload.');
+                    location.reload();
+                    return false;
+                }
+                
+                if (tokenInput) {
+                    tokenInput.value = token;
+                }
+            });
         });
     });
 </script>

@@ -55,7 +55,7 @@ class MonthlyPaymentReminderNotification extends Notification implements ShouldQ
             'amount' => $this->payment->amount,
             'currency' => $this->payment->currency,
             'month' => $this->payment->month->format('Y-m'),
-            'url' => route('student.dashboard'),
+            'url' => route('student.dashboard', [], false),
         ];
     }
 }

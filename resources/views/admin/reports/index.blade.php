@@ -132,23 +132,23 @@
                     <tbody class="divide-y divide-gray-100">
                         @foreach($reports as $report)
                             <tr class="hover:bg-purple-50 transition">
-                                <td class="px-6 py-4 whitespace-nowrap">
+                                <td class="px-6 py-4">
                                     <div class="text-sm font-medium text-gray-900">{{ $report->report_date->format('M d, Y') }}</div>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
+                                <td class="px-6 py-4">
                                     <div class="text-sm font-medium text-gray-900">{{ $report->student->name }}</div>
                                     <div class="text-sm text-gray-500">{{ $report->student->email }}</div>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
+                                <td class="px-6 py-4">
                                     <div class="text-sm font-medium text-gray-900">{{ $report->teacher->name }}</div>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
+                                <td class="px-6 py-4">
                                     <div class="text-sm font-medium text-gray-900">{{ $report->course->title ?? 'N/A' }}</div>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
+                                <td class="px-6 py-4">
                                     <div class="text-sm text-gray-900">{{ $report->level ?? 'N/A' }}</div>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
+                                <td class="px-6 py-4">
                                     @if($report->mastery_score !== null)
                                         <div class="flex items-center gap-2">
                                             <span class="text-sm font-bold text-gray-900">{{ $report->mastery_score }}%</span>
@@ -166,10 +166,10 @@
                                         <span class="text-sm text-gray-400">N/A</span>
                                     @endif
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                <td class="px-6 py-4 text-sm">
                                     <a href="{{ route('admin.reports.show', $report) }}" 
                                        class="text-purple-600 hover:text-purple-800 font-medium">
-                                        <i class="fa-solid fa-eye mr-1"></i>View Details
+                                        <i class="fa-solid fa-eye mr-1"></i>View
                                     </a>
                                 </td>
                             </tr>

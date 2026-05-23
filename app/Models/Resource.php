@@ -82,8 +82,9 @@ class Resource extends Model
             return $this->external_url;
         }
 
+        // For files on private storage, we return a secure download route instead of a direct URL
         if ($this->isFile()) {
-            return Storage::url($this->file_path);
+            return route('teacher.resources.download', $this->id);
         }
 
         return null;
@@ -91,8 +92,8 @@ class Resource extends Model
 
     public function getFileSize(): ?int
     {
-        if ($this->isFile() && Storage::exists($this->file_path)) {
-            return Storage::size($this->file_path);
+        if ($this->isFile() && Storage::disk('local')->exists($this->file_path)) {
+            return Storage::disk('local')->size($this->file_path);
         }
 
         return null;
@@ -100,8 +101,8 @@ class Resource extends Model
 
     public function deleteFile(): bool
     {
-        if ($this->isFile() && Storage::exists($this->file_path)) {
-            return Storage::delete($this->file_path);
+        if ($this->isFile() && Storage::disk('local')->exists($this->file_path)) {
+            return Storage::disk('local')->delete($this->file_path);
         }
 
         return false;

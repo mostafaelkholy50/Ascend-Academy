@@ -13,6 +13,13 @@ use Carbon\Carbon;
 
 class ChildrenController extends Controller
 {
+    protected $evaluationService;
+
+    public function __construct(\App\Services\StudentEvaluationService $evaluationService)
+    {
+        $this->evaluationService = $evaluationService;
+    }
+
     public function index()
     {
         $parent = auth()->user();
@@ -82,6 +89,15 @@ class ChildrenController extends Controller
             ->take(10)
             ->get();
         
+        // Get recent evaluations
+        $recentEvaluations = $this->evaluationService->getStudentEvaluations($child->id);
+        
+        // Get monthly averages for the current year
+        $monthlyAverages = $this->evaluationService->getStudentMonthlyAverages($child->id, now()->year);
+        
+        // Calculate yearly average
+        $yearlyAverage = $monthlyAverages->isNotEmpty() ? round($monthlyAverages->avg()) : 0;
+        
         // Statistics
         $stats = [
             'total_courses' => $enrollments->count(),
@@ -90,7 +106,7 @@ class ChildrenController extends Controller
             'completed_sessions' => Schedule::where('student_id', $child->id)
                 ->where('status', 'completed')->count(),
             'attendance_rate' => $this->calculateAttendanceRate($child->id),
-            'total_reports' => Report::where('student_id', $child->id)->count(),
+            'total_reports' => $recentEvaluations->count(),
         ];
         
         return view('parent.children.show', compact(
@@ -98,7 +114,9 @@ class ChildrenController extends Controller
             'child',
             'enrollments',
             'recentSchedules',
-            'recentReports',
+            'recentEvaluations',
+            'monthlyAverages',
+            'yearlyAverage',
             'stats'
         ));
     }

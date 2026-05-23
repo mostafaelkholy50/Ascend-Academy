@@ -19,6 +19,10 @@
     <i class="fa-solid fa-clipboard-check mr-3 text-base"></i> Attendance
 </a>
 
+<a href="{{ route('books.index') }}" class="flex items-center px-4 py-2.5 rounded-xl {{ request()->routeIs('books.*') ? 'bg-white/20 backdrop-blur-sm font-medium' : 'hover:bg-white/10 opacity-80 hover:opacity-100' }} transition">
+    <i class="fa-solid fa-book-open mr-3 text-base"></i> Books
+</a>
+
 <a href="{{ route('parent.profile.show') }}" class="flex items-center px-4 py-2.5 rounded-xl {{ request()->routeIs('parent.profile.*') ? 'bg-white/20 backdrop-blur-sm font-medium' : 'hover:bg-white/10 opacity-80 hover:opacity-100' }} transition">
     <i class="fa-solid fa-cog mr-3 text-base"></i> Settings
 </a>

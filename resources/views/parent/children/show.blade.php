@@ -161,26 +161,51 @@
 
         <!-- Sidebar -->
         <div class="space-y-6">
-            <!-- Recent Reports -->
-            @if($recentReports->count() > 0)
+            <!-- Monthly Levels -->
+            @if($monthlyAverages->count() > 0)
+                <section class="bg-white p-6 rounded-3xl shadow-lg border border-gray-100">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold text-lg text-gray-800 flex items-center">
+                            <i class="fa-solid fa-chart-bar text-indigo-600 mr-2"></i>
+                            Monthly Levels ({{ now()->year }})
+                        </h3>
+                        <span class="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-xs font-bold">
+                            Avg: {{ $yearlyAverage }}%
+                        </span>
+                    </div>
+                    <div class="space-y-3">
+                        @foreach($monthlyAverages as $month => $score)
+                            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-xl">
+                                <span class="font-medium text-gray-700">{{ DateTime::createFromFormat('!m', $month)->format('F') }}</span>
+                                <div class="flex items-center gap-2">
+                                    <span class="font-bold text-indigo-600">{{ $score }}%</span>
+                                    <div class="w-16 bg-gray-200 rounded-full h-2">
+                                        <div class="bg-indigo-600 h-2 rounded-full" style="width: {{ $score }}%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </section>
+            @endif
+
+            <!-- Recent Evaluations -->
+            @if($recentEvaluations->count() > 0)
                 <section class="bg-white p-6 rounded-3xl shadow-lg border border-gray-100">
                     <h3 class="font-bold text-lg text-gray-800 mb-4 flex items-center">
                         <i class="fa-solid fa-chart-line text-purple-600 mr-2"></i>
-                        Recent Reports
+                        Recent Evaluations
                     </h3>
                     <div class="space-y-3">
-                        @foreach($recentReports as $report)
+                        @foreach($recentEvaluations->take(5) as $evaluation)
                             <div class="p-4 bg-gradient-to-r from-gray-50 to-purple-50 rounded-xl border border-gray-200">
                                 <div class="flex items-center justify-between mb-2">
-                                    <p class="text-sm font-bold text-gray-800 truncate">{{ $report->course->title ?? 'General' }}</p>
-                                    @if($report->mastery_score)
-                                        <span class="px-2 py-1 rounded-lg text-xs font-bold {{ $report->mastery_score >= 80 ? 'bg-green-100 text-green-700' : ($report->mastery_score >= 60 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700') }}">
-                                            {{ $report->mastery_score }}%
-                                        </span>
-                                    @endif
+                                    <p class="text-sm font-bold text-gray-800 truncate">{{ $evaluation->evaluation_date->format('F Y') }}</p>
+                                    <span class="px-2 py-1 rounded-lg text-xs font-bold {{ $evaluation->total_score >= 80 ? 'bg-green-100 text-green-700' : ($evaluation->total_score >= 60 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700') }}">
+                                        {{ $evaluation->total_score }}%
+                                    </span>
                                 </div>
-                                <p class="text-xs text-gray-600"><i class="fa-solid fa-user-tie mr-1"></i>{{ $report->teacher->name }}</p>
-                                <p class="text-xs text-gray-500 mt-1"><i class="fa-solid fa-calendar mr-1"></i>{{ $report->report_date->format('M d, Y') }}</p>
+                                <p class="text-xs text-gray-600"><i class="fa-solid fa-user-tie mr-1"></i>{{ $evaluation->teacher->name }}</p>
                             </div>
                         @endforeach
                     </div>
@@ -195,6 +220,12 @@
                         <div class="flex items-center gap-3">
                             <i class="fa-solid fa-calendar-week"></i>
                             <span class="font-medium">View Schedule</span>
+                        </div>
+                    </a>
+                    <a href="{{ route('parent.children.evaluations', ['child' => $child->id]) }}" class="block p-3 bg-white/10 backdrop-blur-sm rounded-xl hover:bg-white/20 transition">
+                        <div class="flex items-center gap-3">
+                            <i class="fa-solid fa-clipboard-check"></i>
+                            <span class="font-medium">Detailed Evaluations</span>
                         </div>
                     </a>
                     <a href="{{ route('parent.reports.index', ['child_id' => $child->id]) }}" class="block p-3 bg-white/10 backdrop-blur-sm rounded-xl hover:bg-white/20 transition">

@@ -1,39 +1,36 @@
 @props([
     'icon' => 'fa-bookmark',
     'title' => 'Stat Title',
-    'value' => '',
+    'value' => '0',
     'subtitle' => '',
-    'color' => 'yellow'
+    'color' => 'blue'
 ])
 
 @php
-    $bgColors = [
-        'yellow' => 'bg-yellow-50',
-        'green' => 'bg-green-50',
-        'blue' => 'bg-blue-50',
-        'red' => 'bg-red-50',
-        'purple' => 'bg-purple-50',
-        'teal' => 'bg-teal-50',
+    $colorMap = [
+        'blue' => ['bg' => 'bg-blue-50', 'icon' => 'text-blue-600', 'border' => 'border-blue-100'],
+        'green' => ['bg' => 'bg-green-50', 'icon' => 'text-green-600', 'border' => 'border-green-100'],
+        'purple' => ['bg' => 'bg-purple-50', 'icon' => 'text-purple-600', 'border' => 'border-purple-100'],
+        'red' => ['bg' => 'bg-red-50', 'icon' => 'text-red-600', 'border' => 'border-red-100'],
+        'yellow' => ['bg' => 'bg-yellow-50', 'icon' => 'text-yellow-600', 'border' => 'border-yellow-100'],
+        'teal' => ['bg' => 'bg-teal-50', 'icon' => 'text-teal-600', 'border' => 'border-teal-100'],
     ];
-    $textColors = [
-        'yellow' => 'text-yellow-500',
-        'green' => 'text-green-500',
-        'blue' => 'text-blue-500',
-        'red' => 'text-red-500',
-        'purple' => 'text-purple-500',
-        'teal' => 'text-teal-500',
-    ];
+    $style = $colorMap[$color] ?? $colorMap['blue'];
 @endphp
 
-<div class="bg-white p-6 rounded-2xl shadow-sm text-center hover:shadow-md transition">
-    <div class="w-12 h-12 mx-auto mb-3 {{ $bgColors[$color] ?? 'bg-yellow-50' }} rounded-xl flex items-center justify-center">
-        <i class="fa-solid {{ $icon }} text-2xl {{ $textColors[$color] ?? 'text-yellow-500' }}"></i>
+<div class="bg-white p-5 rounded-3xl shadow-sm border border-gray-100 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+    <div class="flex items-start justify-between mb-4">
+        <div class="w-12 h-12 {{ $style['bg'] }} rounded-2xl flex items-center justify-center border {{ $style['border'] }}">
+            <i class="fa-solid {{ $icon }} text-xl {{ $style['icon'] }}"></i>
+        </div>
+        @if($subtitle)
+            <span class="text-[10px] font-bold px-2 py-1 bg-gray-50 text-gray-400 rounded-lg uppercase tracking-wider">
+                {{ $subtitle }}
+            </span>
+        @endif
     </div>
-    <p class="text-sm font-bold text-gray-800 mb-1">{{ $title }}</p>
-    @if($value)
-        <p class="text-xs text-gray-500">{{ $value }}</p>
-    @endif
-    @if($subtitle)
-        <p class="text-xs text-gray-500">{{ $subtitle }}</p>
-    @endif
+    <div>
+        <h3 class="text-2xl font-black text-gray-800 mb-0.5">{{ $value }}</h3>
+        <p class="text-xs font-medium text-gray-400 uppercase tracking-wide">{{ $title }}</p>
+    </div>
 </div>

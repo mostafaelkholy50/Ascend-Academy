@@ -2,36 +2,24 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Models\User;
-use Illuminate\Http\Request;
 use App\Models\TeacherApplication;
+use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Storage;
+use App\Services\TeacherApplicationService;
+use App\Http\Requests\Admin\UpdateTeacherApplicationStatusRequest;
 
 class TeacherApplicationController extends Controller
 {
+    protected $service;
+
+    public function __construct(TeacherApplicationService $service)
+    {
+        $this->service = $service;
+    }
+
     public function index(Request $request)
     {
-        $query = TeacherApplication::query()->latest();
-
-        // Filter by status
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
-
-        // Search
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('full_name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('phone', 'like', "%{$search}%");
-            });
-        }
-
-        $applications = $query->paginate(15);
-
+        $applications = $this->service->getIndexData($request);
         return view('admin.teacher-applications.index', compact('applications'));
     }
 
@@ -42,59 +30,30 @@ class TeacherApplicationController extends Controller
 
     public function convertToTeacher(TeacherApplication $application)
     {
-        // Check if email already exists
-        if (User::where('email', $application->email)->exists()) {
-            return back()->with('error', 'This email is already registered.');
-        }
-
         try {
-            // Create Teacher account
-            $teacher = User::create([
-                'name' => $application->full_name,
-                'email' => $application->email,
-                'password' => Hash::make('teacher123'), // Temporary password
-                'phone' => $application->phone,
-                'gender' => $application->gender,
-                'birth_date' => $application->birth_date,
-                'role' => 'Teacher',
-                'active' => true,
-            ]);
-
-            // Update application status
-            $application->update([
-                'status' => 'converted',
-                'admin_notes' => 'Converted to teacher account on ' . now()->format('Y-m-d H:i:s')
-            ]);
+            $result = $this->service->convertToTeacher($application);
+            $teacher = $result['teacher'];
+            $password = $result['password'];
 
             return redirect()
                 ->route('admin.teachers.show', $teacher->id)
-                ->with('success', "Teacher account created successfully! Temporary password: teacher123");
+                ->with('success', "Teacher account created successfully! Temporary password: {$password}");
 
         } catch (\Exception $e) {
-            return back()->with('error', 'Failed to create teacher account: ' . $e->getMessage());
+            return back()->with('error', $e->getMessage());
         }
     }
 
-    public function updateStatus(Request $request, TeacherApplication $application)
+    public function updateStatus(UpdateTeacherApplicationStatusRequest $request, TeacherApplication $application)
     {
-        $request->validate([
-            'status' => 'required|in:pending,reviewed,approved,rejected,converted',
-            'admin_notes' => 'nullable|string|max:2000'
-        ]);
-
-        $application->update($request->only(['status', 'admin_notes']));
+        $this->service->updateStatus($application, $request->validated());
 
         return back()->with('success', 'Application status updated successfully.');
     }
 
     public function destroy(TeacherApplication $application)
     {
-        // Delete CV file if exists
-        if ($application->cv_path && Storage::exists('public/' . $application->cv_path)) {
-            Storage::delete('public/' . $application->cv_path);
-        }
-
-        $application->delete();
+        $this->service->deleteApplication($application);
         return redirect()->route('admin.teacher-applications.index')
             ->with('success', 'Application deleted successfully.');
     }

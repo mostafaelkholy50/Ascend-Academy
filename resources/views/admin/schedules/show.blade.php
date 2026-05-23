@@ -108,10 +108,12 @@
             <div class="bg-white p-6 rounded-2xl shadow-sm">
                 <h3 class="font-bold text-gray-800 mb-4">Quick Actions</h3>
                 <div class="space-y-3">
+                    @can('manage schedules')
                     <a href="{{ route('admin.schedules.edit', $schedule->id) }}" 
                         class="block w-full bg-vibrant-green text-white px-4 py-2 rounded-lg hover:bg-deep-blue transition text-center text-sm">
                         <i class="fa-solid fa-edit mr-2"></i>Edit Schedule
                     </a>
+                    @endcan
 
                     @if($schedule->zoom_link)
                         <a href="{{ $schedule->zoom_link }}" target="_blank"
@@ -120,6 +122,7 @@
                         </a>
                     @endif
 
+                    @can('manage schedules')
                     <form action="{{ route('admin.schedules.destroy', $schedule->id) }}" method="POST">
                         @csrf
                         @method('DELETE')
@@ -129,6 +132,7 @@
                             <i class="fa-solid fa-trash mr-2"></i>Delete Schedule
                         </button>
                     </form>
+                    @endcan
                 </div>
             </div>
         </div>

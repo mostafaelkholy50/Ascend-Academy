@@ -136,39 +136,40 @@
                     <tbody class="divide-y divide-gray-100">
                         @foreach($attendances as $attendance)
                             <tr class="hover:bg-blue-50 transition">
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm font-medium text-gray-900">
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-xs font-bold text-gray-900">
                                         {{ $attendance->schedule->starts_at->format('M d, Y') }}
                                     </div>
-                                    <div class="text-sm text-gray-500">
+                                    <div class="text-[10px] text-gray-500 font-medium">
                                         {{ $attendance->schedule->starts_at->format('g:i A') }} - {{ $attendance->schedule->ends_at->format('g:i A') }}
                                     </div>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm font-medium text-gray-900">{{ $attendance->student->name }}</div>
-                                    <div class="text-sm text-gray-500">{{ $attendance->student->email }}</div>
+                                <td class="px-4 py-4 min-w-[150px]">
+                                    <div class="text-sm font-bold text-gray-900 leading-tight">{{ $attendance->student->name }}</div>
+                                    <div class="text-[10px] text-gray-400 break-all">{{ $attendance->student->email }}</div>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm font-medium text-gray-900">{{ $attendance->teacher->name }}</div>
-                                    <div class="text-sm text-gray-500">{{ $attendance->teacher->email }}</div>
+                                <td class="px-4 py-4 min-w-[150px]">
+                                    <div class="text-sm font-bold text-gray-900 leading-tight">{{ $attendance->teacher->name }}</div>
+                                    <div class="text-[10px] text-gray-400 break-all">{{ $attendance->teacher->email }}</div>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm font-medium text-gray-900">{{ $attendance->schedule->course->title ?? 'N/A' }}</div>
+                                <td class="px-4 py-4">
+                                    <div class="text-sm font-medium text-gray-700 leading-tight">{{ $attendance->schedule->course->title ?? 'N/A' }}</div>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="px-3 py-1 rounded-lg text-xs font-bold {{ $attendance->student_present ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' }}">
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <span class="px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-tight {{ $attendance->student_present ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' }}">
                                         {{ $attendance->student_present ? 'Present' : 'Absent' }}
                                     </span>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="px-3 py-1 rounded-lg text-xs font-bold {{ $attendance->teacher_present ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' }}">
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <span class="px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-tight {{ $attendance->teacher_present ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' }}">
                                         {{ $attendance->teacher_present ? 'Present' : 'Absent' }}
                                     </span>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                <td class="px-4 py-4 whitespace-nowrap text-right">
                                     <a href="{{ route('admin.attendances.show', $attendance) }}" 
-                                       class="text-blue-600 hover:text-blue-800 font-medium">
-                                        <i class="fa-solid fa-eye mr-1"></i>View Details
+                                       class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-all duration-300"
+                                       title="View Details">
+                                        <i class="fa-solid fa-eye text-xs"></i>
                                     </a>
                                 </td>
                             </tr>
@@ -179,8 +180,8 @@
         </div>
 
         <!-- Pagination -->
-        <div class="mt-6">
-            {{ $attendances->links() }}
+        <div class="mt-8">
+            {{ $attendances->links('vendor.pagination.custom') }}
         </div>
     @else
         <div class="bg-gradient-to-br from-blue-50 to-indigo-50 p-16 rounded-3xl shadow-md text-center border border-blue-200">

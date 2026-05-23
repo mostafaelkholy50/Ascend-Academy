@@ -55,7 +55,7 @@ class ResourceAddedNotification extends Notification implements ShouldQueue
             'resource_title' => $this->resource->title,
             'resource_type' => $this->resource->type,
             'teacher_name' => $this->resource->teacher->name,
-            'url' => route('student.resources.index'),
+            'url' => route('student.resources.index', [], false),
         ];
     }
 }

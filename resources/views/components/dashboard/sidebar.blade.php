@@ -18,8 +18,12 @@
 
     <!-- Navigation -->
     <nav class="flex-1 px-4 py-6 space-y-1.5 text-sm overflow-y-auto min-h-0 hide-scrollbar" style="-webkit-overflow-scrolling: touch;">
-        @if($role === 'admin')
-            @include('components.dashboard.sidebar-admin')
+        @php
+            $staffRoles = ['admin', 'superadmin', 'schedulermanager', 'accountant', 'qualitycontrol'];
+        @endphp
+        
+        @if(in_array($role, $staffRoles))
+            @include('components.dashboard.sidebar-staff')
         @elseif($role === 'teacher')
             @include('components.dashboard.sidebar-teacher')
         @elseif($role === 'parent')

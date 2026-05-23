@@ -73,6 +73,22 @@
                     @enderror
                 </div>
 
+                <!-- Country -->
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">
+                        <i class="fa-solid fa-earth-americas text-blue-500 mr-1"></i>Location / Country
+                    </label>
+                    <select name="country" class="w-full rounded-xl border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all text-lg appearance-none cursor-pointer">
+                        <option value="">Select Country (Optional)...</option>
+                        @foreach($countries as $country)
+                            <option value="{{ $country }}" {{ old('country') == $country ? 'selected' : '' }}>{{ $country }}</option>
+                        @endforeach
+                    </select>
+                    @error('country')
+                        <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+                    @enderror
+                </div>
+
                 <!-- Password -->
                 <div>
                     <label class="block text-sm font-bold text-gray-700 mb-2">

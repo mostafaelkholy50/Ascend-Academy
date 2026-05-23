@@ -55,7 +55,7 @@ class ClassReminderNotification extends Notification implements ShouldQueue
             'course_name' => $this->schedule->course->title,
             'starts_at' => $this->schedule->starts_at->toISOString(),
             'zoom_link' => $this->schedule->zoom_link,
-            'url' => $notifiable->role === 'Teacher' ? route('teacher.schedules.index') : route('student.schedule.weekly'),
+            'url' => $notifiable->role === 'Teacher' ? route('teacher.schedule.index', [], false) : route('student.schedule.weekly', [], false),
         ];
     }
 }

@@ -126,12 +126,7 @@
 
                     <!-- Info -->
                     <div class="space-y-2 mb-4 border-t border-gray-100 pt-3">
-                        @if($enrollment->start_date)
-                            <div class="flex items-center justify-between text-sm">
-                                <span class="text-gray-600">Start Date:</span>
-                                <span class="font-semibold text-gray-800">{{ $enrollment->start_date->format('M d, Y') }}</span>
-                            </div>
-                        @endif
+                        <!-- Date info removed for flexible scheduling -->
                     </div>
 
                     <!-- Actions -->

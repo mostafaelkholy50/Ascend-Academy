@@ -69,7 +69,7 @@ class ScheduleAssignedNotification extends Notification implements ShouldQueue
             'course_name' => $this->schedule->course->title,
             'student_name' => $this->schedule->student->name,
             'starts_at' => $this->schedule->starts_at->toISOString(),
-            'url' => route('teacher.schedules.index'),
+            'url' => route('teacher.schedule.index', [], false),
         ];
     }
 }

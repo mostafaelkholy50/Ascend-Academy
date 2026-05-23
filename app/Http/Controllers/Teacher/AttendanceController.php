@@ -4,48 +4,56 @@ namespace App\Http\Controllers\Teacher;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AttendanceRequest\StoreAttendanceRequest;
-use App\Models\Attendance;
 use App\Models\Schedule;
-use Illuminate\Http\Request;
+use App\Services\TeacherAttendanceService;
+use Exception;
 
 class AttendanceController extends Controller
 {
+    protected $service;
+
+    public function __construct(TeacherAttendanceService $service)
+    {
+        $this->service = $service;
+    }
+
     /**
      * Store or update attendance for a schedule
      */
     public function store(StoreAttendanceRequest $request)
     {
-        $teacher = auth()->user();
-        
-        // Verify the schedule belongs to this teacher
-        $schedule = Schedule::where('id', $request->schedule_id)
-            ->where('teacher_id', $teacher->id)
-            ->firstOrFail();
-        
-        // Create or update attendance
-        $attendance = Attendance::updateOrCreate(
-            [
-                'schedule_id' => $request->schedule_id,
-                'student_id' => $request->student_id,
-            ],
-            [
-                'teacher_id' => $teacher->id,
-                'teacher_present' => $request->teacher_present,
-                'student_present' => $request->student_present,
-                'remark' => $request->remark,
-            ]
-        );
-        
-        // Update schedule status if both are present
-        if ($attendance->isBothPresent()) {
-            $schedule->update(['status' => 'completed']);
+        try {
+            $teacher = auth()->user();
+            
+            if ($teacher->role !== 'Teacher') {
+                return response()->json(['success' => false, 'message' => 'Unauthorized action.'], 403);
+            }
+
+            $attendance = $this->service->storeAttendance($teacher, $request->validated());
+            
+            $message = 'Attendance marked successfully.';
+            
+            if ($attendance->isBothPresent()) {
+                $attendance->load('schedule');
+                $schedule = $attendance->schedule;
+                $duration = $schedule->getDurationInHours();
+                
+                $timeStr = $duration == 1 ? '1 hour' : "{$duration} hours";
+                
+                $message = "Attendance marked successfully! Added {$timeStr} to your total hours.";
+            }
+            
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'attendance' => $attendance->load(['student', 'teacher']),
+            ]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
+        } catch (Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 400);
         }
-        
-        return response()->json([
-            'success' => true,
-            'message' => 'Attendance marked successfully.',
-            'attendance' => $attendance->load(['student', 'teacher']),
-        ]);
     }
     
     /**
@@ -53,18 +61,49 @@ class AttendanceController extends Controller
      */
     public function show(Schedule $schedule)
     {
-        $teacher = auth()->user();
-        
-        // Verify the schedule belongs to this teacher
-        if ($schedule->teacher_id !== $teacher->id) {
-            abort(403, 'Unauthorized access to this schedule.');
+        try {
+            $teacher = auth()->user();
+            
+            if ($teacher->role !== 'Teacher') {
+                return response()->json(['success' => false, 'message' => 'Unauthorized action.'], 403);
+            }
+            
+            if ($schedule->teacher_id !== $teacher->id) {
+                return response()->json(['success' => false, 'message' => 'Unauthorized access to this schedule.'], 403);
+            }
+            
+            $attendance = $schedule->attendance;
+            
+            return response()->json([
+                'success' => true,
+                'attendance' => $attendance,
+            ]);
+
+        } catch (Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Failed to load attendance.'], 500);
         }
-        
-        $attendance = $schedule->attendance;
-        
-        return response()->json([
-            'success' => true,
-            'attendance' => $attendance,
-        ]);
+    }
+
+    /**
+     * Notify parent that the teacher is waiting
+     */
+    public function notifyWaiting(\Illuminate\Http\Request $request)
+    {
+        try {
+            $teacher = auth()->user();
+            $scheduleId = $request->input('schedule_id');
+
+            $this->service->notifyParentWaiting($teacher, $scheduleId);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Notification sent to the parent successfully!'
+            ]);
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 400);
+        }
     }
 }

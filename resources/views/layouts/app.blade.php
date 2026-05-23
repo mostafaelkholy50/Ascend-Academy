@@ -53,29 +53,46 @@
 
     <!-- Preloader Script -->
     <script>
-        window.addEventListener('load', function() {
-            const loadingScreen = document.getElementById('loading-screen');
-            const mainContent = document.getElementById('main-content'); // اتأكد إن المحتوى واخد ID ده
+        // Start filling the progress bar instantly
+        (function() {
             const progressBar = document.getElementById('progress-bar');
+            if (progressBar) {
+                // Animate progress bar quickly to 90% while page loads
+                progressBar.style.transition = 'width 0.4s ease-out';
+                setTimeout(() => {
+                    progressBar.style.width = '90%';
+                }, 50);
+            }
+        })();
 
-            let width = 0;
-            const interval = setInterval(() => {
-                width += Math.random() * 15; // سرعة وهمية للتحميل
-                if (width >= 100) {
-                    width = 100;
-                    clearInterval(interval);
+        // Fade out as soon as the DOM is ready (much faster than waiting for all images to download)
+        document.addEventListener('DOMContentLoaded', function() {
+            const loadingScreen = document.getElementById('loading-screen');
+            const progressBar = document.getElementById('progress-bar');
+            const mainContent = document.getElementById('main-content');
 
-                    // اختفاء تدريجي للشاشة بعد اكتمال الشريط
+            if (progressBar) {
+                progressBar.style.transition = 'width 0.1s ease-out';
+                progressBar.style.width = '100%';
+            }
+
+            // Instantly start fading out the loading screen
+            setTimeout(() => {
+                if (loadingScreen) {
+                    loadingScreen.style.transition = 'opacity 0.3s ease-out';
+                    loadingScreen.style.opacity = '0';
+                    
+                    // Show main content instantly
+                    if (mainContent) {
+                        mainContent.style.transition = 'opacity 0.4s ease-out';
+                        mainContent.style.opacity = '1';
+                    }
+
                     setTimeout(() => {
-                        loadingScreen.style.opacity = '0';
-                        setTimeout(() => {
-                            loadingScreen.style.display = 'none';
-                            if (mainContent) mainContent.style.opacity = '1';
-                        }, 800);
-                    }, 200);
+                        loadingScreen.style.display = 'none';
+                    }, 300);
                 }
-                progressBar.style.width = width + '%';
-            }, 100);
+            }, 150);
         });
     </script>
 

@@ -3,57 +3,41 @@
 namespace App\Http\Controllers\Teacher;
 
 use App\Http\Controllers\Controller;
-use App\Models\Schedule;
+use App\Services\TeacherScheduleService;
 use Illuminate\Http\Request;
-use Carbon\Carbon;
+use Exception;
 
 class ScheduleController extends Controller
 {
+    protected $service;
+
+    public function __construct(TeacherScheduleService $service)
+    {
+        $this->service = $service;
+    }
+
     /**
      * Display weekly schedule view
      */
     public function index(Request $request)
     {
-        $teacher = auth()->user();
-        
-        // Get the week start date (default to current week)
-        $weekStart = $request->has('week') 
-            ? Carbon::parse($request->week)->startOfWeek()
-            : now()->startOfWeek();
-        
-        $weekEnd = $weekStart->copy()->endOfWeek();
-        
-        // Get all schedules for this week
-        $schedules = Schedule::where('teacher_id', $teacher->id)
-            ->whereBetween('starts_at', [$weekStart, $weekEnd])
-            ->where('status', '!=', 'cancelled')
-            ->with(['student', 'course', 'attendance'])
-            ->orderBy('starts_at')
-            ->get();
-        
-        // Group schedules by day
-        $schedulesByDay = [];
-        for ($i = 0; $i < 7; $i++) {
-            $date = $weekStart->copy()->addDays($i);
-            $schedulesByDay[$date->format('Y-m-d')] = [
-                'date' => $date,
-                'schedules' => $schedules->filter(function($schedule) use ($date) {
-                    return $schedule->starts_at->isSameDay($date);
-                })->values()
-            ];
+        try {
+            $teacher = auth()->user();
+            
+            if ($teacher->role !== 'Teacher') {
+                abort(403);
+            }
+
+            $data = $this->service->getWeeklyData($teacher, $request);
+
+            return view('teacher.schedule-weekly', $data);
+            
+        } catch (Exception $e) {
+            if ($e instanceof \Symfony\Component\HttpKernel\Exception\HttpException) {
+                throw $e;
+            }
+            return $this->errorResponse('حدث خطأ أثناء تحميل الجدول الأسبوعي.');
         }
-        
-        // Calculate navigation dates
-        $prevWeek = $weekStart->copy()->subWeek();
-        $nextWeek = $weekStart->copy()->addWeek();
-        
-        return view('teacher.schedule-weekly', compact(
-            'schedulesByDay',
-            'weekStart',
-            'weekEnd',
-            'prevWeek',
-            'nextWeek'
-        ));
     }
     
     /**
@@ -61,43 +45,22 @@ class ScheduleController extends Controller
      */
     public function daily(Request $request)
     {
-        $teacher = auth()->user();
-        
-        // Get the date (default to today)
-        $date = $request->has('date') 
-            ? Carbon::parse($request->date)
-            : now();
-        
-        // Get all schedules for this day
-        $schedules = Schedule::where('teacher_id', $teacher->id)
-            ->whereDate('starts_at', $date)
-            ->where('status', '!=', 'cancelled')
-            ->with(['student', 'course', 'attendance'])
-            ->orderBy('starts_at')
-            ->get();
-        
-        // Calculate navigation dates
-        $prevDay = $date->copy()->subDay();
-        $nextDay = $date->copy()->addDay();
-        
-        // Get statistics for the day
-        $totalSessions = $schedules->count();
-        $completedSessions = $schedules->filter(function($schedule) {
-            return $schedule->status === 'completed';
-        })->count();
-        
-        $totalHours = $schedules->sum(function($schedule) {
-            return $schedule->getDurationInHours();
-        });
-        
-        return view('teacher.schedule-daily', compact(
-            'schedules',
-            'date',
-            'prevDay',
-            'nextDay',
-            'totalSessions',
-            'completedSessions',
-            'totalHours'
-        ));
+        try {
+            $teacher = auth()->user();
+            
+            if ($teacher->role !== 'Teacher') {
+                abort(403);
+            }
+
+            $data = $this->service->getDailyData($teacher, $request);
+
+            return view('teacher.schedule-daily', $data);
+            
+        } catch (Exception $e) {
+            if ($e instanceof \Symfony\Component\HttpKernel\Exception\HttpException) {
+                throw $e;
+            }
+            return $this->errorResponse('حدث خطأ أثناء تحميل الجدول اليومي.');
+        }
     }
 }

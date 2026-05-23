@@ -52,7 +52,7 @@ class NewTeacherApplicationNotification extends Notification implements ShouldQu
             'title' => 'New Teacher Application',
             'message' => 'From: ' . $this->application->name,
             'application_id' => $this->application->id,
-            'url' => route('admin.teacher-applications.index'),
+            'url' => route('admin.teacher-applications.index', [], false),
         ];
     }
 }

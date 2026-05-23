@@ -3,93 +3,83 @@
 namespace App\Http\Controllers\Teacher;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rules\Password;
+use App\Services\TeacherProfileService;
+use App\Http\Requests\ProfileRequest\UpdateTeacherProfileRequest;
+use App\Http\Requests\ProfileRequest\UpdateTeacherPasswordRequest;
+use App\Http\Requests\ProfileRequest\UpdateTeacherAvatarRequest;
+use Exception;
 
 class ProfileController extends Controller
 {
+    protected $service;
+
+    public function __construct(TeacherProfileService $service)
+    {
+        $this->service = $service;
+    }
+
     public function show()
     {
-        $user = auth()->user();
-        
-        // Get user statistics
-        $stats = [
-            'total_students' => \App\Models\Schedule::where('teacher_id', $user->id)
-                ->distinct('student_id')->count('student_id'),
-            'total_sessions' => \App\Models\Schedule::where('teacher_id', $user->id)->count(),
-            'total_reports' => \App\Models\Report::where('teacher_id', $user->id)->count(),
-            'member_since' => $user->created_at->format('F Y'),
-        ];
-
-        return view('teacher.profile.show', compact('user', 'stats'));
+        try {
+            $data = $this->service->getProfileData(auth()->user());
+            return view('teacher.profile.show', $data);
+        } catch (Exception $e) {
+            return $this->errorResponse('حدث خطأ أثناء تحميل الملف الشخصي.');
+        }
     }
 
     public function edit()
     {
-        $user = auth()->user();
-        return view('teacher.profile.edit', compact('user'));
-    }
-
-    public function update(Request $request)
-    {
-        $user = auth()->user();
-
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $user->id],
-            'phone' => ['nullable', 'string', 'max:20'],
-        ]);
-
-        $user->update($validated);
-
-        return redirect()->route('teacher.profile.show')
-            ->with('success', 'Profile updated successfully!');
-    }
-
-    public function updatePassword(Request $request)
-    {
-        $validated = $request->validate([
-            'current_password' => ['required', 'current_password'],
-            'password' => ['required', 'confirmed', Password::defaults()],
-        ]);
-
-        $user = auth()->user();
-        $user->update([
-            'password' => Hash::make($validated['password']),
-        ]);
-
-        return back()->with('success', 'Password changed successfully!');
-    }
-
-    public function updateAvatar(Request $request)
-    {
-        $request->validate([
-            'avatar' => ['required', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
-        ]);
-
-        $user = auth()->user();
-
-        if ($user->avatar && \Illuminate\Support\Facades\Storage::disk('public')->exists($user->avatar)) {
-            \Illuminate\Support\Facades\Storage::disk('public')->delete($user->avatar);
+        try {
+            return view('teacher.profile.edit', ['user' => auth()->user()]);
+        } catch (Exception $e) {
+            return $this->errorResponse('حدث خطأ أثناء تحميل صفحة التعديل.');
         }
+    }
 
-        $path = $request->file('avatar')->store('avatars', 'public');
-        $user->update(['avatar' => $path]);
+    public function update(UpdateTeacherProfileRequest $request)
+    {
+        try {
+            $this->service->updateProfile(auth()->user(), $request->validated());
 
-        return back()->with('success', 'Profile picture updated successfully!');
+            return redirect()->route('teacher.profile.show')
+                ->with('success', 'Profile updated successfully!');
+        } catch (Exception $e) {
+            return back()->with('error', 'Failed to update profile: ' . $e->getMessage())
+                ->withInput();
+        }
+    }
+
+    public function updatePassword(UpdateTeacherPasswordRequest $request)
+    {
+        try {
+            $this->service->updatePassword(auth()->user(), $request->validated()['password']);
+
+            return back()->with('success', 'Password changed successfully!');
+        } catch (Exception $e) {
+            return back()->with('error', 'Failed to change password: ' . $e->getMessage());
+        }
+    }
+
+    public function updateAvatar(UpdateTeacherAvatarRequest $request)
+    {
+        try {
+            $this->service->updateAvatar(auth()->user(), $request->file('avatar'));
+
+            return back()->with('success', 'Profile picture updated successfully!');
+        } catch (Exception $e) {
+            return back()->with('error', 'Failed to update profile picture: ' . $e->getMessage());
+        }
     }
 
     public function deleteAvatar()
     {
-        $user = auth()->user();
+        try {
+            $this->service->deleteAvatar(auth()->user());
 
-        if ($user->avatar && \Illuminate\Support\Facades\Storage::disk('public')->exists($user->avatar)) {
-            \Illuminate\Support\Facades\Storage::disk('public')->delete($user->avatar);
+            return back()->with('success', 'Profile picture removed successfully!');
+        } catch (Exception $e) {
+            return back()->with('error', 'Failed to remove profile picture: ' . $e->getMessage());
         }
-
-        $user->update(['avatar' => null]);
-
-        return back()->with('success', 'Profile picture removed successfully!');
     }
 }

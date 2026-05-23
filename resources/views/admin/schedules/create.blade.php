@@ -29,39 +29,48 @@
     <form method="POST" action="{{ route('admin.schedules.store') }}" class="max-w-4xl" id="scheduleForm">
         @csrf
 
-        <!-- Step 1: Select Enrollment -->
+        <!-- Step 1: Select Student & Course -->
         <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
             <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
                 <span class="w-8 h-8 bg-vibrant-green text-white rounded-full flex items-center justify-center mr-3 text-sm">1</span>
-                Select Enrollment
+                Select Student & Course
             </h2>
 
-            <div>
-                <label for="enrollment_id" class="block text-sm font-semibold text-gray-700 mb-2">
-                    Enrollment <span class="text-red-500">*</span>
-                </label>
-                <select name="enrollment_id" id="enrollment_id" required
-                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vibrant-green focus:border-transparent">
-                    <option value="">Select an enrollment</option>
-                    @foreach($enrollments as $enrollment)
-                        <option value="{{ $enrollment->id }}" {{ old('enrollment_id') == $enrollment->id ? 'selected' : '' }}
-                            data-student="{{ $enrollment->student->name }}"
-                            data-course="{{ $enrollment->course->title }}"
-                            data-start="{{ $enrollment->start_date?->format('M d, Y') }}"
-                            data-end="{{ $enrollment->end_date?->format('M d, Y') }}">
-                            {{ $enrollment->student->name }} - {{ $enrollment->course->title }}
-                            ({{ $enrollment->start_date?->format('M d') }} to {{ $enrollment->end_date?->format('M d, Y') }})
-                        </option>
-                    @endforeach
-                </select>
-                @error('enrollment_id')
-                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                @enderror
-                
-                <div id="enrollmentInfo" class="mt-3 p-3 bg-blue-50 rounded-lg hidden">
-                    <p class="text-sm text-blue-800"><strong>Student:</strong> <span id="studentName"></span></p>
-                    <p class="text-sm text-blue-800"><strong>Course:</strong> <span id="courseName"></span></p>
-                    <p class="text-sm text-blue-800"><strong>Duration:</strong> <span id="enrollmentDuration"></span></p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="student_id" class="block text-sm font-semibold text-gray-700 mb-2">
+                        Student <span class="text-red-500">*</span>
+                    </label>
+                    <select name="student_id" id="student_id" required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vibrant-green focus:border-transparent">
+                        <option value="">Select a student</option>
+                        @foreach($students as $student)
+                            <option value="{{ $student->id }}" {{ old('student_id', $selectedStudent) == $student->id ? 'selected' : '' }}>
+                                {{ $student->name }} ({{ $student->email }})
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('student_id')
+                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div>
+                    <label for="course_id" class="block text-sm font-semibold text-gray-700 mb-2">
+                        Course <span class="text-red-500">*</span>
+                    </label>
+                    <select name="course_id" id="course_id" required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vibrant-green focus:border-transparent">
+                        <option value="">Select a course</option>
+                        @foreach($courses as $course)
+                            <option value="{{ $course->id }}" {{ old('course_id', $selectedCourse) == $course->id ? 'selected' : '' }}>
+                                {{ $course->title }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('course_id')
+                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                    @enderror
                 </div>
             </div>
         </div>
@@ -98,6 +107,19 @@
                 <span class="w-8 h-8 bg-vibrant-green text-white rounded-full flex items-center justify-center mr-3 text-sm">3</span>
                 Select Days & Times
             </h2>
+
+            <div class="mb-6">
+                <label for="start_date" class="block text-sm font-semibold text-gray-700 mb-2">
+                    Schedule Start Date <span class="text-red-500">*</span>
+                </label>
+                <input type="date" name="start_date" id="start_date" required
+                    value="{{ old('start_date', now()->format('Y-m-d')) }}"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vibrant-green focus:border-transparent">
+                <p class="text-[10px] text-gray-500 mt-1 italic">The system will automatically generate sessions for 1 month starting from this date.</p>
+                @error('start_date')
+                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                @enderror
+            </div>
 
             <p class="text-sm text-gray-600 mb-4">
                 Select the days of the week and set a specific time for each day. Each day can have a different time.
@@ -212,20 +234,55 @@
         </div>
     </form>
 
+    <!-- Tom Select for Searchable Dropdowns -->
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+
     <script>
-        // Handle enrollment selection display
-        document.getElementById('enrollment_id').addEventListener('change', function() {
-            const option = this.options[this.selectedIndex];
-            const infoDiv = document.getElementById('enrollmentInfo');
-            
-            if (this.value) {
-                document.getElementById('studentName').textContent = option.dataset.student;
-                document.getElementById('courseName').textContent = option.dataset.course;
-                document.getElementById('enrollmentDuration').textContent = option.dataset.start + ' to ' + option.dataset.end;
-                infoDiv.classList.remove('hidden');
-            } else {
-                infoDiv.classList.add('hidden');
-            }
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize Tom Select for Student
+            const studentSelect = new TomSelect('#student_id', {
+                create: false,
+                sortField: {
+                    field: "text",
+                    direction: "asc"
+                },
+                placeholder: 'Search for student name or email...',
+            });
+
+            // Initialize Tom Select for Course
+            const courseSelect = new TomSelect('#course_id', {
+                create: false,
+                sortField: {
+                    field: "text",
+                    direction: "asc"
+                },
+                placeholder: 'Search for course title...',
+            });
+
+            // Initialize Tom Select for Teacher
+            const teacherSelect = new TomSelect('#teacher_id', {
+                create: false,
+                sortField: {
+                    field: "text",
+                    direction: "asc"
+                },
+                placeholder: 'Search for teacher name or email...',
+            });
+
+            // Set teacher default selection from query param if available
+            @if($selectedTeacher)
+                teacherSelect.setValue('{{ $selectedTeacher }}');
+            @endif
+
+            // Handle checkboxes for days
+            const checkboxes = document.querySelectorAll('.day-checkbox');
+            checkboxes.forEach(checkbox => {
+                if (checkbox.checked) {
+                    const day = checkbox.dataset.day;
+                    toggleTimeInput(day);
+                }
+            });
         });
 
         // Toggle time input visibility based on day checkbox
@@ -242,16 +299,5 @@
                 timeInput.required = false;
             }
         }
-
-        // Initialize time inputs on page load (for old input values)
-        document.addEventListener('DOMContentLoaded', function() {
-            const checkboxes = document.querySelectorAll('.day-checkbox');
-            checkboxes.forEach(checkbox => {
-                if (checkbox.checked) {
-                    const day = checkbox.dataset.day;
-                    toggleTimeInput(day);
-                }
-            });
-        });
     </script>
 </x-dashboard-layout>

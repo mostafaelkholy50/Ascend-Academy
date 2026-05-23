@@ -4,72 +4,68 @@ namespace App\Http\Controllers\ParentUser;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\Report;
-use Carbon\Carbon;
+use App\Models\User;
+use App\Models\StudentEvaluation;
+use App\Models\Course;
+use Exception;
 
 class ReportController extends Controller
 {
     public function index(Request $request)
     {
-        $parent = auth()->user();
-        $children = $parent->children;
-        
-        // Get selected child or all children
-        $selectedChildId = $request->get('child_id', 'all');
-        
-        // Build query
-        $query = Report::with(['student', 'teacher', 'course']);
-        
-        if ($selectedChildId === 'all') {
-            $query->whereIn('student_id', $children->pluck('id'));
-        } else {
-            // Verify child belongs to parent
-            $parent->children()->findOrFail($selectedChildId);
-            $query->where('student_id', $selectedChildId);
+        try {
+            $parent = auth()->user();
+            $children = $parent->children;
+            $childrenIds = $children->pluck('id')->toArray();
+
+            // Fetch active teachers and courses for filtering
+            $teachers = User::roleTeacher()->active()->get();
+            $courses = Course::all();
+
+            // Build dynamic query for children's monthly evaluations
+            $query = StudentEvaluation::with(['student', 'teacher', 'course'])
+                ->whereIn('student_id', $childrenIds);
+
+            if ($request->filled('child_id')) {
+                $query->where('student_id', $request->input('child_id'));
+            }
+            if ($request->filled('course_id')) {
+                $query->where('course_id', $request->input('course_id'));
+            }
+            if ($request->filled('teacher_id')) {
+                $query->where('teacher_id', $request->input('teacher_id'));
+            }
+            if ($request->filled('date_from')) {
+                $query->where('evaluation_date', '>=', $request->input('date_from'));
+            }
+            if ($request->filled('date_to')) {
+                $query->where('evaluation_date', '<=', $request->input('date_to'));
+            }
+
+            $evaluations = $query->latest('evaluation_date')->get();
+
+            return view('parent.reports.index', compact('parent', 'children', 'teachers', 'courses', 'evaluations'));
+            
+        } catch (Exception $e) {
+            return back()->with('error', 'An error occurred while loading evaluations. Please try again.');
         }
-        
-        // Apply filters
-        if ($request->has('course_id') && $request->course_id != '') {
-            $query->where('course_id', $request->course_id);
-        }
-        
-        if ($request->has('date_from') && $request->date_from != '') {
-            $query->whereDate('report_date', '>=', $request->date_from);
-        }
-        
-        if ($request->has('date_to') && $request->date_to != '') {
-            $query->whereDate('report_date', '<=', $request->date_to);
-        }
-        
-        $reports = $query->latest('report_date')
-            ->paginate(15);
-        
-        // Get available courses for filter
-        $courses = \App\Models\Enrollment::with('course')
-            ->whereIn('student_id', $children->pluck('id'))
-            ->get()
-            ->pluck('course')
-            ->unique('id');
-        
-        return view('parent.reports.index', compact(
-            'parent',
-            'children',
-            'reports',
-            'courses',
-            'selectedChildId'
-        ));
     }
     
-    public function show($reportId)
+    public function show($id)
     {
-        $parent = auth()->user();
-        $children = $parent->children;
-        
-        // Get report and verify it belongs to one of parent's children
-        $report = Report::with(['student', 'teacher', 'course'])
-            ->whereIn('student_id', $children->pluck('id'))
-            ->findOrFail($reportId);
-        
-        return view('parent.reports.show', compact('parent', 'report'));
+        try {
+            $parent = auth()->user();
+            $childrenIds = $parent->children->pluck('id')->toArray();
+            
+            // Fetch evaluation and ensure it belongs to one of parent's children
+            $evaluation = StudentEvaluation::with(['student', 'teacher', 'course'])
+                ->whereIn('student_id', $childrenIds)
+                ->findOrFail($id);
+            
+            return view('parent.reports.show_evaluation', compact('evaluation'));
+            
+        } catch (Exception $e) {
+            return redirect()->route('parent.reports.index')->with('error', 'An error occurred while loading the evaluation. Please try again.');
+        }
     }
 }

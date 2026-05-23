@@ -9,20 +9,20 @@
                 <p class="text-sm text-gray-500 mt-1">{{ $date->format('l, F d, Y') }}</p>
             </div>
             <div class="flex items-center space-x-3">
-                <a href="{{ route('teacher.schedule.daily', ['date' => $prevDay->format('Y-m-d')]) }}" 
-                   class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
+                <a href="{{ route('teacher.schedule.daily', ['date' => $prevDay->format('Y-m-d')]) }}"
+                    class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
                     <i class="fa-solid fa-chevron-left mr-2"></i>Previous Day
                 </a>
-                <a href="{{ route('teacher.schedule.daily') }}" 
-                   class="px-4 py-2 bg-vibrant-green text-white rounded-lg text-sm font-semibold hover:bg-deep-blue transition">
+                <a href="{{ route('teacher.schedule.daily') }}"
+                    class="px-4 py-2 bg-vibrant-green text-white rounded-lg text-sm font-semibold hover:bg-deep-blue transition">
                     Today
                 </a>
-                <a href="{{ route('teacher.schedule.daily', ['date' => $nextDay->format('Y-m-d')]) }}" 
-                   class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
+                <a href="{{ route('teacher.schedule.daily', ['date' => $nextDay->format('Y-m-d')]) }}"
+                    class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
                     Next Day<i class="fa-solid fa-chevron-right ml-2"></i>
                 </a>
-                <a href="{{ route('teacher.schedule.index') }}" 
-                   class="px-4 py-2 bg-deep-blue text-white rounded-lg text-sm font-semibold hover:bg-vibrant-green transition">
+                <a href="{{ route('teacher.schedule.index') }}"
+                    class="px-4 py-2 bg-deep-blue text-white rounded-lg text-sm font-semibold hover:bg-vibrant-green transition">
                     <i class="fa-solid fa-calendar-week mr-2"></i>Weekly View
                 </a>
             </div>
@@ -43,9 +43,9 @@
             <p class="text-sm text-gray-500 mt-1">All sessions scheduled for this day</p>
         </div>
 
-        @if($schedules->count() > 0)
+        @if ($schedules->count() > 0)
             <div class="divide-y divide-gray-100">
-                @foreach($schedules as $schedule)
+                @foreach ($schedules as $schedule)
                     @php
                         $colors = ['green', 'blue', 'purple', 'orange', 'pink'];
                         $color = $colors[$loop->index % count($colors)];
@@ -56,7 +56,7 @@
                         $isInProgress = $now->between($startsAt, $endsAt);
                         $isPast = $now->greaterThan($endsAt);
                     @endphp
-                    
+
                     <div class="p-6 hover:bg-gray-50 transition {{ $isInProgress ? 'bg-yellow-50' : '' }}">
                         <div class="flex items-start justify-between">
                             <!-- Session Info -->
@@ -78,45 +78,57 @@
                                 <div class="flex-1">
                                     <div class="flex items-start justify-between">
                                         <div>
-                                            <h3 class="text-lg font-bold text-gray-800">{{ $schedule->course->name }}</h3>
+                                            <h3 class="text-lg font-bold text-gray-800">{{ $schedule->course->name }}
+                                            </h3>
                                             <div class="flex items-center space-x-4 mt-2">
                                                 <div class="flex items-center space-x-2">
-                                                    @if($schedule->student->avatar)
-                                                        <img src="{{ asset('storage/' . $schedule->student->avatar) }}" 
-                                                             alt="{{ $schedule->student->name }}" 
-                                                             class="w-8 h-8 rounded-full object-cover">
+                                                    @if ($schedule->student->avatar)
+                                                        <img src="{{ asset('storage/' . $schedule->student->avatar) }}"
+                                                            alt="{{ $schedule->student->name }}"
+                                                            class="w-8 h-8 rounded-full object-cover">
                                                     @else
-                                                        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-orange-400 to-pink-500 flex items-center justify-center">
-                                                            <span class="text-white font-bold text-xs">{{ substr($schedule->student->name, 0, 1) }}</span>
+                                                        <div
+                                                            class="w-8 h-8 rounded-full bg-gradient-to-br from-orange-400 to-pink-500 flex items-center justify-center">
+                                                            <span
+                                                                class="text-white font-bold text-xs">{{ substr($schedule->student->name, 0, 1) }}</span>
                                                         </div>
                                                     @endif
-                                                    <span class="text-sm font-medium text-gray-700">{{ $schedule->student->name }}</span>
+                                                    <span
+                                                        class="text-sm font-medium text-gray-700">{{ $schedule->student->name }}</span>
                                                 </div>
                                                 <span class="text-sm text-gray-500">•</span>
-                                                <span class="text-sm text-gray-500">{{ $schedule->starts_at->format('g:i A') }} - {{ $schedule->ends_at->format('g:i A') }}</span>
+                                                <span
+                                                    class="text-sm text-gray-500">{{ $schedule->starts_at->format('g:i A') }}
+                                                    - {{ $schedule->ends_at->format('g:i A') }}</span>
                                             </div>
                                         </div>
 
                                         <!-- Status Badge -->
                                         <div>
-                                            @if($schedule->status === 'completed')
-                                                <span class="inline-flex items-center px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+                                            @if ($schedule->status === 'completed')
+                                                <span
+                                                    class="inline-flex items-center px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
                                                     <i class="fa-solid fa-check mr-1"></i>Completed
                                                 </span>
                                             @elseif($isInProgress)
-                                                <span class="inline-flex items-center px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-medium animate-pulse">
+                                                <span
+                                                    class="inline-flex items-center px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-medium animate-pulse">
                                                     <i class="fa-solid fa-circle mr-1"></i>In Progress
                                                 </span>
                                             @elseif($minutesUntil > 0 && $minutesUntil <= 60)
-                                                <span class="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
-                                                    <i class="fa-solid fa-clock mr-1"></i>Starting in {{ $minutesUntil }} min
+                                                <span
+                                                    class="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
+                                                    <i class="fa-solid fa-clock mr-1"></i>Starting in
+                                                    {{ $minutesUntil }} min
                                                 </span>
                                             @elseif($isPast)
-                                                <span class="inline-flex items-center px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-medium">
+                                                <span
+                                                    class="inline-flex items-center px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-medium">
                                                     <i class="fa-solid fa-history mr-1"></i>Past
                                                 </span>
                                             @else
-                                                <span class="inline-flex items-center px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-medium">
+                                                <span
+                                                    class="inline-flex items-center px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-medium">
                                                     <i class="fa-solid fa-calendar mr-1"></i>Scheduled
                                                 </span>
                                             @endif
@@ -125,34 +137,38 @@
 
                                     <!-- Additional Info -->
                                     <div class="mt-4 flex items-center space-x-6">
-                                        @if($schedule->zoom_link)
-                                            <a href="{{ $schedule->zoom_link }}" target="_blank" 
-                                               class="inline-flex items-center px-4 py-2 bg-vibrant-green text-white rounded-lg text-sm font-semibold hover:bg-deep-blue transition">
+                                        @if ($schedule->zoom_link)
+                                            <a href="{{ $schedule->zoom_link }}" target="_blank"
+                                                class="inline-flex items-center px-4 py-2 bg-vibrant-green text-white rounded-lg text-sm font-semibold hover:bg-deep-blue transition">
                                                 <i class="fa-solid fa-video mr-2"></i>Join Zoom
                                             </a>
                                         @endif
 
-                                        @if($schedule->attendance)
+                                        @if ($schedule->attendance)
                                             <div class="flex items-center space-x-4 text-sm">
                                                 <div class="flex items-center space-x-2">
                                                     <span class="text-gray-600">Teacher:</span>
-                                                    @if($schedule->attendance->teacher_present)
-                                                        <span class="text-green-600 font-medium"><i class="fa-solid fa-check-circle mr-1"></i>Present</span>
+                                                    @if ($schedule->attendance->teacher_present)
+                                                        <span class="text-green-600 font-medium"><i
+                                                                class="fa-solid fa-check-circle mr-1"></i>Present</span>
                                                     @else
-                                                        <span class="text-red-600 font-medium"><i class="fa-solid fa-times-circle mr-1"></i>Absent</span>
+                                                        <span class="text-red-600 font-medium"><i
+                                                                class="fa-solid fa-times-circle mr-1"></i>Absent</span>
                                                     @endif
                                                 </div>
                                                 <div class="flex items-center space-x-2">
                                                     <span class="text-gray-600">Student:</span>
-                                                    @if($schedule->attendance->student_present)
-                                                        <span class="text-green-600 font-medium"><i class="fa-solid fa-check-circle mr-1"></i>Present</span>
+                                                    @if ($schedule->attendance->student_present)
+                                                        <span class="text-green-600 font-medium"><i
+                                                                class="fa-solid fa-check-circle mr-1"></i>Present</span>
                                                     @else
-                                                        <span class="text-red-600 font-medium"><i class="fa-solid fa-times-circle mr-1"></i>Absent</span>
+                                                        <span class="text-red-600 font-medium"><i
+                                                                class="fa-solid fa-times-circle mr-1"></i>Absent</span>
                                                     @endif
                                                 </div>
                                             </div>
                                         @else
-                                            <button 
+                                            <button
                                                 onclick="openAttendanceModal({
                                                     id: {{ $schedule->id }},
                                                     student: {
@@ -168,16 +184,23 @@
                                                 class="inline-flex items-center px-4 py-2 bg-vibrant-green text-white rounded-lg text-sm font-semibold hover:bg-deep-blue transition">
                                                 <i class="fa-solid fa-clipboard-check mr-2"></i>Mark Attendance
                                             </button>
+                                            <button onclick="notifyWaiting({{ $schedule->id }})"
+                                                id="waitingBtn-{{ $schedule->id }}"
+                                                class="inline-flex items-center px-4 py-2 bg-white border border-yellow-500 text-yellow-600 rounded-lg text-sm font-semibold hover:bg-yellow-50 transition">
+                                                <i class="fa-solid fa-clock mr-2"></i>I am waiting
+                                            </button>
                                         @endif
 
-                                        <button class="inline-flex items-center px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition">
+                                        <button
+                                            class="inline-flex items-center px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition">
                                             <i class="fa-solid fa-file-alt mr-2"></i>Add Report
                                         </button>
                                     </div>
 
-                                    @if($schedule->notes)
+                                    @if ($schedule->notes)
                                         <div class="mt-4 p-3 bg-gray-50 rounded-lg">
-                                            <p class="text-sm text-gray-600"><strong>Notes:</strong> {{ $schedule->notes }}</p>
+                                            <p class="text-sm text-gray-600"><strong>Notes:</strong>
+                                                {{ $schedule->notes }}</p>
                                         </div>
                                     @endif
                                 </div>

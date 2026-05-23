@@ -2,20 +2,29 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use App\Services\NotificationService;
+use Exception;
 
 class NotificationController extends Controller
 {
+    protected $service;
+
+    public function __construct(NotificationService $service)
+    {
+        $this->service = $service;
+    }
+
     /**
      * Display all notifications for the authenticated user
      */
     public function index()
     {
-        $user = Auth::user();
-        $notifications = $user->notifications()->paginate(20);
-
-        return view('notifications.index', compact('notifications'));
+        try {
+            $data = $this->service->getIndexData(auth()->user());
+            return view('notifications.index', $data);
+        } catch (Exception $e) {
+            return $this->errorResponse('حدث خطأ أثناء تحميل الإشعارات.');
+        }
     }
 
     /**
@@ -23,14 +32,12 @@ class NotificationController extends Controller
      */
     public function getUnread()
     {
-        $user = Auth::user();
-        $unreadNotifications = $user->unreadNotifications()->take(5)->get();
-        $unreadCount = $user->unreadNotifications()->count();
-
-        return response()->json([
-            'notifications' => $unreadNotifications,
-            'count' => $unreadCount,
-        ]);
+        try {
+            $data = $this->service->getUnreadData(auth()->user());
+            return response()->json($data);
+        } catch (Exception $e) {
+            return response()->json(['error' => 'Failed to load notifications'], 500);
+        }
     }
 
     /**
@@ -38,12 +45,12 @@ class NotificationController extends Controller
      */
     public function markAsRead($id)
     {
-        $user = Auth::user();
-        $notification = $user->notifications()->findOrFail($id);
-        
-        $notification->markAsRead();
-
-        return response()->json(['success' => true]);
+        try {
+            $this->service->markAsRead(auth()->user(), $id);
+            return response()->json(['success' => true]);
+        } catch (Exception $e) {
+            return response()->json(['error' => 'Failed to mark as read'], 500);
+        }
     }
 
     /**
@@ -51,9 +58,11 @@ class NotificationController extends Controller
      */
     public function markAllAsRead()
     {
-        $user = Auth::user();
-        $user->unreadNotifications->markAsRead();
-
-        return back()->with('success', 'All notifications marked as read.');
+        try {
+            $this->service->markAllAsRead(auth()->user());
+            return $this->successResponse('All notifications marked as read.');
+        } catch (Exception $e) {
+            return $this->errorResponse('Failed to mark notifications as read.');
+        }
     }
 }

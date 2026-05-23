@@ -8,6 +8,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -91,7 +93,7 @@
         @include('components.dashboard.sidebar')
 
         <!-- Main Content -->
-        <main id="mainContent" class="flex-grow p-3 sm:p-4 md:p-6 lg:p-8 overflow-y-auto w-full lg:w-auto lg:ml-0">
+        <main id="mainContent" class="flex-grow p-3 sm:p-4 md:p-6 lg:p-8 overflow-y-auto overflow-x-hidden w-full lg:w-auto lg:ml-0">
             <!-- Header -->
             @include('components.dashboard.header')
 
@@ -103,5 +105,6 @@
     </div>
 
     @include('components.dashboard.scripts')
+    @stack('scripts')
 </body>
 </html>

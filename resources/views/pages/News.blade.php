@@ -48,7 +48,7 @@
                                     </h3>
                                 </a>
                                 <p class="text-gray-600 text-sm mb-4 line-clamp-3">
-                                    {!! $newsItem->getExcerpt(150) !!}
+                                    {{ $newsItem->getExcerpt(150) }}
                                 </p>
                                 <a href="{{ route('news.show', $newsItem->slug) }}" 
                                    class="inline-flex items-center text-[#1E90A0] font-semibold hover:text-teal-700 transition-colors">

@@ -51,6 +51,10 @@ class ReportAddedNotification extends Notification implements ShouldQueue
     {
         $courseName = $this->report->course ? $this->report->course->title : 'General';
         
+        $url = method_exists($notifiable, 'isParent') && $notifiable->isParent() 
+            ? route('parent.children.evaluations', ['child' => $this->report->student_id], false)
+            : route('student.reports.index', [], false);
+        
         return [
             'type' => 'report_added',
             'title' => 'New Progress Report',
@@ -58,7 +62,7 @@ class ReportAddedNotification extends Notification implements ShouldQueue
             'report_id' => $this->report->id,
             'course_name' => $courseName,
             'teacher_name' => $this->report->teacher->name,
-            'url' => route('student.reports.index'),
+            'url' => $url,
         ];
     }
 }

@@ -12,9 +12,11 @@ use App\Models\Report;
 use App\Models\Resource;
 use App\Models\TeacherHour;
 
+use Spatie\Permission\Traits\HasRoles;
+
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, HasRoles;
 
     protected $fillable = [
         'name',
@@ -25,9 +27,13 @@ class User extends Authenticatable
         'gender',
         'phone',
         'timezone',
+        'country',
+        'allowed_countries',
+        'can_access_payroll',
         'birth_date',
         'active',
         'hourly_rate',
+        'teacher_application_id',
     ];
 
     protected $hidden = [
@@ -43,28 +49,30 @@ class User extends Authenticatable
             'active' => 'boolean',
             'birth_date' => 'date',
             'hourly_rate' => 'decimal:2',
+            'allowed_countries' => 'array',
+            'can_access_payroll' => 'boolean',
         ];
     }
 
     // ============================================
     // Scopes
     // ============================================
-    public function scopeParents($query)
+    public function scopeRoleParent($query)
     {
         return $query->where('role', 'Parent');
     }
 
-    public function scopeStudents($query)
+    public function scopeRoleStudent($query)
     {
         return $query->where('role', 'Student');
     }
 
-    public function scopeTeachers($query)
+    public function scopeRoleTeacher($query)
     {
         return $query->where('role', 'Teacher');
     }
 
-    public function scopeAdmins($query)
+    public function scopeRoleAdmin($query)
     {
         return $query->where('role', 'Admin');
     }
@@ -112,6 +120,11 @@ class User extends Authenticatable
         return $this->hasMany(Report::class, 'student_id');
     }
 
+    public function studentEvaluations()
+    {
+        return $this->hasMany(StudentEvaluation::class, 'student_id');
+    }
+
     public function resources()
     {
         return $this->hasMany(Resource::class, 'student_id');
@@ -140,9 +153,29 @@ class User extends Authenticatable
         return $this->hasMany(Resource::class, 'teacher_id');
     }
 
+    public function evaluations()
+    {
+        return $this->hasMany(TeacherEvaluation::class, 'teacher_id');
+    }
+
+    public function evaluationsGiven()
+    {
+        return $this->hasMany(TeacherEvaluation::class, 'evaluator_id');
+    }
+
     public function teacherHours()
     {
         return $this->hasMany(TeacherHour::class, 'teacher_id');
+    }
+
+    public function teacherEvaluations()
+    {
+        return $this->hasMany(StudentEvaluation::class, 'teacher_id');
+    }
+
+    public function availabilities()
+    {
+        return $this->hasMany(UserAvailability::class);
     }
 
     // ============================================
@@ -187,5 +220,30 @@ class User extends Authenticatable
 
         // Students and Parents use their timezone or default to Egypt
         return $this->timezone ?? 'Africa/Cairo';
+    }
+
+    /**
+     * Check if the user has access to teacher payroll.
+     */
+    public function canAccessPayroll(): bool
+    {
+        // SuperAdmins always have access
+        if ($this->hasRole('SuperAdmin')) {
+            return true;
+        }
+
+        // Direct access
+        if ($this->can_access_payroll) {
+            return true;
+        }
+
+        // Role-based access
+        foreach ($this->roles as $role) {
+            if ($role->can_access_payroll) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

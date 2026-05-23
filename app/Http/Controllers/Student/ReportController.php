@@ -3,65 +3,86 @@
 namespace App\Http\Controllers\Student;
 
 use App\Http\Controllers\Controller;
+use App\Services\StudentReportService;
 use Illuminate\Http\Request;
-use App\Models\Report;
-use App\Models\Course;
-use App\Models\User;
+use Exception;
 
 class ReportController extends Controller
 {
-    public function index(Request $request)
+    protected $service;
+
+    public function __construct(StudentReportService $service)
     {
-        $student = auth()->user();
-
-        // Build the query
-        $query = Report::with(['teacher', 'course'])
-            ->where('student_id', $student->id)
-            ->latest('report_date');
-
-        // Apply filters
-        if ($request->filled('course_id')) {
-            $query->where('course_id', $request->course_id);
-        }
-
-        if ($request->filled('teacher_id')) {
-            $query->where('teacher_id', $request->teacher_id);
-        }
-
-        if ($request->filled('date_from')) {
-            $query->whereDate('report_date', '>=', $request->date_from);
-        }
-
-        if ($request->filled('date_to')) {
-            $query->whereDate('report_date', '<=', $request->date_to);
-        }
-
-        // Get paginated reports
-        $reports = $query->paginate(15)->withQueryString();
-
-        // Get courses for filter dropdown (only courses the student has reports for)
-        $courses = Course::whereHas('reports', function($q) use ($student) {
-            $q->where('student_id', $student->id);
-        })->get();
-
-        // Get teachers for filter dropdown (only teachers who have written reports for this student)
-        $teachers = User::where('role', 'teacher')
-            ->whereHas('teacherReports', function($q) use ($student) {
-                $q->where('student_id', $student->id);
-            })->get();
-
-        return view('student.reports.index', compact('reports', 'courses', 'teachers'));
+        $this->service = $service;
     }
 
-    public function show($id)
+    public function index(Request $request)
     {
-        $student = auth()->user();
+        try {
+            $student = auth()->user();
+            
+            if ($student->role !== 'Student') {
+                abort(403);
+            }
 
-        // Get the report and ensure it belongs to the authenticated student
-        $report = Report::with(['teacher', 'course', 'student'])
-            ->where('student_id', $student->id)
-            ->findOrFail($id);
+            $data = $this->service->getIndexData($student, $request);
 
-        return view('student.reports.show', compact('report'));
+            // Fetch new student evaluations with filters applied
+            $query = \App\Models\StudentEvaluation::with(['teacher', 'course'])
+                ->where('student_id', $student->id);
+
+            if ($request->filled('course_id')) {
+                $query->where('course_id', $request->input('course_id'));
+            }
+            if ($request->filled('teacher_id')) {
+                $query->where('teacher_id', $request->input('teacher_id'));
+            }
+            if ($request->filled('date_from')) {
+                $query->where('evaluation_date', '>=', $request->input('date_from'));
+            }
+            if ($request->filled('date_to')) {
+                $query->where('evaluation_date', '<=', $request->input('date_to'));
+            }
+
+            $data['evaluations'] = $query->latest('evaluation_date')->get();
+
+            return view('student.reports.index', $data);
+            
+        } catch (Exception $e) {
+            if ($e instanceof \Symfony\Component\HttpKernel\Exception\HttpException) {
+                throw $e;
+            }
+            return $this->errorResponse('An error occurred while loading reports. Please try again.');
+        }
+    }
+
+    public function show(Request $request, $id)
+    {
+        try {
+            $student = auth()->user();
+            
+            if ($student->role !== 'Student') {
+                abort(403);
+            }
+
+            // Check if viewing a new monthly evaluation
+            if ($request->input('type') === 'evaluation') {
+                $evaluation = \App\Models\StudentEvaluation::with(['teacher', 'course'])
+                    ->where('student_id', $student->id)
+                    ->findOrFail($id);
+
+                return view('student.reports.show_evaluation', compact('evaluation'));
+            }
+
+            $report = $this->service->getReport($student, $id);
+
+            return view('student.reports.show', compact('report'));
+            
+        } catch (Exception $e) {
+            if ($e instanceof \Symfony\Component\HttpKernel\Exception\HttpException) {
+                throw $e;
+            }
+            return $this->errorResponse('An error occurred while loading the report. Please try again.');
+        }
     }
 }

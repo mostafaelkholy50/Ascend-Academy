@@ -4,31 +4,29 @@ namespace App\Http\Controllers\Admin;
 
 use App\Models\User;
 use App\Models\Course;
-use App\Models\Children;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Hash;
+use App\Services\ParentService;
+use App\Http\Requests\Admin\StoreParentRequest;
+use App\Http\Requests\Admin\AddChildRequest;
+use App\Http\Requests\Admin\UpdateParentRequest;
+use App\Http\Requests\Admin\UpdateParentPasswordRequest;
 
 class ParentController extends Controller
 {
+    protected $parentService;
+
+    public function __construct(ParentService $parentService)
+    {
+        $this->parentService = $parentService;
+    }
+
     /**
      * عرض جميع الآباء
      */
     public function index(Request $request)
     {
-        $query = User::where('role', 'Parent')->with('children');
-
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('phone', 'like', "%{$search}%");
-            });
-        }
-
-        $parents = $query->latest()->paginate(15);
-
+        $parents = $this->parentService->getIndexData($request);
         return view('admin.parents.index', compact('parents'));
     }
 
@@ -44,35 +42,9 @@ class ParentController extends Controller
     /**
      * Store new parent
      */
-    public function store(Request $request)
+    public function store(StoreParentRequest $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|string|min:8|confirmed',
-            'phone' => 'nullable|string|max:20',
-            'active' => 'boolean',
-            'children' => 'nullable|array',
-            'children.*' => 'exists:users,id',
-        ]);
-
-        $parent = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'role' => 'Parent',
-            'phone' => $request->phone,
-            'active' => $request->has('active'),
-        ]);
-
-        if ($request->filled('children')) {
-            $parent->children()->attach($request->children);
-            
-            // Also link the parent back to the children if needed (many-to-many is bidirectional in this logic)
-            // But typically 'children' table has parent_id and child_id.
-            // scope children() uses belongsToMany User 'children', 'parent_id', 'child_id'.
-            // So attach works.
-        }
+        $this->parentService->storeParent($request->validated());
 
         return redirect()->route('admin.parents.index')
             ->with('success', 'Parent created successfully.');
@@ -92,44 +64,10 @@ class ParentController extends Controller
     /**
      * إضافة طالب (ابن) لولي الأمر
      */
-    public function addChild(Request $request, User $parent)
+    public function addChild(AddChildRequest $request, User $parent)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|string|min:8',
-            'birth_date' => 'nullable|date|before:today',
-            'gender' => 'nullable|in:male,female',
-            'level' => 'nullable|string|max:100',
-            'level' => 'nullable|string|max:100',
-        ]);
-
         try {
-            // إنشاء حساب الطالب
-            $student = User::create([
-                'name' => $request->name,
-                'email' => $request->email,
-                'password' => Hash::make($request->password),
-                'birth_date' => $request->birth_date,
-                'gender' => $request->gender,
-                'role' => 'Student',
-                'active' => true,
-            ]);
-
-            // ربط الطالب بولي الأمر
-            Children::create([
-                'parent_id' => $parent->id,
-                'child_id' => $student->id,
-            ]);
-
-            // إضافة الطالب للكورس إذا تم تحديده
-            // if ($request->filled('course_id')) {
-            //     $student->enrollments()->create([
-            //         'course_id' => $request->course_id,
-            //         'start_date' => now(),
-            //         'status' => 'active',
-            //     ]);
-            // }
+            $this->parentService->addChild($parent, $request->validated());
 
             return back()->with('success', 'Student added successfully!');
 
@@ -143,9 +81,7 @@ class ParentController extends Controller
      */
     public function removeChild(User $parent, User $child)
     {
-        Children::where('parent_id', $parent->id)
-            ->where('child_id', $child->id)
-            ->delete();
+        $this->parentService->removeChild($parent, $child);
 
         return back()->with('success', 'Student removed from parent successfully.');
     }
@@ -153,42 +89,30 @@ class ParentController extends Controller
     /**
      * تحديث بيانات Parent
      */
-    public function update(Request $request, User $parent)
+    public function update(UpdateParentRequest $request, User $parent)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $parent->id,
-            'phone' => 'nullable|string|max:20',
-            'active' => 'nullable|boolean',
-        ]);
-
-        $parent->update($request->only(['name', 'email', 'phone', 'active']));
+        $this->parentService->updateParent($parent, $request->validated());
 
         return back()->with('success', 'Parent updated successfully.');
     }
-
 
     /**
      * حذف Parent
      */
     public function destroy(User $parent)
     {
-        $parent->delete();
-        return redirect()->route('admin.parents.index')->with('success', 'Parent deleted successfully.');
+        $this->parentService->deleteParent($parent);
+        
+        return redirect()->route('admin.parents.index')
+            ->with('success', 'Parent deleted successfully.');
     }
 
     /**
      * تحديث كلمة المرور
      */
-    public function updatePassword(Request $request, User $parent)
+    public function updatePassword(UpdateParentPasswordRequest $request, User $parent)
     {
-        $request->validate([
-            'password' => 'required|string|min:8|confirmed',
-        ]);
-
-        $parent->update([
-            'password' => Hash::make($request->password),
-        ]);
+        $this->parentService->updatePassword($parent, $request->password);
 
         return back()->with('success', 'Password updated successfully.');
     }

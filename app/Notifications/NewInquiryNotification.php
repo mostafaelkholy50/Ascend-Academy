@@ -70,7 +70,7 @@ class NewInquiryNotification extends Notification implements ShouldQueue
             'message' => 'From: ' . $this->inquiry->name,
             'inquiry_id' => $this->inquiry->id,
             'inquiry_type' => $this->inquiry->type,
-            'url' => route('admin.inquiries.index'),
+            'url' => route('admin.inquiries.index', [], false),
         ];
     }
 }

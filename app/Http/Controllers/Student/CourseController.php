@@ -3,70 +3,36 @@
 namespace App\Http\Controllers\Student;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use App\Models\Enrollment;
-use App\Models\Schedule;
-use Carbon\Carbon;
+use App\Services\StudentCourseService;
+use Exception;
 
 class CourseController extends Controller
 {
+    protected $service;
+
+    public function __construct(StudentCourseService $service)
+    {
+        $this->service = $service;
+    }
+
     public function index()
     {
-        $student = auth()->user();
-
-        // Get student's enrollments with courses
-        $enrollments = Enrollment::with(['course'])
-            ->where('student_id', $student->id)
-            ->get();
-
-        // Calculate progress and statistics for each enrollment
-        foreach ($enrollments as $enrollment) {
-            // Total sessions for this enrollment
-            $totalSessions = Schedule::where('student_id', $student->id)
-                ->where('course_id', $enrollment->course_id)
-                ->count();
-
-            // Completed sessions
-            $completedSessions = Schedule::where('student_id', $student->id)
-                ->where('course_id', $enrollment->course_id)
-                ->where('status', 'completed')
-                ->count();
-
-            // Upcoming sessions
-            $upcomingSessions = Schedule::where('student_id', $student->id)
-                ->where('course_id', $enrollment->course_id)
-                ->where('status', 'scheduled')
-                ->where('starts_at', '>', now())
-                ->count();
-
-            // Next session
-            $nextSession = Schedule::with(['teacher'])
-                ->where('student_id', $student->id)
-                ->where('course_id', $enrollment->course_id)
-                ->where('status', 'scheduled')
-                ->where('starts_at', '>', now())
-                ->orderBy('starts_at')
-                ->first();
-
-            // Calculate progress percentage
-            $enrollment->progress = $totalSessions > 0
-                ? round(($completedSessions / $totalSessions) * 100)
-                : 0;
+        try {
+            $student = auth()->user();
             
-            $enrollment->total_sessions = $totalSessions;
-            $enrollment->completed_sessions = $completedSessions;
-            $enrollment->upcoming_sessions = $upcomingSessions;
-            $enrollment->next_session = $nextSession;
+            if ($student->role !== 'Student') {
+                abort(403);
+            }
 
-            // Get average mastery score from reports
-            $averageScore = \App\Models\Report::where('student_id', $student->id)
-                ->where('course_id', $enrollment->course_id)
-                ->whereNotNull('mastery_score')
-                ->avg('mastery_score');
+            $enrollments = $this->service->getCoursesData($student);
+
+            return view('student.courses.index', compact('enrollments'));
             
-            $enrollment->average_mastery = $averageScore ? round($averageScore) : null;
+        } catch (Exception $e) {
+            if ($e instanceof \Symfony\Component\HttpKernel\Exception\HttpException) {
+                throw $e;
+            }
+            return $this->errorResponse('حدث خطأ أثناء تحميل الكورسات.');
         }
-
-        return view('student.courses.index', compact('enrollments'));
     }
 }

@@ -111,7 +111,7 @@
                                         </h3>
                                     </a>
                                     <p class="text-gray-600 text-sm line-clamp-2">
-                                        {!! $related->getExcerpt(100) !!}
+                                        {{ $related->getExcerpt(100) }}
                                     </p>
                                 </div>
                             </article>

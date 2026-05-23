@@ -4,24 +4,24 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rules\Password;
+use App\Services\ProfileService;
+use App\Http\Requests\Admin\UpdateProfileRequest;
+use App\Http\Requests\Admin\UpdateProfilePasswordRequest;
+use App\Http\Requests\Admin\UpdateAvatarRequest;
 
 class ProfileController extends Controller
 {
+    protected $service;
+
+    public function __construct(ProfileService $service)
+    {
+        $this->service = $service;
+    }
+
     public function show()
     {
-        $user = auth()->user();
-        
-        // Get user statistics
-        $stats = [
-            'total_users' => \App\Models\User::count(),
-            'total_students' => \App\Models\User::where('role', 'student')->count(),
-            'total_teachers' => \App\Models\User::where('role', 'teacher')->count(),
-            'member_since' => $user->created_at->format('F Y'),
-        ];
-
-        return view('admin.profile.show', compact('user', 'stats'));
+        $data = $this->service->getProfileData(auth()->user());
+        return view('admin.profile.show', $data);
     }
 
     public function edit()
@@ -30,64 +30,31 @@ class ProfileController extends Controller
         return view('admin.profile.edit', compact('user'));
     }
 
-    public function update(Request $request)
+    public function update(UpdateProfileRequest $request)
     {
-        $user = auth()->user();
-
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $user->id],
-            'phone' => ['nullable', 'string', 'max:20'],
-        ]);
-
-        $user->update($validated);
+        $this->service->updateProfile(auth()->user(), $request->validated());
 
         return redirect()->route('admin.profile.show')
             ->with('success', 'Profile updated successfully!');
     }
 
-    public function updatePassword(Request $request)
+    public function updatePassword(UpdateProfilePasswordRequest $request)
     {
-        $validated = $request->validate([
-            'current_password' => ['required', 'current_password'],
-            'password' => ['required', 'confirmed', Password::defaults()],
-        ]);
-
-        $user = auth()->user();
-        $user->update([
-            'password' => Hash::make($validated['password']),
-        ]);
+        $this->service->updatePassword(auth()->user(), $request->password);
 
         return back()->with('success', 'Password changed successfully!');
     }
 
-    public function updateAvatar(Request $request)
+    public function updateAvatar(UpdateAvatarRequest $request)
     {
-        $request->validate([
-            'avatar' => ['required', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
-        ]);
-
-        $user = auth()->user();
-
-        if ($user->avatar && \Illuminate\Support\Facades\Storage::disk('public')->exists($user->avatar)) {
-            \Illuminate\Support\Facades\Storage::disk('public')->delete($user->avatar);
-        }
-
-        $path = $request->file('avatar')->store('avatars', 'public');
-        $user->update(['avatar' => $path]);
+        $this->service->updateAvatar(auth()->user(), $request->file('avatar'));
 
         return back()->with('success', 'Profile picture updated successfully!');
     }
 
     public function deleteAvatar()
     {
-        $user = auth()->user();
-
-        if ($user->avatar && \Illuminate\Support\Facades\Storage::disk('public')->exists($user->avatar)) {
-            \Illuminate\Support\Facades\Storage::disk('public')->delete($user->avatar);
-        }
-
-        $user->update(['avatar' => null]);
+        $this->service->deleteAvatar(auth()->user());
 
         return back()->with('success', 'Profile picture removed successfully!');
     }

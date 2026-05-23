@@ -56,6 +56,15 @@
                                 <option value="0" {{ !$parent->active ? 'selected' : '' }}>Inactive</option>
                             </select>
                         </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-600 mb-2">Location / Country</label>
+                            <select name="country" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vibrant-green">
+                                <option value="">Select Country</option>
+                                @foreach($countries as $country)
+                                    <option value="{{ $country }}" {{ $parent->country == $country ? 'selected' : '' }}>{{ $country }}</option>
+                                @endforeach
+                            </select>
+                        </div>
                     </div>
 
                     <button type="submit" class="bg-vibrant-green text-white px-6 py-2 rounded-lg hover:bg-deep-blue transition">
@@ -276,6 +285,15 @@
                                 <option value="Intermediate">Intermediate</option>
                                 <option value="Advanced">Advanced</option>
                                 <option value="Ijazah">Ijazah</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-600 mb-2">Location / Country</label>
+                            <select name="country" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vibrant-green">
+                                <option value="">Select Country</option>
+                                @foreach($countries as $country)
+                                    <option value="{{ $country }}">{{ $country }}</option>
+                                @endforeach
                             </select>
                         </div>
 
