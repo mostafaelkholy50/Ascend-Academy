@@ -23,3 +23,11 @@
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
 </IfModule>
+
+# Prevent LiteSpeed from aborting during large file uploads
+<IfModule Litespeed>
+    RewriteEngine On
+    RewriteRule .* - [E=noabort:1]
+    RewriteRule .* - [E=nconnectiontimeout:600]
+</IfModule>
+
