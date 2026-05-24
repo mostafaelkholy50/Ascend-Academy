@@ -7,6 +7,7 @@ use App\Models\Book;
 use App\Services\BookService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class BookController extends Controller
 {
@@ -99,13 +100,20 @@ class BookController extends Controller
     {
         $this->authorizeManage();
 
-        $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
+        $rules = [
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'pdf_file' => 'required|file|mimes:pdf|max:1024000', // max 1GB for large files
             'cover_image' => 'nullable|image|max:4096',
             'is_active' => 'nullable',
-        ]);
+        ];
+
+        if ($request->filled('chunk_upload_id')) {
+            $rules['chunk_upload_id'] = 'required|string';
+        } else {
+            $rules['pdf_file'] = 'required|file|mimes:pdf|max:1024000';
+        }
+
+        $validator = \Illuminate\Support\Facades\Validator::make($request->all(), $rules);
 
         if ($validator->fails()) {
             if ($request->ajax() || $request->wantsJson()) {
@@ -121,6 +129,7 @@ class BookController extends Controller
             $this->bookService->storeBook(
                 $request->only(['title', 'description', 'is_active']),
                 $request->file('pdf_file'),
+                $request->input('chunk_upload_id'),
                 $request->file('cover_image')
             );
 
@@ -143,6 +152,36 @@ class BookController extends Controller
             }
             return back()->withInput()->with('error', 'Failed to save book: ' . $e->getMessage());
         }
+    }
+
+    public function uploadPdfChunk(Request $request)
+    {
+        $this->authorizeManage();
+
+        $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
+            'upload_id' => 'required|string',
+            'chunk_index' => 'required|integer|min:0',
+            'total_chunks' => 'required|integer|min:1',
+            'file_name' => 'required|string',
+            'chunk' => 'required|file|max:153600',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
+        }
+
+        $uploadId = preg_replace('/[^A-Za-z0-9\-_]/', '', $request->string('upload_id')->value());
+        $chunkIndex = (int) $request->input('chunk_index');
+        $chunkDir = "tmp/book-chunks/{$uploadId}";
+
+        Storage::disk('local')->putFileAs($chunkDir, $request->file('chunk'), "{$chunkIndex}.part");
+        Storage::disk('local')->put("{$chunkDir}/meta.json", json_encode([
+            'total_chunks' => (int) $request->input('total_chunks'),
+            'file_name' => basename($request->input('file_name')),
+            'updated_at' => now()->toDateTimeString(),
+        ]));
+
+        return response()->json(['success' => true]);
     }
 
     public function edit(Book $book)

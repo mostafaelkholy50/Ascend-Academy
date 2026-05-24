@@ -35,6 +35,7 @@
     <div class="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-gray-100 max-w-3xl mx-auto">
         <form id="book-form" action="{{ route('books.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
             @csrf
+            <input type="hidden" name="chunk_upload_id" id="chunk_upload_id">
 
             <!-- Title -->
             <div class="space-y-2">
@@ -162,6 +163,8 @@
                 errorList.innerHTML = '';
                 
                 const formData = new FormData(form);
+                const pdfInput = document.getElementById('pdf_file');
+                const pdfFile = pdfInput.files[0];
                 
                 // Show progress modal
                 const modal = document.getElementById('upload-progress-modal');
@@ -188,6 +191,42 @@
                     return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
                 }
                 
+                async function uploadInChunks(file) {
+                    const chunkSize = 5 * 1024 * 1024;
+                    const totalChunks = Math.ceil(file.size / chunkSize);
+                    const uploadId = (crypto.randomUUID ? crypto.randomUUID() : (Date.now() + '-' + Math.random().toString(36).slice(2)));
+                    document.getElementById('chunk_upload_id').value = uploadId;
+
+                    for (let i = 0; i < totalChunks; i++) {
+                        const start = i * chunkSize;
+                        const end = Math.min(start + chunkSize, file.size);
+                        const chunk = file.slice(start, end);
+                        const chunkData = new FormData();
+                        chunkData.append('_token', '{{ csrf_token() }}');
+                        chunkData.append('upload_id', uploadId);
+                        chunkData.append('chunk_index', i);
+                        chunkData.append('total_chunks', totalChunks);
+                        chunkData.append('file_name', file.name);
+                        chunkData.append('chunk', chunk, file.name + '.part');
+
+                        const res = await fetch('{{ route('books.upload-pdf-chunk') }}', {
+                            method: 'POST',
+                            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                            body: chunkData
+                        });
+
+                        if (!res.ok) {
+                            throw new Error('Chunk upload failed at part ' + (i + 1));
+                        }
+
+                        const percent = Math.round(((i + 1) / totalChunks) * 100);
+                        barFill.style.width = percent + '%';
+                        percentText.textContent = percent + '%';
+                        bytesText.textContent = formatBytes(end) + ' / ' + formatBytes(file.size);
+                    }
+                }
+
+                const sendFinalForm = () => {
                 // Set up XHR request
                 const xhr = new XMLHttpRequest();
                 xhr.open('POST', form.action, true);
@@ -263,6 +302,22 @@
                 
                 // Send form data
                 xhr.send(formData);
+                };
+
+                (async () => {
+                    try {
+                        if (pdfFile) {
+                            statusTitle.textContent = 'Uploading Book in Parts...';
+                            await uploadInChunks(pdfFile);
+                            formData.delete('pdf_file');
+                        }
+                        statusTitle.textContent = 'Saving Book Record...';
+                        sendFinalForm();
+                    } catch (err) {
+                        modal.classList.add('hidden');
+                        showErrorBanner([err.message || 'Chunk upload failed.']);
+                    }
+                })();
                 
                 function showErrorBanner(messages) {
                     errorList.innerHTML = '';

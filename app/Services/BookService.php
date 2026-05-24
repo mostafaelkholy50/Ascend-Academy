@@ -7,6 +7,7 @@ use App\Models\Book;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Http\UploadedFile;
 
 class BookService
 {
@@ -41,9 +42,13 @@ class BookService
         return $query->paginate($perPage);
     }
 
-    public function storeBook(array $data, $pdfFile, $coverFile = null): Book
+    public function storeBook(array $data, $pdfFile, ?string $chunkUploadId = null, $coverFile = null): Book
     {
         $data['is_active'] = isset($data['is_active']) ? (bool)$data['is_active'] : true;
+
+        if (!$pdfFile && $chunkUploadId) {
+            $pdfFile = $this->buildUploadedFileFromChunks($chunkUploadId);
+        }
 
         if ($pdfFile) {
             // Save to secure private local disk under books folder
@@ -57,6 +62,57 @@ class BookService
         }
 
         return $this->repository->create($data);
+    }
+
+    private function buildUploadedFileFromChunks(string $uploadId): UploadedFile
+    {
+        $safeUploadId = preg_replace('/[^A-Za-z0-9\-_]/', '', $uploadId);
+        $chunkDir = "tmp/book-chunks/{$safeUploadId}";
+        $metaPath = "{$chunkDir}/meta.json";
+
+        if (!Storage::disk('local')->exists($metaPath)) {
+            throw new \RuntimeException('Chunk metadata not found.');
+        }
+
+        $meta = json_decode(Storage::disk('local')->get($metaPath), true);
+        $totalChunks = (int) ($meta['total_chunks'] ?? 0);
+        $originalName = (string) ($meta['file_name'] ?? 'book.pdf');
+
+        if ($totalChunks < 1) {
+            throw new \RuntimeException('Invalid chunk metadata.');
+        }
+
+        $tempDir = storage_path('app/tmp/assembled-books');
+        if (!is_dir($tempDir)) {
+            mkdir($tempDir, 0755, true);
+        }
+
+        $assembledPath = $tempDir . '/' . Str::uuid()->toString() . '.pdf';
+        $out = fopen($assembledPath, 'wb');
+
+        if ($out === false) {
+            throw new \RuntimeException('Failed to create assembled upload file.');
+        }
+
+        for ($i = 0; $i < $totalChunks; $i++) {
+            $partPath = "{$chunkDir}/{$i}.part";
+            if (!Storage::disk('local')->exists($partPath)) {
+                fclose($out);
+                @unlink($assembledPath);
+                throw new \RuntimeException("Missing chunk {$i}.");
+            }
+            fwrite($out, Storage::disk('local')->get($partPath));
+        }
+        fclose($out);
+        Storage::disk('local')->deleteDirectory($chunkDir);
+
+        return new UploadedFile(
+            $assembledPath,
+            basename($originalName),
+            'application/pdf',
+            null,
+            true
+        );
     }
 
     public function updateBook(Book $book, array $data, $pdfFile = null, $coverFile = null): bool
@@ -137,4 +193,3 @@ class BookService
         }
     }
 }
-

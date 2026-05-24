@@ -83,6 +83,7 @@ Route::middleware('throttle:60,1')->group(function () {
         Route::get('/dashboard/books', [\App\Http\Controllers\Dashboard\BookController::class, 'index'])->name('books.index');
         Route::get('/dashboard/books/create', [\App\Http\Controllers\Dashboard\BookController::class, 'create'])->name('books.create');
         Route::post('/dashboard/books', [\App\Http\Controllers\Dashboard\BookController::class, 'store'])->name('books.store');
+        Route::post('/dashboard/books/upload-pdf-chunk', [\App\Http\Controllers\Dashboard\BookController::class, 'uploadPdfChunk'])->name('books.upload-pdf-chunk');
         Route::get('/dashboard/books/{book}', [\App\Http\Controllers\Dashboard\BookController::class, 'show'])->name('books.show');
         Route::get('/dashboard/books/{book}/edit', [\App\Http\Controllers\Dashboard\BookController::class, 'edit'])->name('books.edit');
         Route::patch('/dashboard/books/{book}', [\App\Http\Controllers\Dashboard\BookController::class, 'update'])->name('books.update');
@@ -109,4 +110,3 @@ Route::get('/storage/{path}', function ($path) {
 
     return response()->file($fullPath);
 })->where('path', '.*');
-
