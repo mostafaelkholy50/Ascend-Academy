@@ -224,6 +224,7 @@
                         percentText.textContent = percent + '%';
                         bytesText.textContent = formatBytes(end) + ' / ' + formatBytes(file.size);
                     }
+                    return uploadId;
                 }
 
                 const sendFinalForm = () => {
@@ -308,8 +309,9 @@
                     try {
                         if (pdfFile) {
                             statusTitle.textContent = 'Uploading Book in Parts...';
-                            await uploadInChunks(pdfFile);
+                            const uploadId = await uploadInChunks(pdfFile);
                             formData.delete('pdf_file');
+                            formData.set('chunk_upload_id', uploadId);
                         }
                         statusTitle.textContent = 'Saving Book Record...';
                         sendFinalForm();
