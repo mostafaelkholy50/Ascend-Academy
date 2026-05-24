@@ -227,4 +227,81 @@ class BookTest extends TestCase
             ]
         ]);
     }
+
+    public function test_authorized_user_can_upload_pdf_chunk()
+    {
+        $this->actingAs($this->adminWithManage);
+
+        $chunk = UploadedFile::fake()->create('part.pdf', 10, 'application/pdf');
+
+        $response = $this->post(route('books.upload-pdf-chunk'), [
+            'upload_id' => 'test-upload-123',
+            'chunk_index' => 0,
+            'total_chunks' => 2,
+            'file_name' => 'book.pdf',
+            'chunk' => $chunk,
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertJson(['success' => true]);
+
+        Storage::disk('local')->assertExists('tmp/book-chunks/test-upload-123/0.part');
+        Storage::disk('local')->assertExists('tmp/book-chunks/test-upload-123/meta.json');
+    }
+
+    public function test_unauthorized_user_cannot_upload_pdf_chunk()
+    {
+        $this->actingAs($this->student);
+
+        $chunk = UploadedFile::fake()->create('part.pdf', 10, 'application/pdf');
+
+        $response = $this->post(route('books.upload-pdf-chunk'), [
+            'upload_id' => 'test-upload-123',
+            'chunk_index' => 0,
+            'total_chunks' => 2,
+            'file_name' => 'book.pdf',
+            'chunk' => $chunk,
+        ]);
+
+        $response->assertStatus(403);
+    }
+
+    public function test_store_book_using_chunk_upload_id()
+    {
+        $this->actingAs($this->adminWithManage);
+
+        // Upload two chunks manually to fake local storage
+        $uploadId = 'test-upload-456';
+        Storage::disk('local')->put("tmp/book-chunks/{$uploadId}/0.part", 'first part content ');
+        Storage::disk('local')->put("tmp/book-chunks/{$uploadId}/1.part", 'second part content');
+        Storage::disk('local')->put("tmp/book-chunks/{$uploadId}/meta.json", json_encode([
+            'total_chunks' => 2,
+            'file_name' => 'my-large-book.pdf',
+            'updated_at' => now()->toDateTimeString()
+        ]));
+
+        $response = $this->post(route('books.store'), [
+            'title' => 'Assembled Book Title',
+            'description' => 'Assembled Book Description',
+            'chunk_upload_id' => $uploadId,
+            'is_active' => '1',
+        ]);
+
+        $response->assertRedirect(route('books.index'));
+
+        $this->assertDatabaseHas('books', [
+            'title' => 'Assembled Book Title',
+        ]);
+
+        $book = Book::where('title', 'Assembled Book Title')->first();
+        Storage::disk('local')->assertExists($book->file_path);
+
+        // Check content of assembled file
+        $content = Storage::disk('local')->get($book->file_path);
+        $this->assertEquals('first part content second part content', $content);
+
+        // Check that temp directory is cleaned up
+        Storage::disk('local')->assertMissing("tmp/book-chunks/{$uploadId}");
+    }
 }
+

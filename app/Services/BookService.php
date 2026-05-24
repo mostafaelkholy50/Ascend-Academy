@@ -46,22 +46,51 @@ class BookService
     {
         $data['is_active'] = isset($data['is_active']) ? (bool)$data['is_active'] : true;
 
-        if (!$pdfFile && $chunkUploadId) {
-            $pdfFile = $this->buildUploadedFileFromChunks($chunkUploadId);
-        }
+        $storedPdfPath = null;
+        $storedCoverPath = null;
+        $tempAssembledPath = null;
 
-        if ($pdfFile) {
-            // Save to secure private local disk under books folder
-            $data['file_path'] = $pdfFile->store('books', 'local');
-        }
+        try {
+            if (!$pdfFile && $chunkUploadId) {
+                $pdfFile = $this->buildUploadedFileFromChunks($chunkUploadId);
+                $tempAssembledPath = $pdfFile->getPathname();
+            }
 
-        if ($coverFile) {
-            // Save to public disk so it can be served as an image directly
-            $data['cover_image'] = $coverFile->store('books/covers', 'public');
-            $this->copyCoverToPublicFolder($data['cover_image']);
-        }
+            if ($pdfFile) {
+                // Save to secure private local disk under books folder
+                $data['file_path'] = $pdfFile->store('books', 'local');
+                $storedPdfPath = $data['file_path'];
+            }
 
-        return $this->repository->create($data);
+            if ($coverFile) {
+                // Save to public disk so it can be served as an image directly
+                $data['cover_image'] = $coverFile->store('books/covers', 'public');
+                $storedCoverPath = $data['cover_image'];
+                $this->copyCoverToPublicFolder($data['cover_image']);
+            }
+
+            // Clean up the temp assembled file if it was built from chunks
+            if ($tempAssembledPath && file_exists($tempAssembledPath)) {
+                @unlink($tempAssembledPath);
+            }
+
+            return \Illuminate\Support\Facades\DB::transaction(function () use ($data) {
+                return $this->repository->create($data);
+            });
+        } catch (\Throwable $e) {
+            // Rollback files stored on disk
+            if ($storedPdfPath && Storage::disk('local')->exists($storedPdfPath)) {
+                Storage::disk('local')->delete($storedPdfPath);
+            }
+            if ($storedCoverPath && Storage::disk('public')->exists($storedCoverPath)) {
+                Storage::disk('public')->delete($storedCoverPath);
+                $this->deleteCoverFromPublicFolder($storedCoverPath);
+            }
+            if ($tempAssembledPath && file_exists($tempAssembledPath)) {
+                @unlink($tempAssembledPath);
+            }
+            throw $e;
+        }
     }
 
     private function buildUploadedFileFromChunks(string $uploadId): UploadedFile
@@ -119,25 +148,60 @@ class BookService
     {
         $data['is_active'] = isset($data['is_active']) ? (bool)$data['is_active'] : false;
 
-        if ($pdfFile) {
-            // Delete old file
-            if ($book->file_path && Storage::disk('local')->exists($book->file_path)) {
-                Storage::disk('local')->delete($book->file_path);
-            }
-            $data['file_path'] = $pdfFile->store('books', 'local');
-        }
+        $oldPdfPath = $book->file_path;
+        $oldCoverPath = $book->cover_image;
 
-        if ($coverFile) {
-            // Delete old cover
-            if ($book->cover_image && Storage::disk('public')->exists($book->cover_image)) {
-                Storage::disk('public')->delete($book->cover_image);
-                $this->deleteCoverFromPublicFolder($book->cover_image);
-            }
-            $data['cover_image'] = $coverFile->store('books/covers', 'public');
-            $this->copyCoverToPublicFolder($data['cover_image']);
-        }
+        $newPdfPath = null;
+        $newCoverPath = null;
 
-        return $this->repository->update($book, $data);
+        try {
+            if ($pdfFile) {
+                $data['file_path'] = $pdfFile->store('books', 'local');
+                $newPdfPath = $data['file_path'];
+            }
+
+            if ($coverFile) {
+                $data['cover_image'] = $coverFile->store('books/covers', 'public');
+                $newCoverPath = $data['cover_image'];
+                $this->copyCoverToPublicFolder($data['cover_image']);
+            }
+
+            $success = \Illuminate\Support\Facades\DB::transaction(function () use ($book, $data) {
+                return $this->repository->update($book, $data);
+            });
+
+            if ($success) {
+                // Delete old files since the update succeeded
+                if ($pdfFile && $oldPdfPath && Storage::disk('local')->exists($oldPdfPath)) {
+                    Storage::disk('local')->delete($oldPdfPath);
+                }
+                if ($coverFile && $oldCoverPath && Storage::disk('public')->exists($oldCoverPath)) {
+                    Storage::disk('public')->delete($oldCoverPath);
+                    $this->deleteCoverFromPublicFolder($oldCoverPath);
+                }
+            } else {
+                // If it returned false, delete the newly stored files
+                if ($newPdfPath && Storage::disk('local')->exists($newPdfPath)) {
+                    Storage::disk('local')->delete($newPdfPath);
+                }
+                if ($newCoverPath && Storage::disk('public')->exists($newCoverPath)) {
+                    Storage::disk('public')->delete($newCoverPath);
+                    $this->deleteCoverFromPublicFolder($newCoverPath);
+                }
+            }
+
+            return $success;
+        } catch (\Throwable $e) {
+            // Delete new files on database failure
+            if ($newPdfPath && Storage::disk('local')->exists($newPdfPath)) {
+                Storage::disk('local')->delete($newPdfPath);
+            }
+            if ($newCoverPath && Storage::disk('public')->exists($newCoverPath)) {
+                Storage::disk('public')->delete($newCoverPath);
+                $this->deleteCoverFromPublicFolder($newCoverPath);
+            }
+            throw $e;
+        }
     }
 
     public function deleteBook(Book $book): bool
