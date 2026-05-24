@@ -1,0 +1,10 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # If request is already for /public, do nothing.
+    RewriteCond %{REQUEST_URI} ^/Freelance/Ascend-Academy/public/ [NC]
+    RewriteRule ^ - [L]
+
+    # Send all requests through Laravel public directory.
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
