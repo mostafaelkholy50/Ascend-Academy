@@ -235,7 +235,10 @@ class ScheduleService
             throw new \Exception('Student has a conflict at this time.');
         }
 
-        return $this->repository->update($schedule, [
+        $oldTeacherId = $schedule->teacher_id;
+        $oldStartsAt = $schedule->starts_at;
+
+        $updated = $this->repository->update($schedule, [
             'teacher_id' => $data['teacher_id'],
             'starts_at' => $startsAt,
             'ends_at' => $endsAt,
@@ -243,6 +246,20 @@ class ScheduleService
             'notes' => $data['notes'] ?? null,
             'status' => $data['status'],
         ]);
+
+        if ($updated) {
+            try {
+                if ($oldTeacherId != $data['teacher_id'] || !$oldStartsAt->equalTo($startsAt)) {
+                    $teacher = User::find($data['teacher_id']);
+                    $schedule->load(['student', 'teacher', 'course']);
+                    $teacher->notify(new \App\Notifications\ScheduleAssignedNotification($schedule));
+                }
+            } catch (\Exception $e) {
+                Log::error('Failed to send schedule update notification: ' . $e->getMessage());
+            }
+        }
+
+        return $updated;
     }
 
     public function deleteSchedule(Schedule $schedule)

@@ -27,7 +27,7 @@ You have been assigned a new class schedule.
 {{ $schedule->notes }}
 @endif
 
-@component('mail::button', ['url' => route('teacher.schedules.index')])
+@component('mail::button', ['url' => route('teacher.schedule.index')])
 View My Schedule
 @endcomponent
 
