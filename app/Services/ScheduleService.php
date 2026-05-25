@@ -208,12 +208,33 @@ class ScheduleService
         if ($firstSchedule) {
             try {
                 $teacher = User::find($data['teacher_id']);
-                $firstSchedule->load(['student', 'teacher', 'course']);
+                $firstSchedule->load(['student.parents', 'teacher', 'course']);
+                
+                // Notify Teacher
                 $teacher->notify(new \App\Notifications\ScheduleAssignedNotification(
                     $firstSchedule,
                     $createdCount > 1,
                     $createdCount
                 ));
+
+                // Notify Student
+                $student = $firstSchedule->student;
+                if ($student) {
+                    $student->notify(new \App\Notifications\StudentScheduleAssignedNotification(
+                        $firstSchedule,
+                        $createdCount > 1,
+                        $createdCount
+                    ));
+                    
+                    // Notify Parents
+                    foreach ($student->parents as $parent) {
+                        $parent->notify(new \App\Notifications\StudentScheduleAssignedNotification(
+                            $firstSchedule,
+                            $createdCount > 1,
+                            $createdCount
+                        ));
+                    }
+                }
             } catch (\Exception $e) {
                 Log::error('Failed to send schedule notification: ' . $e->getMessage());
             }
@@ -251,8 +272,21 @@ class ScheduleService
             try {
                 if ($oldTeacherId != $data['teacher_id'] || !$oldStartsAt->equalTo($startsAt)) {
                     $teacher = User::find($data['teacher_id']);
-                    $schedule->load(['student', 'teacher', 'course']);
+                    $schedule->load(['student.parents', 'teacher', 'course']);
+                    
+                    // Notify Teacher
                     $teacher->notify(new \App\Notifications\ScheduleAssignedNotification($schedule));
+
+                    // Notify Student
+                    $student = $schedule->student;
+                    if ($student) {
+                        $student->notify(new \App\Notifications\StudentScheduleAssignedNotification($schedule));
+                        
+                        // Notify Parents
+                        foreach ($student->parents as $parent) {
+                            $parent->notify(new \App\Notifications\StudentScheduleAssignedNotification($schedule));
+                        }
+                    }
                 }
             } catch (\Exception $e) {
                 Log::error('Failed to send schedule update notification: ' . $e->getMessage());
@@ -425,12 +459,33 @@ class ScheduleService
             if ($firstSchedule && $createdCount > 0) {
                 try {
                     $teacher = User::find($teacherId);
-                    $firstSchedule->load(['student', 'teacher', 'course']);
+                    $firstSchedule->load(['student.parents', 'teacher', 'course']);
+                    
+                    // Notify Teacher
                     $teacher->notify(new \App\Notifications\ScheduleAssignedNotification(
                         $firstSchedule,
                         $createdCount > 1,
                         $createdCount
                     ));
+
+                    // Notify Student
+                    $student = $firstSchedule->student;
+                    if ($student) {
+                        $student->notify(new \App\Notifications\StudentScheduleAssignedNotification(
+                            $firstSchedule,
+                            $createdCount > 1,
+                            $createdCount
+                        ));
+                        
+                        // Notify Parents
+                        foreach ($student->parents as $parent) {
+                            $parent->notify(new \App\Notifications\StudentScheduleAssignedNotification(
+                                $firstSchedule,
+                                $createdCount > 1,
+                                $createdCount
+                            ));
+                        }
+                    }
                 } catch (\Exception $e) {
                     Log::error('Failed to send schedule notification: ' . $e->getMessage());
                 }
