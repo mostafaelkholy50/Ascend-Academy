@@ -100,3 +100,25 @@ test('accountant cannot access student from unauthorized country', function () {
 
     $response->assertStatus(403);
 });
+
+test('accountant can filter payments by country matching student', function () {
+    $this->actingAs($this->accountant);
+
+    // Filter by Egypt (should match Jane Student)
+    $response = $this->get(route('accountant.payments.index', ['country' => 'Egypt']));
+
+    $response->assertStatus(200);
+    $response->assertSee('Jane Student');
+});
+
+test('accountant country filter excludes non-matching countries', function () {
+    // Grant access to both Egypt and Canada so they are authorized, but filter specifically by Canada
+    $this->accountant->update(['allowed_countries' => ['Egypt', 'Canada']]);
+    $this->actingAs($this->accountant);
+
+    // Filter by Canada (should exclude Jane Student who is in Egypt)
+    $response = $this->get(route('accountant.payments.index', ['country' => 'Canada']));
+
+    $response->assertStatus(200);
+    $response->assertDontSee('Jane Student');
+});

@@ -28,6 +28,12 @@ class PaymentFilter
             $query->where('course_id', $request->course_id);
         }
 
+        if ($request->filled('country')) {
+            $query->whereHas('student', function ($q) use ($request) {
+                $q->where('country', $request->country);
+            });
+        }
+
         return $query;
     }
 }

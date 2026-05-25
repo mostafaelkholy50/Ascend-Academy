@@ -34,6 +34,7 @@
         <!-- Smart Search & Quick Filters -->
         <div class="bg-white/80 backdrop-blur-xl border border-slate-100 p-4 rounded-[2.5rem] shadow-sm sticky top-4 z-40">
             <form method="GET" action="{{ route('accountant.payments.index') }}" class="flex flex-wrap items-center gap-4">
+                <input type="hidden" name="country" id="country-filter-input" value="{{ request('country') }}">
                 <div class="relative flex-1 min-w-[300px]">
                     <i class="fa-solid fa-magnifying-glass absolute left-5 top-1/2 -translate-y-1/2 text-slate-400"></i>
                     <input type="text" name="search" value="{{ request('search') }}" placeholder="Search by student name or email..." 
@@ -59,6 +60,25 @@
                     Filter
                 </button>
             </form>
+        </div>
+
+        <!-- Country Pills Filter -->
+        <div class="flex flex-wrap items-center gap-3 bg-white/80 backdrop-blur-xl border border-slate-100 p-6 rounded-[2.5rem] shadow-sm">
+            <span class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-2">Filter by Country:</span>
+            <div class="flex flex-wrap gap-2">
+                <button type="button" data-country="" 
+                    class="country-pill px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-wider transition-all duration-300 active:scale-95 shadow-sm
+                    {{ !request('country') ? 'bg-vibrant-green text-black ring-4 ring-vibrant-green/10' : 'bg-slate-50 text-slate-600 hover:bg-slate-100' }}">
+                    All
+                </button>
+                @foreach($allowedCountries as $country)
+                    <button type="button" data-country="{{ $country }}" 
+                        class="country-pill px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-wider transition-all duration-300 active:scale-95 shadow-sm
+                        {{ request('country') == $country ? 'bg-vibrant-green text-black ring-4 ring-vibrant-green/10' : 'bg-slate-50 text-slate-600 hover:bg-slate-100' }}">
+                        {{ $country }}
+                    </button>
+                @endforeach
+            </div>
         </div>
 
         <!-- Financial Dashboard Grid -->
@@ -206,6 +226,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             const searchInput = document.querySelector('input[name="search"]');
             const courseSelect = document.querySelector('select[name="course_id"]');
+            const countrySelect = document.querySelector('select[name="country"]');
             const statusSelect = document.querySelector('select[name="payment_status"]');
             const container = document.getElementById('payments-grid-container');
             const form = searchInput.closest('form');
@@ -252,6 +273,25 @@
 
             courseSelect.addEventListener('change', performSearch);
             statusSelect.addEventListener('change', performSearch);
+
+            const countryInput = document.getElementById('country-filter-input');
+            const countryPills = document.querySelectorAll('.country-pill');
+
+            countryPills.forEach(pill => {
+                pill.addEventListener('click', function() {
+                    countryInput.value = this.getAttribute('data-country');
+                    
+                    countryPills.forEach(p => {
+                        p.classList.remove('bg-vibrant-green', 'text-black', 'ring-4', 'ring-vibrant-green/10');
+                        p.classList.add('bg-slate-50', 'text-slate-600', 'hover:bg-slate-100');
+                    });
+                    
+                    this.classList.remove('bg-slate-50', 'text-slate-600', 'hover:bg-slate-100');
+                    this.classList.add('bg-vibrant-green', 'text-black', 'ring-4', 'ring-vibrant-green/10');
+                    
+                    performSearch();
+                });
+            });
         });
     </script>
 

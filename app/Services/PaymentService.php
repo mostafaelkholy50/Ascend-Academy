@@ -29,6 +29,10 @@ class PaymentService
         $user = auth()->user();
         $allowedCountries = $this->getAllowedCountries($user);
 
+        if (empty($allowedCountries)) {
+            $allowedCountries = ['Canada', 'USA', 'UK', 'Egypt', 'KSA', 'UAE', 'Australia', 'Germany', 'France'];
+        }
+
         // Fetch Enrollments for the grid view
         $query = $this->repository->getEnrollmentsQuery();
 
