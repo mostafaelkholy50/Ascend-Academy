@@ -14,8 +14,8 @@ trait HasRegionalAccess
      */
     public function getAllowedCountries($user): array
     {
-        // SuperAdmins always see everything
-        if ($user->hasRole('SuperAdmin')) {
+        // SuperAdmins and Admins always see everything
+        if ($user->hasRole('SuperAdmin') || $user->hasRole('Admin')) {
             return [];
         }
 
@@ -43,8 +43,8 @@ trait HasRegionalAccess
      */
     public function hasAccessToCountry($user, $country): bool
     {
-        // SuperAdmins always have access
-        if ($user->hasRole('SuperAdmin')) {
+        // SuperAdmins and Admins always have access
+        if ($user->hasRole('SuperAdmin') || $user->hasRole('Admin')) {
             return true;
         }
 
@@ -69,8 +69,8 @@ trait HasRegionalAccess
     {
         $user = auth()->user();
         
-        // SuperAdmins are never restricted
-        if ($user->hasRole('SuperAdmin')) {
+        // SuperAdmins and Admins are never restricted
+        if ($user->hasRole('SuperAdmin') || $user->hasRole('Admin')) {
             return $query;
         }
 
@@ -98,8 +98,8 @@ trait HasRegionalAccess
      */
     public function canAccessPayroll($user): bool
     {
-        // SuperAdmins always have access
-        if ($user->hasRole('SuperAdmin')) {
+        // SuperAdmins and Admins always have access
+        if ($user->hasRole('SuperAdmin') || $user->hasRole('Admin')) {
             return true;
         }
 

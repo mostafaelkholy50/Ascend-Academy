@@ -10,7 +10,6 @@ use App\Http\Controllers\Admin\TeacherController as AdminTeacherController;
 use App\Http\Controllers\Admin\CourseController as AdminCourseController;
 use App\Http\Controllers\Admin\NewsController as AdminNewsController;
 use App\Http\Controllers\Admin\EnrollmentController;
-use App\Http\Controllers\Admin\EnrollmentPaymentController;
 use App\Http\Controllers\Admin\ScheduleController;
 use App\Http\Controllers\Admin\AttendanceController;
 use App\Http\Controllers\Admin\ReportController;
@@ -78,13 +77,6 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::resource('enrollments', EnrollmentController::class);
     Route::patch('enrollments/{enrollment}/payment-status', [EnrollmentController::class, 'updatePaymentStatus'])->name('enrollments.update-payment-status');
 
-    // Payment Management
-    Route::get('payments', [EnrollmentPaymentController::class, 'index'])->name('payments.index');
-    Route::get('payments/enrollment/{enrollment}', [EnrollmentPaymentController::class, 'show'])->name('payments.show');
-    Route::patch('payments/{payment}/status', [EnrollmentPaymentController::class, 'updatePaymentStatus'])->name('payments.update-status');
-    Route::post('payments/generate-monthly', [EnrollmentPaymentController::class, 'generateMonthlyPayments'])->name('payments.generate-monthly');
-    Route::post('payments/{enrollment}/mark-all-paid', [EnrollmentPaymentController::class, 'markAllPaid'])->name('payments.mark-all-paid');
-    Route::post('payments/{enrollment}/mark-all-unpaid', [EnrollmentPaymentController::class, 'markAllUnpaid'])->name('payments.mark-all-unpaid');
 
     // Schedules Management
     Route::resource('schedules', ScheduleController::class);

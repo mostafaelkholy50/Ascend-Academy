@@ -21,7 +21,7 @@
                     <x-dashboard.stat-card icon="fa-user-clock" title="Pending Attendance" :value="number_format($pendingAttendance)" color="red" />
                 </a>
                 @can('manage accounting')
-                <a href="{{route('admin.payments.index')}}">
+                <a href="{{route('accountant.payments.index')}}">
                     <x-dashboard.stat-card icon="fa-money-bill-wave" title="Monthly Revenue" :value="'$'.number_format($monthlyRevenue)" color="teal" />
                 </a>
                 @endcan

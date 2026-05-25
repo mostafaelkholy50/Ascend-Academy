@@ -39,7 +39,7 @@ class StudentReportRepository
 
     public function getTeachersWithReports(User $student): Collection
     {
-        return User::role('Teacher')
+        return User::roleTeacher()
             ->whereHas('teacherReports', function($q) use ($student) {
                 $q->where('student_id', $student->id);
             })->get();

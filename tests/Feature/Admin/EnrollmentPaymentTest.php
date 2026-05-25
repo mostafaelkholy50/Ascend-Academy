@@ -58,7 +58,7 @@ class EnrollmentPaymentTest extends TestCase
     {
         $this->actingAs($this->admin);
 
-        $response = $this->get(route('admin.payments.index')); // Assuming route name is admin.payments.index
+        $response = $this->get(route('accountant.payments.index'));
 
         $response->assertStatus(200);
     }
@@ -67,7 +67,7 @@ class EnrollmentPaymentTest extends TestCase
     {
         $this->actingAs($this->admin);
 
-        $response = $this->get(route('admin.payments.show', $this->enrollment->id));
+        $response = $this->get(route('accountant.payments.show', $this->enrollment->id));
 
         $response->assertStatus(200);
     }
@@ -76,7 +76,7 @@ class EnrollmentPaymentTest extends TestCase
     {
         $this->actingAs($this->admin);
 
-        $response = $this->patch(route('admin.payments.update-status', $this->payment->id), [
+        $response = $this->patch(route('accountant.payments.update-status', $this->payment->id), [
             'payment_status' => 'paid',
             'notes' => 'Paid in full',
         ]);

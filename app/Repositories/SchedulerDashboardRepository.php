@@ -33,12 +33,12 @@ class SchedulerDashboardRepository
 
     public function getStudentsCount(): int
     {
-        return User::role('Student')->count();
+        return User::roleStudent()->count();
     }
 
     public function getTeachersCount(): int
     {
-        return User::role('Teacher')->count();
+        return User::roleTeacher()->count();
     }
 
     public function getPendingAttendanceCount(): int
@@ -78,7 +78,7 @@ class SchedulerDashboardRepository
 
     public function getStudentsQuery(Request $request): Builder
     {
-        $query = User::role('Student');
+        $query = User::roleStudent();
 
         if ($request->filled('search')) {
             $search = $request->search;
@@ -94,7 +94,7 @@ class SchedulerDashboardRepository
 
     public function getTeachersQuery(Request $request): Builder
     {
-        $query = User::role('Teacher');
+        $query = User::roleTeacher();
 
         if ($request->filled('search')) {
             $search = $request->search;

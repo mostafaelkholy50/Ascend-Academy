@@ -56,7 +56,7 @@ class TeacherHourService
         });
 
         // Get all active teachers
-        $teachers = \App\Models\User::role('Teacher')->where('active', true)->get();
+        $teachers = \App\Models\User::roleTeacher()->where('active', true)->get();
 
         foreach ($teachers as $teacher) {
             $workedHours = isset($hoursData[$teacher->id]) ? round($hoursData[$teacher->id], 2) : 0;

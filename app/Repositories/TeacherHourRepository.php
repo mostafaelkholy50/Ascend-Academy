@@ -18,7 +18,7 @@ class TeacherHourRepository
      */
     public function getTeachers(\Illuminate\Http\Request $request, int $perPage = 20): LengthAwarePaginator
     {
-        $query = User::role('Teacher');
+        $query = User::roleTeacher();
 
         $query = (new \App\Filters\TeacherHourFilter)->apply($query, $request);
 

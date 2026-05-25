@@ -43,6 +43,7 @@ class StudentService
                 'role' => 'Student',
                 'active' => true,
             ]);
+            $student->assignRole('Student');
 
             if (!empty($data['parent_id'])) {
                 Children::create([

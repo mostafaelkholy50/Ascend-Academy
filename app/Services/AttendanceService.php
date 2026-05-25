@@ -33,8 +33,8 @@ class AttendanceService
         $stats = $this->repository->getStats();
 
         // Get filter options
-        $students = User::role('Student')->orderBy('name')->get();
-        $teachers = User::role('Teacher')->orderBy('name')->get();
+        $students = User::roleStudent()->orderBy('name')->get();
+        $teachers = User::roleTeacher()->orderBy('name')->get();
         $courses = Course::orderBy('title')->get();
 
         return array_merge([

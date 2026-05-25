@@ -3,7 +3,7 @@
     $pendingEvaluationsCount = 0;
     if ($user->can('view evaluations')) {
         $startOfWeek = now()->startOfWeek(\Carbon\Carbon::SATURDAY)->format('Y-m-d');
-        $allTeachersCount = \App\Models\User::role('Teacher')->count();
+        $allTeachersCount = \App\Models\User::roleTeacher()->count();
         $evaluatedCount = \App\Models\TeacherEvaluation::where('week_start_date', $startOfWeek)->count();
         $pendingEvaluationsCount = max(0, $allTeachersCount - $evaluatedCount);
     }
@@ -104,8 +104,8 @@
 
 
 
-<a href="{{ $user->hasRole('Accountant') ? route('accountant.payments.index') : route('admin.payments.index') }}"
-    class="flex items-center px-4 py-2.5 rounded-xl {{ request()->routeIs('accountant.payments.*') || request()->routeIs('admin.payments.*') ? 'bg-white/20 backdrop-blur-sm font-medium' : 'hover:bg-white/10 opacity-80 hover:opacity-100' }} transition">
+<a href="{{ route('accountant.payments.index') }}"
+    class="flex items-center px-4 py-2.5 rounded-xl {{ request()->routeIs('accountant.payments.*') ? 'bg-white/20 backdrop-blur-sm font-medium' : 'hover:bg-white/10 opacity-80 hover:opacity-100' }} transition">
     <i class="fa-solid fa-money-bill-wave mr-3 text-base"></i> Payments
 </a>
 @if($user->canAccessPayroll())

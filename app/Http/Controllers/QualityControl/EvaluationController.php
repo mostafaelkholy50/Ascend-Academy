@@ -26,7 +26,7 @@ class EvaluationController extends Controller
     public function create(User $teacher)
     {
         // Only allow evaluating teachers
-        if (!$teacher->hasRole('Teacher')) {
+        if (!$teacher->isTeacher()) {
             abort(404);
         }
 
@@ -56,7 +56,7 @@ class EvaluationController extends Controller
     public function index(Request $request)
     {
         $evaluations = $this->repository->getEvaluationsQuery($request)->paginate(20);
-        $teachers = User::role('Teacher')->get();
+        $teachers = User::roleTeacher()->get();
 
         return view('qualitycontrol.reports.index', compact('evaluations', 'teachers'));
     }
@@ -72,7 +72,7 @@ class EvaluationController extends Controller
 
     public function performance(Request $request)
     {
-        $teachers = User::role('Teacher')->get();
+        $teachers = User::roleTeacher()->get();
         $performanceData = $this->service->getPerformanceData($teachers);
 
         return view('qualitycontrol.reports.performance', compact('performanceData'));
@@ -81,7 +81,7 @@ class EvaluationController extends Controller
     public function center(Request $request)
     {
         $view = $request->get('view', 'weekly'); // default to weekly
-        $teachers = User::role('Teacher')->get();
+        $teachers = User::roleTeacher()->get();
         
         $performanceData = $this->service->getPerformanceData($teachers);
 

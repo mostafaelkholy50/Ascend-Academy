@@ -24,7 +24,7 @@
 
 @can('manage accounting')
 <div class="px-4 pt-4 pb-2 text-[10px] uppercase tracking-wider text-white/50 font-bold">Finance</div>
-<a href="{{ route('admin.payments.index') }}" class="flex items-center px-4 py-2.5 rounded-xl {{ request()->routeIs('admin.payments.*') ? 'bg-white/20 backdrop-blur-sm font-medium' : 'hover:bg-white/10 opacity-80 hover:opacity-100' }} transition">
+<a href="{{ route('accountant.payments.index') }}" class="flex items-center px-4 py-2.5 rounded-xl {{ request()->routeIs('accountant.payments.*') ? 'bg-white/20 backdrop-blur-sm font-medium' : 'hover:bg-white/10 opacity-80 hover:opacity-100' }} transition">
     <i class="fa-solid fa-money-bill-wave mr-3 text-base"></i> Payments
 </a>
 @endcan

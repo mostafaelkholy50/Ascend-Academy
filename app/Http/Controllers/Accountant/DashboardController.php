@@ -22,8 +22,8 @@ class DashboardController extends Controller
 
 
         // Base queries
-        $studentsQuery = User::role('Student');
-        $teachersQuery = User::role('Teacher');
+        $studentsQuery = User::roleStudent();
+        $teachersQuery = User::roleTeacher();
         $schedulesQuery = Schedule::query();
 
         // Apply country filtering if restricted

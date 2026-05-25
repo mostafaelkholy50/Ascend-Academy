@@ -41,6 +41,7 @@ class ParentService
                 'country' => $data['country'] ?? null,
                 'active' => $data['active'] ?? true,
             ]);
+            $parent->assignRole('Parent');
 
             if (!empty($data['children'])) {
                 $parent->children()->attach($data['children']);
@@ -63,6 +64,7 @@ class ParentService
                 'role' => 'Student',
                 'active' => true,
             ]);
+            $student->assignRole('Student');
 
             Children::create([
                 'parent_id' => $parent->id,

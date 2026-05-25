@@ -127,7 +127,7 @@ class DashboardRepository
 
     public function getTeacherPerformanceRanking(int $limit = 5): Collection
     {
-        return User::role('Teacher')
+        return User::roleTeacher()
             ->select('users.id', 'users.name')
             ->withAvg('teacherEvaluations as avg_score', 'total_score')
             ->orderBy('avg_score', 'desc')

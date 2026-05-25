@@ -55,7 +55,9 @@ class TeacherService
             $data['avatar'] = $avatarFile->store('avatars', 'public');
         }
 
-        return $this->repository->create($data);
+        $teacher = $this->repository->create($data);
+        $teacher->assignRole('Teacher');
+        return $teacher;
     }
 
     public function updateTeacher(User $teacher, array $data, $avatarFile = null)

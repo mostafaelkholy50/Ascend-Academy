@@ -5,7 +5,7 @@ use App\Http\Controllers\Accountant\DashboardController;
 use App\Http\Controllers\Accountant\PaymentController;
 use App\Http\Controllers\Accountant\TeacherHourController;
 
-Route::middleware(['auth', 'role:Accountant|SuperAdmin'])->prefix('accountant')->name('accountant.')->group(function () {
+Route::middleware(['auth', 'role_or_permission:Accountant|SuperAdmin|Admin|manage accounting'])->prefix('accountant')->name('accountant.')->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
     
     // Payments

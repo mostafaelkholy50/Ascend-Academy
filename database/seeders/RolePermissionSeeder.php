@@ -49,6 +49,7 @@ class RolePermissionSeeder extends Seeder
         $adminRole->givePermissionTo([
             'manage users',
             'manage schedules',
+            'manage accounting',
             'view dashboard',
             'edit profile',
             'manage quality',
