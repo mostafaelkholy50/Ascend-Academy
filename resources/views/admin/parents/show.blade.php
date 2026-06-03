@@ -65,6 +65,13 @@
                                 @endforeach
                             </select>
                         </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-600 mb-2">Daily Class Reminders</label>
+                            <select name="class_reminders_enabled" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vibrant-green">
+                                <option value="1" {{ $parent->class_reminders_enabled ? 'selected' : '' }}>Enabled</option>
+                                <option value="0" {{ !$parent->class_reminders_enabled ? 'selected' : '' }}>Disabled</option>
+                            </select>
+                        </div>
                     </div>
 
                     <button type="submit" class="bg-vibrant-green text-white px-6 py-2 rounded-lg hover:bg-deep-blue transition">

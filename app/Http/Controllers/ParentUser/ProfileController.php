@@ -40,6 +40,8 @@ class ProfileController extends Controller
             'phone' => ['nullable', 'string', 'max:20'],
         ]);
 
+
+
         $user->update($validated);
 
         return redirect()->route('parent.profile.show')

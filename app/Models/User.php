@@ -18,6 +18,10 @@ class User extends Authenticatable
 {
     use HasFactory, Notifiable, HasRoles;
 
+    protected $attributes = [
+        'class_reminders_enabled' => true,
+    ];
+
     protected $fillable = [
         'name',
         'email',
@@ -32,6 +36,7 @@ class User extends Authenticatable
         'can_access_payroll',
         'birth_date',
         'active',
+        'class_reminders_enabled',
         'hourly_rate',
         'teacher_application_id',
     ];
@@ -47,6 +52,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'active' => 'boolean',
+            'class_reminders_enabled' => 'boolean',
             'birth_date' => 'date',
             'hourly_rate' => 'decimal:2',
             'allowed_countries' => 'array',

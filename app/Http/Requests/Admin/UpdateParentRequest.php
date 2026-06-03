@@ -21,6 +21,7 @@ class UpdateParentRequest extends FormRequest
             'phone' => 'nullable|string|max:20',
             'country' => 'nullable|string|max:100',
             'active' => 'nullable|boolean',
+            'class_reminders_enabled' => 'nullable|boolean',
         ];
     }
 }

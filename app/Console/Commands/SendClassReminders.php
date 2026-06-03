@@ -43,18 +43,27 @@ class SendClassReminders extends Command
 
         foreach ($schedules as $schedule) {
             try {
-                // Send to student
-                $schedule->student->notify(new ClassReminderNotification($schedule));
-                $sentCount++;
+                $parents = $schedule->student->parents;
+                
+                // Check if any parent has disabled daily class reminders
+                $anyParentDisabled = $parents->contains(fn($parent) => !$parent->class_reminders_enabled);
 
-                // Send to teacher
+                // Send to student only if class reminders are enabled for all parents (or there are no parents)
+                if (!$anyParentDisabled) {
+                    $schedule->student->notify(new ClassReminderNotification($schedule));
+                    $sentCount++;
+                }
+
+                // Send to teacher (always)
                 $schedule->teacher->notify(new ClassReminderNotification($schedule));
                 $sentCount++;
 
-                // Send to parent(s)
-                foreach ($schedule->student->parents as $parent) {
-                    $parent->notify(new ClassReminderNotification($schedule));
-                    $sentCount++;
+                // Send to parent(s) who have class reminders enabled
+                foreach ($parents as $parent) {
+                    if ($parent->class_reminders_enabled) {
+                        $parent->notify(new ClassReminderNotification($schedule));
+                        $sentCount++;
+                    }
                 }
 
                 $this->info("Sent reminders for: {$schedule->course->title} - {$schedule->student->name}");
