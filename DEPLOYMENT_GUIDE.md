@@ -255,12 +255,36 @@ sudo certbot --nginx -d your-domain.com -d www.your-domain.com
     ```
     قم بزيارة الرابط `yourdomain.com/run-migrations` مرة واحدة، ثم **قم بحذف المسار فوراً من ملف الراوتس لأسباب أمنية**.
 
-### الخطوة 5: إعداد المهام المجدولة (Cron Jobs)
-في لوحة cPanel، ابحث عن **Cron Jobs** وأضف مهمة جديدة تعمل كل دقيقة بالتالي:
-```bash
-/usr/local/bin/php /home/username/ascend-academy/artisan schedule:run >> /dev/null 2>&1
-```
-*(ملاحظة: تأكد من كتابة المسار الصحيح لإصدار الـ PHP ومجلد مشروعك في الاستضافة)*.
+### الخطوة 5: إعداد المهام المجدولة وطابور الرسائل (Cron Jobs & Queue Worker)
+بما أن بعض الإيميلات مثل إشعارات الحصص والمدفوعات يتم إرسالها بالخلفية عبر الطوابير (Queues)، يجب عليك إعداد مهمتين مجدولتين (Cron Jobs) في لوحة التحكم (cPanel أو Hostinger):
+
+#### المهمة الأولى: تشغيل المجدول (Laravel Scheduler)
+هذه المهمة مسؤولة عن التحقق من وجود حصص أو مدفوعات تحتاج لتنبيهات بشكل دوري.
+- **التوقيت:** كل دقيقة (`* * * * *`).
+- **الأمر:**
+  ```bash
+  /usr/local/bin/php /home/username/ascend-academy/artisan schedule:run >> /dev/null 2>&1
+  ```
+  *(أو يمكنك استخدام ملف `cron-scheduler.php` المرفق في جذر المشروع إذا كانت الاستضافة لا تدعم تشغيل artisan مباشرة):*
+  ```bash
+  /usr/local/bin/php /home/username/ascend-academy/cron-scheduler.php >> /dev/null 2>&1
+  ```
+
+#### المهمة الثانية: تشغيل طابور الرسائل (Queue Worker)
+هذه المهمة مسؤولة عن إرسال الإيميلات الفعلية التي تم جدولتها في قاعدة البيانات. بدونها ستظل الرسائل معلقة في جدول `jobs`.
+- **التوقيت:** كل دقيقة (`* * * * *`).
+- **الأمر:**
+  ```bash
+  /usr/local/bin/php /home/username/ascend-academy/artisan queue:work --stop-when-empty >> /dev/null 2>&1
+  ```
+  *(أو يمكنك استخدام ملف `queue.php` المرفق في جذر المشروع والذي تم تحسينه لمعالجة كافة المهام دفعة واحدة ثم التوقف):*
+  ```bash
+  /usr/local/bin/php /home/username/ascend-academy/queue.php >> /dev/null 2>&1
+  ```
+
+> 💡 **خيار بديل وسهل:** إذا كنت لا ترغب في إعداد مهمة Cron ثانية للـ Queue Worker، يمكنك تعديل ملف `.env` على السيرفر وجعل قيمة `QUEUE_CONNECTION=sync`. هذا سيجعل النظام يرسل الإيميلات مباشرة وتلقائياً بمجرد تشغيل المجدول، ولكن قد يأخذ المجدول وقتاً أطول في التنفيذ.
+
+*(ملاحظة: تأكد من كتابة المسار الصحيح لإصدار الـ PHP ومجلد مشروعك في الاستضافة بدلاً من /home/username/)*.
 
 ---
 

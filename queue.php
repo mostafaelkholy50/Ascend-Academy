@@ -16,13 +16,13 @@ $app = require_once __DIR__.'/bootstrap/app.php';
 
 $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
 
-// معالجة job واحد فقط في كل مرة (أفضل لـ Hostinger)
+// معالجة جميع المهام المعلقة بالخلفية وإيقاف التشغيل عند انتهائها (أفضل لـ Hostinger)
 $status = $kernel->call('queue:work', [
-    '--once' => true,           // معالجة job واحد فقط
-    '--queue' => 'default',     // اسم الـ queue
-    '--tries' => 3,             // عدد المحاولات
-    '--timeout' => 60,          // timeout بالثواني
-    '--memory' => 128,          // حد الذاكرة
+    '--stop-when-empty' => true, // تشغيل كافة المهام المعلقة ثم التوقف
+    '--queue' => 'default',      // اسم الـ queue
+    '--tries' => 3,              // عدد المحاولات
+    '--timeout' => 60,           // timeout بالثواني
+    '--memory' => 128,           // حد الذاكرة
 ]);
 
 echo "[" . date('Y-m-d H:i:s') . "] Queue worker executed\n";
