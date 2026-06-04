@@ -214,17 +214,10 @@ class User extends Authenticatable
 
     /**
      * Get the timezone for the user.
-     * Teachers and Admins always use Egypt timezone.
-     * Students and Parents use their configured timezone or default to Egypt.
+     * All users use their configured timezone or default to Egypt.
      */
     public function getUserTimezone(): string
     {
-        // Teachers and Admins always use Egypt timezone
-        if ($this->isTeacher() || $this->isAdmin()) {
-            return 'Africa/Cairo';
-        }
-
-        // Students and Parents use their timezone or default to Egypt
         return $this->timezone ?? 'Africa/Cairo';
     }
 

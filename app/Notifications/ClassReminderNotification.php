@@ -39,6 +39,8 @@ class ClassReminderNotification extends Notification implements ShouldQueue
             ->subject('Class Reminder: ' . $this->schedule->course->title)
             ->markdown('emails.class-reminder', [
                 'schedule' => $this->schedule,
+                'user' => $notifiable,
+                'recipient' => $notifiable,
             ]);
     }
 

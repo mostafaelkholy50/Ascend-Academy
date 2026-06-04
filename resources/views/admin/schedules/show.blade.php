@@ -31,11 +31,11 @@
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <p class="text-sm text-gray-600 mb-1">Date</p>
-                        <p class="font-semibold text-gray-800">{{ $schedule->starts_at->format('l, M d, Y') }}</p>
+                        <p class="font-semibold text-gray-800">{{ $schedule->getStartsAtInTimezone(auth()->user()->getUserTimezone())->format('l, M d, Y') }}</p>
                     </div>
                     <div>
                         <p class="text-sm text-gray-600 mb-1">Time</p>
-                        <p class="font-semibold text-gray-800">{{ $schedule->starts_at->format('g:i A') }} - {{ $schedule->ends_at->format('g:i A') }}</p>
+                        <p class="font-semibold text-gray-800">{{ $schedule->getStartsAtInTimezone(auth()->user()->getUserTimezone())->format('g:i A') }} - {{ $schedule->getEndsAtInTimezone(auth()->user()->getUserTimezone())->format('g:i A') }} {{ $schedule->getStartsAtInTimezone(auth()->user()->getUserTimezone())->format('T') }}</p>
                     </div>
                     <div>
                         <p class="text-sm text-gray-600 mb-1">Duration</p>

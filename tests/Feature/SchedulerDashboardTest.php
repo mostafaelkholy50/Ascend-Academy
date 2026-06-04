@@ -56,3 +56,29 @@ test('scheduler dashboard search works', function () {
     $results = $response->viewData('searchResults');
     expect($results->pluck('id'))->toContain($student->id);
 });
+
+test('scheduler dashboard shows schedule in scheduler timezone', function () {
+    $user = User::factory()->create([
+        'role' => 'SchedulerManager',
+        'timezone' => 'America/New_York',
+    ]);
+    $user->assignRole('SchedulerManager');
+    $student = User::factory()->student()->create(['name' => 'Time Student']);
+    $teacher = User::factory()->teacher()->create(['name' => 'Time Teacher']);
+    $course = \App\Models\Course::create(['title' => 'Timezone Course']);
+
+    \App\Models\Schedule::create([
+        'course_id' => $course->id,
+        'teacher_id' => $teacher->id,
+        'student_id' => $student->id,
+        'starts_at' => Carbon::create(2026, 6, 4, 16, 0, 0, 'Africa/Cairo'),
+        'ends_at' => Carbon::create(2026, 6, 4, 17, 0, 0, 'Africa/Cairo'),
+        'status' => 'scheduled',
+    ]);
+
+    $response = $this->actingAs($user)->get(route('scheduler.dashboard'));
+
+    $response->assertStatus(200);
+    $response->assertSee('9:00 AM');
+    $response->assertDontSee('4:00 PM');
+});

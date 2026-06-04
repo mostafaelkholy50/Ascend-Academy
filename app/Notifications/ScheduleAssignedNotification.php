@@ -49,6 +49,7 @@ class ScheduleAssignedNotification extends Notification implements ShouldQueue
                 'schedule' => $this->schedule,
                 'isMultiple' => $this->isMultiple,
                 'count' => $this->count,
+                'recipient' => $notifiable,
             ]);
     }
 

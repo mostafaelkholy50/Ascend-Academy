@@ -50,6 +50,7 @@ class StudentScheduleAssignedNotification extends Notification implements Should
                 'isMultiple' => $this->isMultiple,
                 'count' => $this->count,
                 'user' => $notifiable,
+                'recipient' => $notifiable,
             ]);
     }
 

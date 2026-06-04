@@ -158,7 +158,7 @@
                                                         {{ $schedule->status === 'scheduled' ? 'bg-green-600 text-white' : '' }}
                                                         {{ $schedule->status === 'completed' ? 'bg-blue-600 text-white' : '' }}
                                                         {{ $schedule->status === 'cancelled' ? 'bg-red-600 text-white' : '' }}">
-                                                        {{ $schedule->starts_at->format('g:i A') }}
+                                                        {{ $schedule->getStartsAtInTimezone(auth()->user()->getUserTimezone())->format('g:i A') }}
                                                     </div>
                                                     <div class="text-xs text-gray-500 mt-1">{{ $schedule->getDurationInMinutes() }} min</div>
                                                 </div>
@@ -345,7 +345,7 @@
                                                                 </div>
                                                                 <div>
                                                                     <p class="font-semibold text-gray-800">{{ $schedule->starts_at->format('M d, Y') }}</p>
-                                                                    <p class="text-sm text-gray-600">{{ $schedule->starts_at->format('g:i A') }} - {{ $schedule->ends_at->format('g:i A') }}</p>
+                                                                    <p class="text-sm text-gray-600">{{ $schedule->getStartsAtInTimezone(auth()->user()->getUserTimezone())->format('g:i A') }} - {{ $schedule->getEndsAtInTimezone(auth()->user()->getUserTimezone())->format('g:i A') }} {{ $schedule->getStartsAtInTimezone(auth()->user()->getUserTimezone())->format('T') }}</p>
                                                                 </div>
                                                             </div>
                                                         </td>

@@ -28,7 +28,7 @@
                                         </div>
                                         <div>
                                             <h4 class="font-semibold text-gray-800">{{ $schedule->course->title ?? 'Session' }}</h4>
-                                            <p class="text-xs text-gray-500">{{ $schedule->student->name }} • {{ $schedule->starts_at->format('g:i A') }} - {{ $schedule->ends_at->format('g:i A') }}</p>
+                                            <p class="text-xs text-gray-500">{{ $schedule->student->name }} • {{ $schedule->getStartsAtInTimezone($user->getUserTimezone())->format('g:i A') }} - {{ $schedule->getEndsAtInTimezone($user->getUserTimezone())->format('g:i A') }} {{ $schedule->getStartsAtInTimezone($user->getUserTimezone())->format('T') }}</p>
                                         </div>
                                     </div>
                                     <div class="flex items-center space-x-2">
@@ -42,7 +42,7 @@
                                                     <a href="{{ $schedule->zoom_link }}" target="_blank" class="px-4 py-2 bg-vibrant-green text-white rounded-lg text-xs font-semibold hover:bg-deep-blue transition">Start</a>
                                                 @endif
                                             @else
-                                                <span class="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-medium">{{ $schedule->starts_at->format('g:i A') }}</span>
+                                                <span class="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-medium">{{ $schedule->getStartsAtInTimezone($user->getUserTimezone())->format('g:i A') }}</span>
                                             @endif
                                         @else
                                             <span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">In Progress</span>

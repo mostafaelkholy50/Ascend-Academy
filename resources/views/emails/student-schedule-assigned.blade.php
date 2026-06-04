@@ -1,4 +1,11 @@
 @component('mail::message')
+@php
+    $recipient = $user ?? $recipient ?? null;
+    $timezone = $recipient?->getUserTimezone() ?? 'Africa/Cairo';
+    $startsAt = $schedule->getStartsAtInTimezone($timezone);
+    $endsAt = $schedule->getEndsAtInTimezone($timezone);
+    $timezoneAbbr = $startsAt->format('T');
+@endphp
 # @if($isMultiple) New Class Schedules Assigned @else New Class Schedule Assigned @endif
 
 Assalamu Alaikum {{ $user->name }},
@@ -13,9 +20,9 @@ A new class schedule has been assigned for you.
 
 **Course:** {{ $schedule->course->title }}  
 **Teacher:** {{ $schedule->teacher->name }}  
-**Start Date:** {{ $schedule->starts_at->format('l, F d, Y') }}  
-**Time:** {{ $schedule->starts_at->format('g:i A') }} - {{ $schedule->ends_at->format('g:i A') }}  
-**Duration:** {{ $schedule->starts_at->diffInMinutes($schedule->ends_at) }} minutes
+**Start Date:** {{ $startsAt->format('l, F d, Y') }}  
+**Time:** {{ $startsAt->format('g:i A') }} - {{ $endsAt->format('g:i A') }} {{ $timezoneAbbr }}  
+**Duration:** {{ $startsAt->diffInMinutes($endsAt) }} minutes
 
 @if($schedule->zoom_link)
 **Zoom Link:** {{ $schedule->zoom_link }}

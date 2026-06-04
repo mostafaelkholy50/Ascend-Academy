@@ -1,6 +1,9 @@
 <?php
 
 use App\Models\User;
+use App\Models\Schedule;
+use App\Models\Course;
+use Carbon\Carbon;
 use Spatie\Permission\Models\Role;
 
 uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
@@ -38,4 +41,29 @@ test('non-teacher cannot view dashboard', function () {
     
     // Assert
     $response->assertStatus(403);
+});
+
+test('teacher dashboard shows schedule in teacher timezone', function () {
+    $teacher = User::factory()->teacher()->create([
+        'role' => 'Teacher',
+        'timezone' => 'America/New_York',
+    ]);
+    $teacher->assignRole('Teacher');
+    $student = User::factory()->student()->create(['role' => 'Student']);
+    $course = Course::create(['title' => 'Timezone Course']);
+
+    Schedule::create([
+        'course_id' => $course->id,
+        'teacher_id' => $teacher->id,
+        'student_id' => $student->id,
+        'starts_at' => Carbon::create(2026, 6, 4, 10, 0, 0, 'Africa/Cairo'),
+        'ends_at' => Carbon::create(2026, 6, 4, 11, 0, 0, 'Africa/Cairo'),
+        'status' => 'scheduled',
+    ]);
+
+    $response = $this->actingAs($teacher)->get(route('teacher.dashboard'));
+
+    $response->assertStatus(200);
+    $response->assertSee('3:00 AM');
+    $response->assertDontSee('10:00 AM');
 });

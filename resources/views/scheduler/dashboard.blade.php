@@ -72,7 +72,7 @@
                                     @foreach($todaySchedules as $schedule)
                                         <tr class="hover:bg-gray-50">
                                             <td class="px-3 md:px-4 py-3 font-medium text-vibrant-green">
-                                                {{ $schedule->starts_at->format('h:i A') }}
+                                                {{ $schedule->getStartsAtInTimezone($user->getUserTimezone())->format('h:i A') }}
                                             </td>
                                             <td class="px-3 md:px-4 py-3">{{ $schedule->student->name ?? 'N/A' }}</td>
                                             <td class="px-3 md:px-4 py-3">{{ $schedule->teacher->name ?? 'N/A' }}</td>
@@ -111,7 +111,7 @@
                                     <p class="text-xs text-gray-500">{{ $schedule->course->title ?? 'N/A' }}</p>
                                 </div>
                                 <span class="text-xs font-bold text-deep-blue bg-blue-50 px-2 py-1 rounded-lg">
-                                    {{ $schedule->starts_at->format('M d, h:i A') }}
+                                    {{ $schedule->getStartsAtInTimezone($user->getUserTimezone())->format('M d, h:i A') }}
                                 </span>
                             </div>
                             <div class="flex items-center text-xs text-gray-600 mt-2">

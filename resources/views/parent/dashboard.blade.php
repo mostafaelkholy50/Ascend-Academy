@@ -219,7 +219,7 @@
                                                 <p class="text-sm text-gray-600">
                                                     <i class="fa-solid fa-user-tie mr-1"></i>{{ $schedule->teacher->name }}
                                                     <span class="mx-2">•</span>
-                                                    <i class="fa-solid fa-clock mr-1"></i>{{ $schedule->starts_at->format('g:i A') }} - {{ $schedule->ends_at->format('g:i A') }}
+                                                    <i class="fa-solid fa-clock mr-1"></i>{{ $schedule->getStartsAtInTimezone($parent->getUserTimezone())->format('g:i A') }} - {{ $schedule->getEndsAtInTimezone($parent->getUserTimezone())->format('g:i A') }} {{ $schedule->getStartsAtInTimezone($parent->getUserTimezone())->format('T') }}
                                                 </p>
                                             </div>
                                         </div>
@@ -232,7 +232,7 @@
                                                     </span>
                                                 @else
                                                     <span class="px-4 py-2 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium">
-                                                        {{ $schedule->starts_at->format('g:i A') }}
+                                                        {{ $schedule->getStartsAtInTimezone($parent->getUserTimezone())->format('g:i A') }}
                                                     </span>
                                                 @endif
                                             @else
@@ -279,7 +279,7 @@
                                 <p class="text-xs text-gray-600">
                                     <i class="fa-solid fa-calendar mr-1"></i>{{ $schedule->starts_at->format('M d') }}
                                     <span class="mx-1">•</span>
-                                    <i class="fa-solid fa-clock mr-1"></i>{{ $schedule->starts_at->format('g:i A') }}
+                                    <i class="fa-solid fa-clock mr-1"></i>{{ $schedule->getStartsAtInTimezone($parent->getUserTimezone())->format('g:i A') }}
                                 </p>
                             </div>
                         @endforeach

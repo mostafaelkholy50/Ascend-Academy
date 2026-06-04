@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Enrollment;
 use App\Models\Schedule;
 use App\Models\Course;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 use Spatie\Permission\Models\Role;
@@ -64,6 +65,28 @@ class ScheduleTest extends TestCase
         $response = $this->get(route('admin.schedules.create'));
 
         $response->assertStatus(200);
+    }
+
+    public function test_admin_schedule_detail_uses_admin_timezone()
+    {
+        $this->admin->update(['timezone' => 'Asia/Dubai']);
+        $this->actingAs($this->admin);
+
+        $schedule = Schedule::create([
+            'enrollment_id' => $this->enrollment->id,
+            'student_id' => $this->student->id,
+            'course_id' => $this->enrollment->course_id,
+            'teacher_id' => $this->teacher->id,
+            'starts_at' => Carbon::create(2026, 6, 4, 10, 0, 0, 'Africa/Cairo'),
+            'ends_at' => Carbon::create(2026, 6, 4, 11, 0, 0, 'Africa/Cairo'),
+            'status' => 'scheduled',
+        ]);
+
+        $response = $this->get(route('admin.schedules.show', $schedule->id));
+
+        $response->assertStatus(200);
+        $response->assertSee('12:00 PM');
+        $response->assertDontSee('10:00 AM');
     }
 
     public function test_admin_can_store_schedule_with_existing_enrollment()

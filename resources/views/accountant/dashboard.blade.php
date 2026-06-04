@@ -107,8 +107,8 @@
                                     <div class="text-sm font-medium text-gray-600">{{ $schedule->teacher->name }}</div>
                                 </td>
                                 <td class="px-10 py-6">
-                                    <div class="text-xs font-bold text-gray-800">{{ $schedule->starts_at->format('M d, Y') }}</div>
-                                    <div class="text-[10px] text-gray-400">{{ $schedule->starts_at->format('h:i A') }}</div>
+                                    <div class="text-xs font-bold text-gray-800">{{ $schedule->getStartsAtInTimezone(auth()->user()->getUserTimezone())->format('M d, Y') }}</div>
+                                    <div class="text-[10px] text-gray-400">{{ $schedule->getStartsAtInTimezone(auth()->user()->getUserTimezone())->format('h:i A') }}</div>
                                 </td>
                             </tr>
                         @empty

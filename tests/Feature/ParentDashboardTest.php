@@ -5,8 +5,13 @@ use App\Models\Schedule;
 use App\Models\Enrollment;
 use App\Models\Course;
 use Carbon\Carbon;
+use Spatie\Permission\Models\Role;
 
 uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
+
+beforeEach(function () {
+    Role::create(['name' => 'Parent']);
+});
 
 test('parent can view dashboard successfully', function () {
     // Arrange
@@ -56,4 +61,39 @@ test('parent can search on dashboard', function () {
     
     // Assert
     $response->assertStatus(200);
+});
+
+test('parent dashboard shows schedule in parent timezone', function () {
+    $parent = User::factory()->parent()->create([
+        'role' => 'Parent',
+        'timezone' => 'America/New_York',
+    ]);
+    $parent->assignRole('Parent');
+    $student = User::factory()->student()->create(['role' => 'Student']);
+    $parent->children()->attach($student->id);
+    $teacher = User::factory()->teacher()->create(['role' => 'Teacher']);
+    $course = Course::create(['title' => 'Timezone Course']);
+
+    $enrollment = Enrollment::create([
+        'student_id' => $student->id,
+        'course_id' => $course->id,
+        'status' => 'active',
+        'enrollment_date' => now(),
+    ]);
+
+    Schedule::create([
+        'enrollment_id' => $enrollment->id,
+        'course_id' => $course->id,
+        'teacher_id' => $teacher->id,
+        'student_id' => $student->id,
+        'starts_at' => Carbon::create(2026, 6, 4, 16, 0, 0, 'Africa/Cairo'),
+        'ends_at' => Carbon::create(2026, 6, 4, 17, 0, 0, 'Africa/Cairo'),
+        'status' => 'scheduled',
+    ]);
+
+    $response = $this->actingAs($parent)->get(route('parent.dashboard'));
+
+    $response->assertStatus(200);
+    $response->assertSee('9:00 AM');
+    $response->assertDontSee('4:00 PM');
 });

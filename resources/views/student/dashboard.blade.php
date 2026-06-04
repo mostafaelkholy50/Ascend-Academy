@@ -167,7 +167,7 @@
                                             <p class="text-sm text-gray-600 mt-1">
                                                 <i class="fa-solid fa-user-tie mr-1"></i>{{ $schedule->teacher->name }} 
                                                 <span class="mx-2">•</span>
-                                                <i class="fa-solid fa-clock mr-1"></i>{{ $schedule->starts_at->format('g:i A') }} - {{ $schedule->ends_at->format('g:i A') }}
+                                                <i class="fa-solid fa-clock mr-1"></i>{{ $schedule->getStartsAtInTimezone($user->getUserTimezone())->format('g:i A') }} - {{ $schedule->getEndsAtInTimezone($user->getUserTimezone())->format('g:i A') }} {{ $schedule->getStartsAtInTimezone($user->getUserTimezone())->format('T') }}
                                             </p>
                                         </div>
                                     </div>
@@ -186,7 +186,7 @@
                                                     </a>
                                                 @endif
                                             @else
-                                                <span class="px-4 py-2 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium">{{ $schedule->starts_at->format('g:i A') }}</span>
+                                                <span class="px-4 py-2 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium">{{ $schedule->getStartsAtInTimezone($user->getUserTimezone())->format('g:i A') }}</span>
                                             @endif
                                         @else
                                             <span class="px-4 py-2 bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-700 rounded-xl text-sm font-bold border border-blue-200">
