@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Schedule;
 use App\Models\Enrollment;
+use App\Models\EnrollmentPayment;
 use App\Models\User;
 use App\Repositories\ScheduleRepository;
 use App\Filters\ScheduleFilter;
@@ -125,6 +126,11 @@ class ScheduleService
                     'currency' => $enrollment->currency,
                     'payment_status' => 'unpaid',
                 ]);
+
+                $this->generatePaymentsForEnrollment(
+                    $enrollment,
+                    Carbon::parse($data['start_date'])->startOfMonth()->addMonths(3)
+                );
             }
 
             $days = $data['days'];
@@ -309,6 +315,28 @@ class ScheduleService
     public function bulkDelete(Enrollment $enrollment)
     {
         return $this->repository->bulkDelete($enrollment);
+    }
+
+    protected function generatePaymentsForEnrollment(Enrollment $enrollment, $endMonth = null)
+    {
+        $startDate = $enrollment->start_date ?? $enrollment->created_at;
+        $currentMonth = $endMonth
+            ? Carbon::parse($endMonth)->startOfMonth()
+            : now()->startOfMonth();
+        $enrollmentMonth = Carbon::parse($startDate)->startOfMonth();
+
+        while ($enrollmentMonth->lte($currentMonth)) {
+            EnrollmentPayment::firstOrCreate([
+                'enrollment_id' => $enrollment->id,
+                'month' => $enrollmentMonth->copy(),
+            ], [
+                'amount' => $enrollment->admin_price,
+                'currency' => $enrollment->currency,
+                'payment_status' => 'unpaid',
+            ]);
+
+            $enrollmentMonth->addMonth();
+        }
     }
 
     public function generateMonthlySchedules(Enrollment $enrollment, $month, $teacherId = null)

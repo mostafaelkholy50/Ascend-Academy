@@ -167,17 +167,13 @@
                                             @csrf
                                             @method('PATCH')
                                             <input type="hidden" name="payment_status" value="{{ $isPaid ? 'unpaid' : 'paid' }}">
-                                            <form method="POST" action="{{ route('accountant.payments.update-status', $payment->id) }}">
-                                                @csrf
-                                                @method('PATCH')
-                                                <input type="hidden" name="payment_status" value="{{ $isPaid ? 'unpaid' : 'paid' }}">
-                                                <button type="submit" 
-                                                    class="w-full py-4 rounded-[1.5rem] flex flex-col items-center justify-center gap-1 transition-all duration-300 hover:scale-105 active:scale-95 shadow-sm
-                                                    {{ $isPaid ? 'bg-vibrant-green text-black ring-4 ring-vibrant-green/10' : ($isUnpaid ? 'bg-red-50 text-red-500 border border-red-100 hover:bg-red-500 hover:text-white' : 'bg-slate-50 text-slate-400') }}">
-                                                    <i class="fa-solid {{ $isPaid ? 'fa-check-circle' : 'fa-circle-dollar-to-slot' }} text-lg"></i>
-                                                    <span class="text-[8px] font-black uppercase tracking-widest">{{ $isPaid ? 'Paid' : 'Pay' }}</span>
-                                                </button>
-                                            </form>
+                                            <button type="submit" 
+                                                class="w-full py-4 rounded-[1.5rem] flex flex-col items-center justify-center gap-1 transition-all duration-300 hover:scale-105 active:scale-95 shadow-sm
+                                                {{ $isPaid ? 'bg-vibrant-green text-black ring-4 ring-vibrant-green/10' : ($isUnpaid ? 'bg-red-50 text-red-500 border border-red-100 hover:bg-red-500 hover:text-white' : 'bg-slate-50 text-slate-400') }}">
+                                                <i class="fa-solid {{ $isPaid ? 'fa-check-circle' : 'fa-circle-dollar-to-slot' }} text-lg"></i>
+                                                <span class="text-[8px] font-black uppercase tracking-widest">{{ $isPaid ? 'Paid' : 'Pay' }}</span>
+                                            </button>
+                                        </form>
                                         @else
                                             <div class="w-full py-4 rounded-[1.5rem] flex flex-col items-center justify-center gap-1 bg-slate-50 text-slate-300 shadow-sm opacity-50 cursor-not-allowed" title="No payment record generated">
                                                 <i class="fa-solid fa-circle-dollar-to-slot text-lg"></i>

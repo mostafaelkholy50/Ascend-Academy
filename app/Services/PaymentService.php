@@ -33,6 +33,11 @@ class PaymentService
             $allowedCountries = ['Canada', 'USA', 'UK', 'Egypt', 'KSA', 'UAE', 'Australia', 'Germany', 'France'];
         }
 
+        $baseMonth = $request->filled('base_month')
+            ? Carbon::parse($request->base_month . '-01')->startOfMonth()
+            : now()->startOfMonth();
+        $visibleEndMonth = $baseMonth->copy()->addMonths(3);
+
         // Fetch Enrollments for the grid view
         $query = $this->repository->getEnrollmentsQuery();
 
@@ -43,6 +48,11 @@ class PaymentService
         $query = (new \App\Filters\PaymentFilter)->apply($query, $request);
 
         $enrollments = $query->orderBy('created_at', 'desc')->paginate(12);
+
+        // Make sure every visible enrollment has payment records for the months shown
+        foreach ($enrollments as $enrollment) {
+            $this->generatePaymentsForEnrollment($enrollment, $visibleEndMonth);
+        }
 
         // Filter data for students
         $studentsQuery = $this->repository->getStudentsQuery();
@@ -182,10 +192,12 @@ class PaymentService
         return $generated;
     }
 
-    public function generatePaymentsForEnrollment(Enrollment $enrollment)
+    public function generatePaymentsForEnrollment(Enrollment $enrollment, $endMonth = null)
     {
         $startDate = $enrollment->start_date ?? $enrollment->created_at;
-        $currentMonth = now()->startOfMonth();
+        $currentMonth = $endMonth
+            ? Carbon::parse($endMonth)->startOfMonth()
+            : now()->startOfMonth();
         $enrollmentMonth = Carbon::parse($startDate)->startOfMonth();
 
         while ($enrollmentMonth->lte($currentMonth)) {

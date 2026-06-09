@@ -12,17 +12,54 @@ return new class extends Migration
      */
     public function up(): void
     {
+        $columnExists = function (string $columnName): bool {
+            $database = DB::getDatabaseName();
+
+            return DB::table('information_schema.columns')
+                ->where('table_schema', $database)
+                ->where('table_name', 'enrollments')
+                ->where('column_name', $columnName)
+                ->exists();
+        };
+
+        $dropIndexIfExists = function (string $indexName) {
+            $database = DB::getDatabaseName();
+            $exists = DB::table('information_schema.statistics')
+                ->where('table_schema', $database)
+                ->where('table_name', 'enrollments')
+                ->where('index_name', $indexName)
+                ->exists();
+
+            if ($exists) {
+                Schema::table('enrollments', function (Blueprint $table) use ($indexName) {
+                    $table->dropIndex($indexName);
+                });
+            }
+        };
+
+        $dropIndexIfExists('enrollments_billing_cycle_start_index');
+        $dropIndexIfExists('enrollments_billing_cycle_end_index');
+        $dropIndexIfExists('enrollments_billing_cycle_start_billing_cycle_end_index');
+
+        $columnsToDrop = array_values(array_filter(
+            ['end_date', 'billing_cycle_start', 'billing_cycle_end'],
+            fn (string $column) => $columnExists($column)
+        ));
+
+        if (!empty($columnsToDrop)) {
+            Schema::table('enrollments', function (Blueprint $table) use ($columnsToDrop) {
+                $table->dropColumn($columnsToDrop);
+            });
+        }
+
+        // Backfill any null values before tightening the column constraint.
+        DB::table('enrollments')
+            ->whereNull('start_date')
+            ->update(['start_date' => now()->toDateString()]);
+
         Schema::table('enrollments', function (Blueprint $table) {
-            // Drop indexes first (using correct names)
-            $table->dropIndex('enrollments_billing_cycle_start_index');
-            $table->dropIndex('enrollments_billing_cycle_end_index');
-            $table->dropIndex('enrollments_billing_cycle_start_billing_cycle_end_index');
-            
-            // Remove columns
-            $table->dropColumn(['end_date', 'billing_cycle_start', 'billing_cycle_end']);
-            
-            // Make start_date non-nullable with default value (current timestamp)
-            $table->date('start_date')->nullable(false)->default(DB::raw('CURRENT_DATE'))->change();
+            // MySQL does not accept CURRENT_DATE as a default in this ALTER syntax.
+            $table->date('start_date')->nullable(false)->change();
         });
     }
 
