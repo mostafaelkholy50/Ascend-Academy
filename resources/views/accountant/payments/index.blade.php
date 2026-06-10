@@ -144,7 +144,12 @@
                                     </div>
                                 </div>
                                 <div class="text-right">
-                                    <div class="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-1">Monthly Rate</div>
+                                    <div class="flex items-center justify-end gap-2 mb-1">
+                                        <div class="text-[10px] font-black text-slate-300 uppercase tracking-widest">Monthly Rate</div>
+                                        <button x-data="" x-on:click="$dispatch('open-modal', 'edit-enrollment-{{ $enrollment->id }}')" class="text-slate-400 hover:text-vibrant-green transition-colors">
+                                            <i class="fa-solid fa-pen-to-square text-sm"></i>
+                                        </button>
+                                    </div>
                                     <div class="text-xl font-black text-slate-900 group-hover:text-vibrant-green transition-colors">{{ $enrollment->getFormattedPrice() }}</div>
                                 </div>
                             </div>
@@ -200,6 +205,45 @@
                             </div>
                         </div>
                     </div>
+                    
+                    <!-- Edit Enrollment Modal -->
+                    <x-modal name="edit-enrollment-{{ $enrollment->id }}" focusable>
+                        <form method="POST" action="{{ route('accountant.payments.enrollment.update', $enrollment->id) }}" class="p-8">
+                            @csrf
+                            @method('PATCH')
+
+                            <h2 class="text-2xl font-black text-slate-900 mb-6">
+                                Update Enrollment Details
+                            </h2>
+
+                            <div class="space-y-6">
+                                <div>
+                                    <label for="admin_price_{{ $enrollment->id }}" class="block text-xs font-black uppercase tracking-widest text-slate-500 mb-2">Monthly Price</label>
+                                    <input type="number" step="0.01" id="admin_price_{{ $enrollment->id }}" name="admin_price" value="{{ $enrollment->admin_price }}" class="w-full px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-vibrant-green/50 transition font-bold text-slate-900" required>
+                                </div>
+
+                                <div>
+                                    <label for="currency_{{ $enrollment->id }}" class="block text-xs font-black uppercase tracking-widest text-slate-500 mb-2">Currency</label>
+                                    <select id="currency_{{ $enrollment->id }}" name="currency" class="w-full px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-vibrant-green/50 transition font-bold text-slate-900 appearance-none" required>
+                                        <option value="USD" {{ $enrollment->currency === 'USD' ? 'selected' : '' }}>USD ($)</option>
+                                        <option value="CAD" {{ $enrollment->currency === 'CAD' ? 'selected' : '' }}>CAD (CA$)</option>
+                                        <option value="GBP" {{ $enrollment->currency === 'GBP' ? 'selected' : '' }}>GBP (£)</option>
+                                        <option value="EUR" {{ $enrollment->currency === 'EUR' ? 'selected' : '' }}>EUR (€)</option>
+                                        <option value="EGP" {{ $enrollment->currency === 'EGP' ? 'selected' : '' }}>EGP (E£)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="mt-8 flex justify-end gap-3">
+                                <button type="button" x-on:click="$dispatch('close-modal', 'edit-enrollment-{{ $enrollment->id }}')" class="px-6 py-3 bg-slate-100 text-slate-600 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-slate-200 transition-colors">
+                                    Cancel
+                                </button>
+                                <button type="submit" class="px-6 py-3 bg-vibrant-green text-black rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-green-400 shadow-lg shadow-vibrant-green/20 transition-all active:scale-95">
+                                    Save Changes
+                                </button>
+                            </div>
+                        </form>
+                    </x-modal>
                 @empty
                     <div class="col-span-full py-20 text-center">
                         <div class="w-32 h-32 bg-slate-50 rounded-[3rem] flex items-center justify-center mx-auto mb-8 shadow-inner">

@@ -42,8 +42,25 @@ class ScheduleController extends Controller
         $selectedStudent = $request->query('student_id');
         $selectedCourse = $request->query('course_id');
         $selectedTeacher = $request->query('teacher_id');
+        $selectedEnrollment = null;
 
-        return view('admin.schedules.create', compact('students', 'courses', 'teachers', 'selectedStudent', 'selectedCourse', 'selectedTeacher'));
+        if ($selectedStudent && $selectedCourse) {
+            $selectedEnrollment = Enrollment::with(['student', 'course'])
+                ->where('student_id', $selectedStudent)
+                ->where('course_id', $selectedCourse)
+                ->where('status', 'active')
+                ->first();
+        }
+
+        return view('admin.schedules.create', compact(
+            'students',
+            'courses',
+            'teachers',
+            'selectedStudent',
+            'selectedCourse',
+            'selectedTeacher',
+            'selectedEnrollment'
+        ));
     }
 
     public function store(StoreScheduleRequest $request)

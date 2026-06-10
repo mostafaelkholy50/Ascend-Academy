@@ -17,6 +17,8 @@ class StoreScheduleRequest extends FormRequest
             'student_id' => 'required|exists:users,id',
             'course_id' => 'required|exists:courses,id',
             'teacher_id' => 'required|exists:users,id',
+            'admin_price' => 'nullable|numeric|min:0',
+            'currency' => 'nullable|in:CAD,USD,GBP,EUR',
             'days' => 'required|array|min:1',
             'days.*' => 'in:Sunday,Monday,Tuesday,Wednesday,Thursday,Friday,Saturday',
             'schedule_times' => 'required|array|min:1',

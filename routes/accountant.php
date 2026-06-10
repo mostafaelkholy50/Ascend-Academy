@@ -11,6 +11,7 @@ Route::middleware(['auth', 'role_or_permission:Accountant|SuperAdmin|Admin|manag
     // Payments
     Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
     Route::get('/payments/enrollment/{enrollment}', [PaymentController::class, 'show'])->name('payments.show');
+    Route::patch('/payments/enrollment/{enrollment}', [PaymentController::class, 'updateEnrollment'])->name('payments.enrollment.update');
     Route::patch('/payments/{payment}/status', [PaymentController::class, 'updateStatus'])->name('payments.update-status');
 
     // Teacher Hours

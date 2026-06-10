@@ -101,6 +101,56 @@
             </div>
         </div>
 
+        <!-- Enrollment / Pricing Details -->
+        <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
+            <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                <span class="w-8 h-8 bg-vibrant-green text-white rounded-full flex items-center justify-center mr-3 text-sm">2.5</span>
+                Enrollment & Pricing
+            </h2>
+
+            @if($selectedEnrollment)
+                <div class="mb-4 p-4 rounded-lg border border-green-200 bg-green-50 text-sm text-green-900">
+                    <p class="font-semibold mb-1">Existing enrollment found</p>
+                    <p>Student: {{ $selectedEnrollment->student?->name }} | Course: {{ $selectedEnrollment->course?->title }}</p>
+                    <p>Current price: {{ $selectedEnrollment->getFormattedPrice() }}</p>
+                </div>
+            @else
+                <div class="mb-4 p-4 rounded-lg border border-blue-200 bg-blue-50 text-sm text-blue-900">
+                    No active enrollment was found for the selected student and course. A new enrollment will be created when you submit.
+                </div>
+            @endif
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="admin_price" class="block text-sm font-semibold text-gray-700 mb-2">
+                        Price
+                    </label>
+                    <input type="number" name="admin_price" id="admin_price" step="0.01" min="0"
+                        value="{{ old('admin_price', $selectedEnrollment?->admin_price) }}"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vibrant-green focus:border-transparent">
+                    @error('admin_price')
+                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div>
+                    <label for="currency" class="block text-sm font-semibold text-gray-700 mb-2">
+                        Currency
+                    </label>
+                    <select name="currency" id="currency"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vibrant-green focus:border-transparent">
+                        <option value="CAD" {{ old('currency', $selectedEnrollment?->currency ?? 'CAD') == 'CAD' ? 'selected' : '' }}>CAD</option>
+                        <option value="USD" {{ old('currency', $selectedEnrollment?->currency) == 'USD' ? 'selected' : '' }}>USD</option>
+                        <option value="GBP" {{ old('currency', $selectedEnrollment?->currency) == 'GBP' ? 'selected' : '' }}>GBP</option>
+                        <option value="EUR" {{ old('currency', $selectedEnrollment?->currency) == 'EUR' ? 'selected' : '' }}>EUR</option>
+                    </select>
+                    @error('currency')
+                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                    @enderror
+                </div>
+            </div>
+        </div>
+
         <!-- Step 3: Select Days & Times -->
         <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
             <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center">

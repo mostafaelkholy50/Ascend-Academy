@@ -98,13 +98,35 @@ class ScheduleService
                 ->where('status', 'active')
                 ->first();
 
+            $daysPerWeek = count($data['days']);
+            $sessionDuration = (int) $data['duration_minutes'];
+            $currency = $data['currency'] ?? 'CAD';
+            $adminPrice = $data['admin_price'] ?? null;
+
+            if ($enrollment) {
+                $targetMonth = Carbon::parse($data['start_date'])->startOfMonth();
+                $existingSchedulesInMonth = Schedule::where('enrollment_id', $enrollment->id)
+                    ->whereYear('starts_at', $targetMonth->year)
+                    ->whereMonth('starts_at', $targetMonth->month)
+                    ->exists();
+
+                if ($existingSchedulesInMonth) {
+                    throw new \Exception('This student already has an enrollment and schedules for this month.');
+                }
+
+                $enrollment->update([
+                    'days_per_week' => $daysPerWeek,
+                    'session_duration' => $sessionDuration,
+                    'admin_price' => $adminPrice ?? $enrollment->admin_price,
+                    'currency' => $currency ?? $enrollment->currency,
+                ]);
+            }
+
             if (!$enrollment) {
-                $daysPerWeek = count($data['days']);
-                $sessionDuration = ((int)$data['duration_minutes'] <= 30) ? 30 : 60;
-                $currency = 'CAD'; // Default currency
-                
-                // Get price from pricing tier or default to 0
-                $adminPrice = \App\Models\PricingTier::getSuggestedPrice($daysPerWeek, $sessionDuration, $currency) ?? 0.00;
+                // Use the submitted price if provided, otherwise suggest one for the derived schedule shape.
+                $adminPrice = $adminPrice
+                    ?? \App\Models\PricingTier::getSuggestedPrice($daysPerWeek, $sessionDuration, $currency)
+                    ?? 0.00;
 
                 $enrollment = Enrollment::create([
                     'student_id' => $data['student_id'],
@@ -149,7 +171,7 @@ class ScheduleService
                 $enrollment->update(['start_date' => $monthStart]);
             }
 
-            $durationMinutes = (int) $data['duration_minutes'];
+            $durationMinutes = $sessionDuration;
 
             $sessionDates = [];
             $currentDate = $monthStart->copy();

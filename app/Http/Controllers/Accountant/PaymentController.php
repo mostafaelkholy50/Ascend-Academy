@@ -43,6 +43,30 @@ class PaymentController extends Controller
         return view('accountant.payments.show', compact('enrollment'));
     }
 
+    public function updateEnrollment(Request $request, Enrollment $enrollment)
+    {
+        $user = auth()->user();
+
+        $enrollment->load('student');
+
+        // Security check
+        if (!$this->hasAccessToCountry($user, $enrollment->student->country)) {
+            abort(403, 'Unauthorized access to this student.');
+        }
+
+        $request->validate([
+            'admin_price' => 'required|numeric|min:0',
+            'currency' => 'required|in:CAD,USD,GBP,EUR,EGP',
+        ]);
+
+        $enrollment->update([
+            'admin_price' => $request->admin_price,
+            'currency' => $request->currency,
+        ]);
+
+        return back()->with('success', 'Enrollment updated successfully.');
+    }
+
     public function updateStatus(Request $request, EnrollmentPayment $payment)
     {
         $user = auth()->user();

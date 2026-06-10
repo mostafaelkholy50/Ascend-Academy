@@ -108,6 +108,8 @@ class Enrollment extends Model
             'CAD' => 'CA$',
             'USD' => '$',
             'GBP' => '£',
+            'EUR' => '€',
+            'EGP' => 'E£',
         ];
 
         $symbol = $currencySymbols[$this->currency] ?? '$';
