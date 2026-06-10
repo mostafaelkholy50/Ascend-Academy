@@ -195,6 +195,13 @@
                                     <a href="{{ route('accountant.payments.show', $enrollment->id) }}" class="px-5 py-2.5 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-vibrant-green hover:text-black transition-all">
                                         Full Statement
                                     </a>
+                                    <form method="POST" action="{{ route('accountant.payments.enrollment.destroy', $enrollment->id) }}" onsubmit="return confirm('Are you sure you want to delete this enrollment? This will remove related payments and schedules too.');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="px-5 py-2.5 bg-red-50 text-red-600 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-red-600 hover:text-white transition-all">
+                                            Delete Enrollment
+                                        </button>
+                                    </form>
                                 </div>
                                 <div class="flex items-center gap-4">
                                     <div class="text-right">

@@ -91,10 +91,18 @@ class EnrollmentService
     public function deleteEnrollment(Enrollment $enrollment)
     {
         return DB::transaction(function () use ($enrollment) {
+            // Delete attendance records attached to this enrollment's schedules first
+            $scheduleIds = $enrollment->schedules()->pluck('id');
+            if ($scheduleIds->isNotEmpty()) {
+                \App\Models\Attendance::whereIn('schedule_id', $scheduleIds)->delete();
+            }
+
             // Delete related payments
             $enrollment->payments()->delete();
+
             // Delete related schedules
             $enrollment->schedules()->delete();
+
             // Delete the enrollment
             return $this->repository->delete($enrollment);
         });

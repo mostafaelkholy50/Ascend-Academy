@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Enrollment;
 use App\Models\EnrollmentPayment;
 use Illuminate\Http\Request;
+use App\Services\EnrollmentService;
 use App\Services\PaymentService;
 use App\Traits\HasRegionalAccess;
 
@@ -14,10 +15,12 @@ class PaymentController extends Controller
     use HasRegionalAccess;
 
     protected $service;
+    protected $enrollmentService;
 
-    public function __construct(PaymentService $service)
+    public function __construct(PaymentService $service, EnrollmentService $enrollmentService)
     {
         $this->service = $service;
+        $this->enrollmentService = $enrollmentService;
     }
 
     public function index(Request $request)
@@ -91,5 +94,21 @@ class PaymentController extends Controller
         $this->service->updatePaymentStatus($payment, $data);
 
         return $this->successResponse('Payment status updated successfully.');
+    }
+
+    public function destroyEnrollment(Enrollment $enrollment)
+    {
+        $user = auth()->user();
+
+        $enrollment->load('student');
+
+        if (!$this->hasAccessToCountry($user, $enrollment->student->country)) {
+            abort(403, 'Unauthorized access to this student.');
+        }
+
+        $this->enrollmentService->deleteEnrollment($enrollment);
+
+        return redirect()->route('accountant.payments.index')
+            ->with('success', 'Enrollment deleted successfully.');
     }
 }
