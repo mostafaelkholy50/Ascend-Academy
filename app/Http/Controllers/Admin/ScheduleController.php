@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Models\Schedule;
 use App\Models\Enrollment;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Services\ScheduleService;
@@ -23,13 +24,14 @@ class ScheduleController extends Controller
     public function index(Request $request)
     {
         $viewType = $request->get('view', 'calendar');
+        $teachers = User::where('role', 'Teacher')->where('active', true)->orderBy('name')->get();
         
         if ($viewType === 'calendar') {
             $data = $this->scheduleService->getCalendarData($request);
-            return view('admin.schedules.index', array_merge($data, compact('viewType')));
+            return view('admin.schedules.index', array_merge($data, compact('viewType', 'teachers')));
         } else {
             $data = $this->scheduleService->getEnrollmentGroupedData($request);
-            return view('admin.schedules.index', array_merge($data, compact('viewType')));
+            return view('admin.schedules.index', array_merge($data, compact('viewType', 'teachers')));
         }
     }
 
@@ -120,6 +122,48 @@ class ScheduleController extends Controller
 
         return redirect()->route('admin.schedules.index')
             ->with('success', "Successfully deleted {$count} schedule(s) for this enrollment.");
+    }
+
+    public function print(Request $request)
+    {
+        $teacherId = $request->get('teacher_id');
+        $month = $request->get('month');
+
+        if (!$teacherId || !$month) {
+            return back()->with('error', 'Please select a teacher and a month to print.');
+        }
+
+        $teacher = User::findOrFail($teacherId);
+        $targetMonth = Carbon::parse($month);
+        
+        $schedules = Schedule::with(['student', 'course'])
+            ->where('teacher_id', $teacherId)
+            ->whereYear('starts_at', $targetMonth->year)
+            ->whereMonth('starts_at', $targetMonth->month)
+            ->orderBy('starts_at')
+            ->get();
+
+        // Group by week and then by day
+        $monthDays = [];
+        $currentDate = $targetMonth->copy()->startOfMonth();
+        $endDate = $targetMonth->copy()->endOfMonth();
+
+        while ($currentDate->lte($endDate)) {
+            $monthDays[$currentDate->format('Y-m-d')] = [
+                'date' => $currentDate->copy(),
+                'schedules' => collect()
+            ];
+            $currentDate->addDay();
+        }
+
+        foreach ($schedules as $schedule) {
+            $dateString = $schedule->starts_at->format('Y-m-d');
+            if (isset($monthDays[$dateString])) {
+                $monthDays[$dateString]['schedules']->push($schedule);
+            }
+        }
+
+        return view('admin.schedules.print', compact('teacher', 'targetMonth', 'monthDays'));
     }
 
     /**

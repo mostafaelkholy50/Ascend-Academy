@@ -7,10 +7,16 @@
                 <p class="text-sm text-gray-500 mt-1">Manage all course schedules and sessions</p>
             </div>
             @can('manage schedules')
-            <a href="{{ route('admin.schedules.create') }}" 
-                class="inline-flex items-center justify-center px-4 md:px-6 py-2.5 md:py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold hover:shadow-lg transition text-sm md:text-base">
-                <i class="fa-solid fa-plus mr-2"></i><span>Create New Schedule</span>
-            </a>
+            <div class="flex gap-2">
+                <button type="button" onclick="document.getElementById('printScheduleModal').classList.remove('hidden')" 
+                    class="inline-flex items-center justify-center px-4 md:px-6 py-2.5 md:py-3 bg-white text-indigo-600 border border-indigo-200 rounded-xl font-semibold hover:bg-indigo-50 hover:shadow-lg transition text-sm md:text-base">
+                    <i class="fa-solid fa-print mr-2"></i><span>Print Schedule</span>
+                </button>
+                <a href="{{ route('admin.schedules.create') }}" 
+                    class="inline-flex items-center justify-center px-4 md:px-6 py-2.5 md:py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold hover:shadow-lg transition text-sm md:text-base">
+                    <i class="fa-solid fa-plus mr-2"></i><span>Create New Schedule</span>
+                </a>
+            </div>
             @endcan
         </div>
     </div>
@@ -437,4 +443,44 @@
             }
         }
     </script>
+    <!-- Print Schedule Modal -->
+    <div id="printScheduleModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden transform transition-all">
+            <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-indigo-50 to-purple-50">
+                <h3 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                    <i class="fa-solid fa-print text-indigo-600"></i>
+                    Print Teacher Schedule
+                </h3>
+                <button type="button" onclick="document.getElementById('printScheduleModal').classList.add('hidden')" class="text-gray-400 hover:text-gray-600 transition">
+                    <i class="fa-solid fa-times text-xl"></i>
+                </button>
+            </div>
+            <form action="{{ route('scheduler.schedules.print') }}" method="GET" target="_blank" class="p-6">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Select Teacher <span class="text-red-500">*</span></label>
+                        <select name="teacher_id" required class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
+                            <option value="">Choose a teacher...</option>
+                            @foreach($teachers as $teacher)
+                                <option value="{{ $teacher->id }}">{{ $teacher->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Select Month <span class="text-red-500">*</span></label>
+                        <input type="month" name="month" required value="{{ date('Y-m') }}" class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
+                    </div>
+                </div>
+                <div class="mt-8 flex gap-3">
+                    <button type="button" onclick="document.getElementById('printScheduleModal').classList.add('hidden')" class="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition font-semibold">
+                        Cancel
+                    </button>
+                    <button type="submit" onclick="document.getElementById('printScheduleModal').classList.add('hidden')" class="flex-1 px-4 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:shadow-lg transition font-semibold flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-file-pdf"></i>
+                        Print Schedule
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 </x-dashboard-layout>

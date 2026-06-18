@@ -23,6 +23,7 @@ Route::middleware(['auth', 'role_or_permission:SchedulerManager|SuperAdmin|Admin
     Route::post('/availability/{user}', [DashboardController::class, 'saveAvailability']);
 
     // Schedule Management
+    Route::get('/schedules/print', [ScheduleController::class, 'print'])->name('schedules.print');
     Route::resource('schedules', ScheduleController::class);
     
     // Attendance Management

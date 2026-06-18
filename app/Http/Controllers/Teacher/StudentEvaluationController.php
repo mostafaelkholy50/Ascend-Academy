@@ -123,9 +123,7 @@ class StudentEvaluationController extends Controller
     public function show(StudentEvaluation $studentEvaluation)
     {
         try {
-            if ($studentEvaluation->teacher_id !== auth()->id()) {
-                abort(403, 'Unauthorized action.');
-            }
+            \Illuminate\Support\Facades\Gate::authorize('view', $studentEvaluation);
 
             $studentEvaluation->load(['student', 'teacher']);
 

@@ -6,6 +6,7 @@ use App\Models\Course;
 use App\Notifications\ClassReminderNotification;
 use Illuminate\Support\Facades\Notification;
 use Carbon\Carbon;
+use App\Notifications\TeacherDailyScheduleNotification;
 
 uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
 
@@ -91,7 +92,8 @@ test('class reminders command respects parent toggle setting', function () {
         ->assertSuccessful();
 
     // Check notifications were sent to student, parent, and teacher
-    Notification::assertSentTo([$student, $parent, $teacher], ClassReminderNotification::class);
+    Notification::assertSentTo([$student, $parent], ClassReminderNotification::class);
+    Notification::assertSentTo($teacher, TeacherDailyScheduleNotification::class);
 
     // Reset notification fake
     Notification::fake();
@@ -104,5 +106,5 @@ test('class reminders command respects parent toggle setting', function () {
 
     // Student and Parent should NOT get reminders, but Teacher should STILL get the reminder
     Notification::assertNotSentTo([$student, $parent], ClassReminderNotification::class);
-    Notification::assertSentTo($teacher, ClassReminderNotification::class);
+    Notification::assertSentTo($teacher, TeacherDailyScheduleNotification::class);
 });

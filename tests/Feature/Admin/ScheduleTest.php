@@ -201,4 +201,81 @@ class ScheduleTest extends TestCase
         $this->assertTrue(session()->has('error'));
         $this->assertStringContainsString('Teacher conflict', session('error'));
     }
+    public function test_admin_can_print_monthly_schedule()
+    {
+        $this->actingAs($this->admin);
+
+        $targetMonth = now()->format('Y-m');
+
+        // Create a schedule for the teacher
+        Schedule::create([
+            'enrollment_id' => $this->enrollment->id,
+            'student_id' => $this->student->id,
+            'course_id' => $this->enrollment->course_id,
+            'teacher_id' => $this->teacher->id,
+            'starts_at' => now()->copy()->startOfMonth()->setTime(10, 0),
+            'ends_at' => now()->copy()->startOfMonth()->setTime(11, 0),
+            'status' => 'scheduled',
+        ]);
+
+        $response = $this->get(route('scheduler.schedules.print', [
+            'teacher_id' => $this->teacher->id,
+            'month' => $targetMonth,
+        ]));
+
+        $response->assertStatus(200);
+        $response->assertViewIs('admin.schedules.print');
+        $response->assertViewHas('teacher');
+        $response->assertViewHas('monthDays');
+        
+        // Assert the schedule is present in the response
+        $response->assertSee($this->teacher->name);
+    }
+
+    public function test_admin_can_print_monthly_schedule_with_late_night_sessions()
+    {
+        $this->actingAs($this->admin);
+
+        $targetMonth = '2026-06';
+
+        Schedule::create([
+            'enrollment_id' => $this->enrollment->id,
+            'student_id' => $this->student->id,
+            'course_id' => $this->enrollment->course_id,
+            'teacher_id' => $this->teacher->id,
+            'starts_at' => Carbon::create(2026, 6, 4, 0, 30, 0, 'Africa/Cairo'),
+            'ends_at' => Carbon::create(2026, 6, 4, 1, 30, 0, 'Africa/Cairo'),
+            'status' => 'scheduled',
+        ]);
+
+        Schedule::create([
+            'enrollment_id' => $this->enrollment->id,
+            'student_id' => $this->student->id,
+            'course_id' => $this->enrollment->course_id,
+            'teacher_id' => $this->teacher->id,
+            'starts_at' => Carbon::create(2026, 6, 4, 1, 30, 0, 'Africa/Cairo'),
+            'ends_at' => Carbon::create(2026, 6, 4, 2, 30, 0, 'Africa/Cairo'),
+            'status' => 'scheduled',
+        ]);
+
+        $response = $this->get(route('scheduler.schedules.print', [
+            'teacher_id' => $this->teacher->id,
+            'month' => $targetMonth,
+        ]));
+
+        $response->assertStatus(200);
+        $response->assertSee('12:30 AM');
+        $response->assertSee('1:30 AM');
+        $response->assertSee($this->student->name);
+    }
+
+    public function test_admin_print_monthly_schedule_fails_without_params()
+    {
+        $this->actingAs($this->admin);
+
+        $response = $this->get(route('scheduler.schedules.print'));
+
+        $response->assertRedirect();
+        $response->assertSessionHas('error');
+    }
 }

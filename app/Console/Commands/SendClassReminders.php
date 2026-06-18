@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\Schedule;
 use App\Notifications\ClassReminderNotification;
+use App\Notifications\TeacherDailyScheduleNotification;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 
@@ -41,6 +42,20 @@ class SendClassReminders extends Command
 
         $sentCount = 0;
 
+        // Group schedules by teacher ID to send one daily email to each teacher
+        $schedulesByTeacher = $schedules->groupBy('teacher_id');
+
+        foreach ($schedulesByTeacher as $teacherId => $teacherSchedules) {
+            try {
+                $teacher = $teacherSchedules->first()->teacher;
+                $teacher->notify(new TeacherDailyScheduleNotification($teacherSchedules));
+                $sentCount++;
+                $this->info("Sent daily schedule digest to teacher: {$teacher->name}");
+            } catch (\Exception $e) {
+                $this->error("Failed to send daily schedule digest to teacher {$teacherId}: " . $e->getMessage());
+            }
+        }
+
         foreach ($schedules as $schedule) {
             try {
                 $parents = $schedule->student->parents;
@@ -54,10 +69,6 @@ class SendClassReminders extends Command
                     $sentCount++;
                 }
 
-                // Send to teacher (always)
-                $schedule->teacher->notify(new ClassReminderNotification($schedule));
-                $sentCount++;
-
                 // Send to parent(s) who have class reminders enabled
                 foreach ($parents as $parent) {
                     if ($parent->class_reminders_enabled) {
@@ -66,7 +77,7 @@ class SendClassReminders extends Command
                     }
                 }
 
-                $this->info("Sent reminders for: {$schedule->course->title} - {$schedule->student->name}");
+                $this->info("Sent student/parent reminders for: {$schedule->course->title} - {$schedule->student->name}");
             } catch (\Exception $e) {
                 $this->error("Failed to send reminder for schedule {$schedule->id}: " . $e->getMessage());
             }
