@@ -38,7 +38,7 @@ return new class extends Migration
             fn (string $column) => $columnExists($column)
         ));
 
-        if (!empty($columnsToDrop)) {
+        if (!empty($columnsToDrop) && DB::getDriverName() !== 'sqlite') {
             Schema::table('enrollments', function (Blueprint $table) use ($columnsToDrop) {
                 $table->dropColumn($columnsToDrop);
             });

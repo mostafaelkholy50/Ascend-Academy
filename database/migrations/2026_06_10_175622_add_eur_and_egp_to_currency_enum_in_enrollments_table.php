@@ -12,7 +12,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        DB::statement("ALTER TABLE enrollments MODIFY COLUMN currency ENUM('CAD', 'USD', 'GBP', 'EUR', 'EGP') DEFAULT 'CAD'");
+        if (\Illuminate\Support\Facades\DB::getDriverName() !== 'sqlite') {
+            \Illuminate\Support\Facades\DB::statement("ALTER TABLE enrollments MODIFY COLUMN currency ENUM('CAD', 'USD', 'GBP', 'EUR', 'EGP') DEFAULT 'CAD'");
+        }
     }
 
     /**
