@@ -159,12 +159,8 @@ class Schedule extends Model
         return self::where('teacher_id', $teacherId)
             ->where('status', '!=', 'cancelled')
             ->where(function ($q) use ($startsAt, $endsAt) {
-                $q->whereBetween('starts_at', [$startsAt, $endsAt])
-                    ->orWhereBetween('ends_at', [$startsAt, $endsAt])
-                    ->orWhere(function ($q2) use ($startsAt, $endsAt) {
-                        $q2->where('starts_at', '<=', $startsAt)
-                            ->where('ends_at', '>=', $endsAt);
-                    });
+                $q->where('starts_at', '<', $endsAt)
+                  ->where('ends_at', '>', $startsAt);
             })
             ->when($excludeId, fn($q) => $q->where('id', '!=', $excludeId))
             ->exists();
@@ -175,12 +171,8 @@ class Schedule extends Model
         return self::where('student_id', $studentId)
             ->where('status', '!=', 'cancelled')
             ->where(function ($q) use ($startsAt, $endsAt) {
-                $q->whereBetween('starts_at', [$startsAt, $endsAt])
-                    ->orWhereBetween('ends_at', [$startsAt, $endsAt])
-                    ->orWhere(function ($q2) use ($startsAt, $endsAt) {
-                        $q2->where('starts_at', '<=', $startsAt)
-                            ->where('ends_at', '>=', $endsAt);
-                    });
+                $q->where('starts_at', '<', $endsAt)
+                  ->where('ends_at', '>', $startsAt);
             })
             ->when($excludeId, fn($q) => $q->where('id', '!=', $excludeId))
             ->exists();
