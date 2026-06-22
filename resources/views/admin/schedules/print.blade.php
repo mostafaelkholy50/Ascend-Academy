@@ -10,17 +10,19 @@
     <style>
         body { font-family: 'Poppins', sans-serif; background: white; }
         @media print {
-            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; background: white; margin: 0; padding: 0; }
+            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; background: white; margin: 0; padding: 0 !important; width: 100% !important; max-width: 100% !important; }
             .no-print { display: none !important; }
-            @page { margin: 10mm; size: landscape; }
-            .calendar-container { width: 100%; }
-            .print-table { page-break-inside: auto; }
-            .print-table-wrap { overflow: visible !important; }
+            @page { margin: 5mm; size: landscape; }
+            .calendar-container { width: 100% !important; max-width: 100% !important; border: none !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; }
+            .print-table { page-break-inside: auto; width: 100% !important; }
+            .print-table-wrap { overflow: visible !important; width: 100% !important; border: none !important; }
+            table { width: 100% !important; table-layout: fixed !important; }
+            .main-header { margin-bottom: 10px !important; padding-bottom: 5px !important; }
         }
         .day-cell { min-height: 100px; }
     </style>
 </head>
-<body class="p-8 max-w-7xl mx-auto">
+<body class="p-4 md:p-8 w-full print:p-0 mx-auto">
     
     <!-- Controls (Hidden on Print) -->
     <div class="no-print flex justify-end mb-6 gap-4 border-b pb-4">
@@ -33,7 +35,7 @@
     </div>
 
     <!-- Header -->
-    <div class="flex justify-between items-center mb-8 pb-6 border-b-2 border-indigo-100">
+    <div class="flex justify-between items-center mb-8 pb-6 border-b-2 border-indigo-100 main-header">
         <div class="flex items-center gap-4">
             <div class="w-16 h-16 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-2xl flex items-center justify-center text-white text-3xl font-bold">
                 <i class="fa-solid fa-graduation-cap"></i>
@@ -50,7 +52,7 @@
     </div>
 
     <!-- Timetable Grid -->
-    <div class="calendar-container bg-white rounded-2xl overflow-hidden border border-gray-200 shadow-sm p-4">
+    <div class="calendar-container w-full bg-white rounded-2xl overflow-hidden border border-gray-200 shadow-sm p-4 print:p-0 print:rounded-none">
         @php
             $timezone = auth()->user()->getUserTimezone();
             $dayEntries = collect($monthDays)->map(function ($dayData, $dateString) use ($timezone) {
@@ -81,14 +83,14 @@
                 <p class="text-lg">No schedules found for this month.</p>
             </div>
         @else
-            <div class="print-table-wrap print-table rounded-2xl border border-gray-200">
-                <table class="w-full text-left border-collapse border border-gray-200 text-[10px] table-fixed">
+            <div class="print-table-wrap print-table rounded-2xl border border-gray-200 print:rounded-none">
+                <table class="w-full text-left border-collapse border border-gray-200 text-[10px] table-fixed print:w-full">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th class="border border-gray-200 p-2 font-bold text-gray-700 w-36 bg-gray-100">Date</th>
+                            <th class="border border-gray-200 p-1 font-bold text-gray-700 w-[50px] bg-gray-100 text-center">Date</th>
                             @foreach($hours as $time)
-                                <th class="border border-gray-200 p-2 font-bold text-gray-700 text-center bg-gray-100 whitespace-nowrap w-[78px]">
-                                    {{ \Carbon\Carbon::parse($time . ':00')->format('g A') }}
+                                <th class="border border-gray-200 p-1 font-bold text-gray-700 text-center bg-gray-100 whitespace-nowrap text-[10px]">
+                                    {{ \Carbon\Carbon::parse($time . ':00')->format('ga') }}
                                 </th>
                             @endforeach
                         </tr>
@@ -99,27 +101,27 @@
                                 $schedulesByHour = $day['schedules']->groupBy(fn ($schedule) => $schedule->getStartsAtInTimezone($timezone)->format('H'));
                             @endphp
                             <tr class="{{ $day['isToday'] ? 'bg-indigo-50/50' : ($day['isWeekend'] ? 'bg-gray-50/50' : 'bg-white') }}">
-                                <td class="border border-gray-200 p-2 font-semibold {{ $day['isToday'] ? 'text-indigo-600' : 'text-gray-700' }} align-top w-36">
-                                    <span class="block text-[10px] uppercase text-gray-500">{{ $day['date']->format('D') }}</span>
-                                    <span class="text-sm">{{ $day['date']->format('d M') }}</span>
+                                <td class="border border-gray-200 p-1 font-semibold {{ $day['isToday'] ? 'text-indigo-600' : 'text-gray-700' }} align-middle text-center w-[50px]">
+                                    <span class="block text-[9px] uppercase text-gray-500 leading-tight">{{ $day['date']->format('D') }}</span>
+                                    <span class="text-xs leading-tight">{{ $day['date']->format('d/m') }}</span>
                                 </td>
                                 @foreach($hours as $time)
                                     @php $hourSchedules = $schedulesByHour->get($time, collect()); @endphp
-                                    <td class="border border-gray-200 p-1 align-top h-20 w-[78px]">
+                                    <td class="border border-gray-200 p-0.5 align-top min-h-[40px]">
                                         @foreach($hourSchedules as $s)
                                             @php
                                                 $start = $s->getStartsAtInTimezone($timezone);
                                                 $end = $s->getEndsAtInTimezone($timezone);
                                             @endphp
-                                            <div class="mb-1 last:mb-0 p-1 bg-indigo-50 border border-indigo-100 rounded-md text-indigo-800 text-[9px] text-left shadow-sm overflow-hidden break-words">
-                                                <div class="font-bold leading-tight break-words" title="{{ $s->student->name }}">
+                                            <div class="mb-0.5 last:mb-0 p-0.5 bg-indigo-50 border border-indigo-100 rounded text-indigo-800 text-[8px] sm:text-[9px] text-left shadow-sm overflow-hidden break-words">
+                                                <div class="font-bold leading-none break-words" title="{{ $s->student->name }}">
                                                     {{ $s->student->name }}
                                                 </div>
-                                                <div class="text-gray-500 leading-tight mt-0.5 break-words">
+                                                <div class="text-gray-500 leading-none mt-[2px] break-words text-[8px]">
                                                     {{ $s->course->title }}
                                                 </div>
-                                                <div class="text-gray-500 mt-0.5">
-                                                    {{ $start->format('g:i A') }} - {{ $end->format('g:i A') }}
+                                                <div class="text-gray-500 mt-[2px] leading-none text-[8px]">
+                                                    {{ $start->format('g:ia') }}-{{ $end->format('g:ia') }}
                                                 </div>
                                             </div>
                                         @endforeach
@@ -134,9 +136,9 @@
     </div>
 
     <!-- Summary / Footer -->
-    <div class="mt-8 pt-4 border-t border-gray-100 flex justify-between items-center text-sm text-gray-500">
-        <p>Generated on {{ now()->format('M d, Y \a\t g:i A') }}</p>
-        <p class="font-medium text-indigo-600">Ascend Quran Academy - Excellence in Education</p>
+    <div class="mt-4 pt-2 border-t border-gray-100 flex justify-between items-center text-xs text-gray-500 main-footer print:mt-2">
+        <p>Generated on {{ now()->format('M d, Y g:i A') }}</p>
+        <p class="font-medium text-indigo-600">Ascend Quran Academy</p>
     </div>
 
     <script>

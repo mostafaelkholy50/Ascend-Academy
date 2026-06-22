@@ -22,7 +22,7 @@ class SendClassReminders extends Command
      *
      * @var string
      */
-    protected $description = 'Send class reminder emails to students, parents, and teachers for classes in the next 24 hours';
+    protected $description = 'Send class reminder emails to students, parents, and teachers for today\'s classes';
 
     /**
      * Execute the console command.
@@ -31,16 +31,19 @@ class SendClassReminders extends Command
     {
         $this->info('Sending class reminders...');
 
-        // Get all scheduled classes in the next 24 hours
+        // Get all scheduled classes for the current day window
         $now = Carbon::now();
-        $tomorrow = $now->copy()->addDay();
+        $dayStart = $now->copy()->startOfDay();
+        $dayEnd = $now->copy()->endOfDay();
 
         $schedules = Schedule::with(['student', 'teacher', 'course', 'student.parents'])
             ->where('status', 'scheduled')
-            ->whereBetween('starts_at', [$now, $tomorrow])
+            ->whereBetween('starts_at', [$dayStart, $dayEnd])
             ->get();
 
         $sentCount = 0;
+        $teacherDigestCount = 0;
+        $classReminderCount = 0;
 
         // Group schedules by teacher ID to send one daily email to each teacher
         $schedulesByTeacher = $schedules->groupBy('teacher_id');
@@ -50,6 +53,7 @@ class SendClassReminders extends Command
                 $teacher = $teacherSchedules->first()->teacher;
                 $teacher->notify(new TeacherDailyScheduleNotification($teacherSchedules));
                 $sentCount++;
+                $teacherDigestCount++;
                 $this->info("Sent daily schedule digest to teacher: {$teacher->name}");
             } catch (\Exception $e) {
                 $this->error("Failed to send daily schedule digest to teacher {$teacherId}: " . $e->getMessage());
@@ -67,6 +71,7 @@ class SendClassReminders extends Command
                 if (!$anyParentDisabled) {
                     $schedule->student->notify(new ClassReminderNotification($schedule));
                     $sentCount++;
+                    $classReminderCount++;
                 }
 
                 // Send to parent(s) who have class reminders enabled
@@ -74,6 +79,7 @@ class SendClassReminders extends Command
                     if ($parent->class_reminders_enabled) {
                         $parent->notify(new ClassReminderNotification($schedule));
                         $sentCount++;
+                        $classReminderCount++;
                     }
                 }
 
@@ -83,7 +89,8 @@ class SendClassReminders extends Command
             }
         }
 
-        $this->info("Successfully sent {$sentCount} class reminder emails for " . $schedules->count() . " classes.");
+        $this->info("Successfully sent {$sentCount} reminder emails for " . $schedules->count() . " classes.");
+        $this->info("Teacher digests: {$teacherDigestCount}, class reminders: {$classReminderCount}");
 
         return Command::SUCCESS;
     }
