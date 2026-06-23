@@ -612,23 +612,20 @@ class ScheduleService
                 'session_duration' => $durationMinutes,
             ]);
 
-            // Find all upcoming schedules
-            $upcomingSchedules = Schedule::where('enrollment_id', $enrollment->id)
-                ->where('starts_at', '>', now())
-                ->where('status', 'scheduled')
-                ->get();
+            // Find all schedules
+            $allSchedules = Schedule::where('enrollment_id', $enrollment->id)->get();
 
-            if ($upcomingSchedules->isEmpty()) {
+            if ($allSchedules->isEmpty()) {
                 \Illuminate\Support\Facades\DB::commit();
-                return ['success' => true, 'message' => 'Pattern updated. No upcoming schedules to modify.'];
+                return ['success' => true, 'message' => 'Pattern updated. No schedules found to modify.'];
             }
 
-            // Find the maximum date of the upcoming schedules to know how far to generate
-            $maxDate = $upcomingSchedules->max('starts_at');
-            $minDate = $upcomingSchedules->min('starts_at')->copy()->startOfDay();
+            // Find the maximum and minimum date across all schedules
+            $maxDate = $allSchedules->max('starts_at');
+            $minDate = $allSchedules->min('starts_at')->copy()->startOfDay();
 
-            // We will delete all upcoming schedules
-            foreach ($upcomingSchedules as $schedule) {
+            // We will delete all schedules (past and future)
+            foreach ($allSchedules as $schedule) {
                 $schedule->delete();
                 $deletedCount++;
             }
@@ -640,14 +637,10 @@ class ScheduleService
             while ($currentDate->lte($maxDate)) {
                 $dayName = $currentDate->format('l');
                 if (in_array($dayName, $days)) {
-                    // Only add if it's strictly in the future (greater than now)
-                    $startsAtTest = Carbon::parse($currentDate->format('Y-m-d') . ' ' . $scheduleTimes[$dayName]);
-                    if ($startsAtTest->gt(now())) {
-                        $sessionDates[] = [
-                            'date' => $currentDate->copy(),
-                            'time' => $scheduleTimes[$dayName],
-                        ];
-                    }
+                    $sessionDates[] = [
+                        'date' => $currentDate->copy(),
+                        'time' => $scheduleTimes[$dayName],
+                    ];
                 }
                 $currentDate->addDay();
             }

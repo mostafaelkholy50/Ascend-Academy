@@ -90,25 +90,17 @@ test('updateSchedulePattern successfully replaces upcoming schedules', function 
     expect($this->enrollment->schedule_pattern)->toHaveKey('Saturday', '12:00');
     expect($this->enrollment->schedule_pattern)->toHaveKey('Thursday', '12:00');
 
-    // Past schedule should still exist
-    $pastSchedules = Schedule::where('enrollment_id', $this->enrollment->id)
-        ->where('starts_at', '<', now())
-        ->get();
-    expect($pastSchedules->count())->toBe(1);
-
-    // Old upcoming schedules should be gone (at 10:00)
-    $oldUpcomingSchedules = Schedule::where('enrollment_id', $this->enrollment->id)
-        ->where('starts_at', '>', now())
+    // Past schedules matching old pattern should be gone
+    $oldPastSchedules = Schedule::where('enrollment_id', $this->enrollment->id)
         ->whereTime('starts_at', '10:00:00')
         ->count();
-    expect($oldUpcomingSchedules)->toBe(0);
+    expect($oldPastSchedules)->toBe(0);
 
-    // New upcoming schedules should be created
-    $newUpcomingSchedules = Schedule::where('enrollment_id', $this->enrollment->id)
-        ->where('starts_at', '>', now())
+    // New schedules (past and future) should be created
+    $newSchedules = Schedule::where('enrollment_id', $this->enrollment->id)
         ->whereTime('starts_at', '12:00:00')
         ->get();
-    expect($newUpcomingSchedules->count())->toBeGreaterThan(0);
+    expect($newSchedules->count())->toBeGreaterThan(0);
 });
 
 test('updateSchedulePattern rolls back on conflict', function () {

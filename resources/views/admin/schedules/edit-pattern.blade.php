@@ -32,7 +32,7 @@
             <div>
                 <p class="font-semibold">Important Information</p>
                 <p class="text-sm mt-1">
-                    Changing the schedule pattern here will <strong>delete all upcoming sessions</strong> for this enrollment and generate new ones according to your new selections. Past or completed sessions will remain unchanged.
+                    Changing the schedule pattern here will <strong>delete ALL sessions</strong> (both past and future) for this enrollment and generate new ones according to your new selections. Please make sure this is intended, as data attached to past sessions may be affected.
                 </p>
             </div>
         </div>

@@ -8,11 +8,10 @@ Admins can modify the schedule pattern (days of the week, times, session duratio
 
 **How it works:**
 1. The admin selects new days, times, duration, and a teacher.
-2. The system locates all **upcoming** sessions for the enrollment (sessions with `status = 'scheduled'` and `starts_at > now()`).
-3. Past, completed, or cancelled sessions remain untouched.
-4. The system deletes all the upcoming sessions.
-5. It then generates new sessions starting from today up to the maximum date of the previously existing upcoming sessions, using the new pattern.
-6. Similar to initial creation, this process is strictly atomic. If the new pattern causes a conflict on *any* generated day, the entire transaction is rolled back, no old sessions are deleted, and no new sessions are created. An error is shown to the user.
+2. The system locates **ALL** sessions for the enrollment (both past and future).
+3. The system deletes all these sessions.
+4. It then generates new sessions starting from the very first session date up to the date of the very last session, using the new pattern.
+5. Similar to initial creation, this process is strictly atomic. If the new pattern causes a conflict on *any* generated day (past or future), the entire transaction is rolled back, no old sessions are deleted, and no new sessions are created. An error is shown to the user.
 
 ## Conflict Resolution Logic
 To prevent double-booking and assure data consistency, the system enforces a strict all-or-nothing (atomic) scheduling policy. When an admin or automated script attempts to generate schedules for a student, the system checks for two types of conflicts:
