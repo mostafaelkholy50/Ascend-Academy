@@ -170,13 +170,17 @@ class ScheduleController extends Controller
             return back()->with('error', 'Please select a teacher and a month to print.');
         }
 
+        $timezone = auth()->user()->getUserTimezone();
         $teacher = User::findOrFail($teacherId);
-        $targetMonth = Carbon::parse($month);
+        $targetMonth = Carbon::parse($month, $timezone);
         
+        // Convert local month boundaries to UTC for database querying
+        $startOfMonthUtc = $targetMonth->copy()->startOfMonth()->setTimezone('UTC');
+        $endOfMonthUtc = $targetMonth->copy()->endOfMonth()->setTimezone('UTC');
+
         $schedules = Schedule::with(['student', 'course'])
             ->where('teacher_id', $teacherId)
-            ->whereYear('starts_at', $targetMonth->year)
-            ->whereMonth('starts_at', $targetMonth->month)
+            ->whereBetween('starts_at', [$startOfMonthUtc, $endOfMonthUtc])
             ->orderBy('starts_at')
             ->get();
 
@@ -194,7 +198,7 @@ class ScheduleController extends Controller
         }
 
         foreach ($schedules as $schedule) {
-            $dateString = $schedule->starts_at->format('Y-m-d');
+            $dateString = $schedule->getStartsAtInTimezone($timezone)->format('Y-m-d');
             if (isset($monthDays[$dateString])) {
                 $monthDays[$dateString]['schedules']->push($schedule);
             }
