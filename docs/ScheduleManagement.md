@@ -3,6 +3,12 @@
 ## Overview
 The Schedule Management system in Ascend Academy handles the booking of classes for students with teachers. It supports both manual schedule creation (via the admin dashboard), automated monthly schedule generation for active enrollments, and bulk schedule pattern editing.
 
+## Initial Schedule Creation and Continuation
+When creating a new recurring schedule for a student from the admin panel:
+- **Initial Generation**: The system generates the first set of sessions starting from the exact `start_date` up to the **end of that specific month** (e.g., if the `start_date` is June 15th, sessions are generated up to June 30th). This prevents the schedule from spilling over into the next month improperly.
+- **Subsequent Months**: When the enrollment is renewed or the CronJob generates the next month's payment/schedule, the system will automatically generate a fresh set of sessions for the full next month (e.g., July 1st to July 31st).
+This guarantees that class schedules are strictly bounded by calendar months without missing any expected days.
+
 ## Bulk Schedule Pattern Editing
 Admins can modify the schedule pattern (days of the week, times, session duration, and teacher) for an active enrollment.
 

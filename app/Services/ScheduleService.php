@@ -175,7 +175,7 @@ class ScheduleService
             $enrollment->setSchedulePattern($schedulePattern);
 
             $monthStart = Carbon::parse($data['start_date']);
-            $monthEnd = $monthStart->copy()->addMonth();
+            $monthEnd = $monthStart->copy()->endOfMonth();
             
             if (!$enrollment->start_date || $monthStart->lt($enrollment->start_date)) {
                 $enrollment->update(['start_date' => $monthStart]);
