@@ -174,13 +174,13 @@ class ScheduleController extends Controller
         $teacher = User::findOrFail($teacherId);
         $targetMonth = Carbon::parse($month, $timezone);
         
-        // Convert local month boundaries to UTC for database querying
-        $startOfMonthUtc = $targetMonth->copy()->startOfMonth()->setTimezone('UTC');
-        $endOfMonthUtc = $targetMonth->copy()->endOfMonth()->setTimezone('UTC');
+        // Convert local month boundaries to App Timezone for database querying
+        $startOfMonthApp = $targetMonth->copy()->startOfMonth()->setTimezone(config('app.timezone'));
+        $endOfMonthApp = $targetMonth->copy()->endOfMonth()->setTimezone(config('app.timezone'));
 
         $schedules = Schedule::with(['student', 'course'])
             ->where('teacher_id', $teacherId)
-            ->whereBetween('starts_at', [$startOfMonthUtc, $endOfMonthUtc])
+            ->whereBetween('starts_at', [$startOfMonthApp, $endOfMonthApp])
             ->orderBy('starts_at')
             ->get();
 
