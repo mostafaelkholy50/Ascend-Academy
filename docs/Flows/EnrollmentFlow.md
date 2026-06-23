@@ -8,6 +8,7 @@ Managed primarily by `EnrollmentService::storeEnrollments`:
 1. Validates that the student is not already enrolled in the selected course.
 2. Creates the `Enrollment` record.
 3. **Side Effect**: Instantly creates the first month's `EnrollmentPayment` record as 'unpaid'.
+4. The resulting enrollment may later be expanded into multiple sessions on the same weekday by the scheduling layer without changing the enrollment contract itself.
 
 ## Dependencies & Triggers
 - **Who calls it**: Admin or Superadmin via `Admin\EnrollmentController`.
@@ -17,6 +18,7 @@ Managed primarily by `EnrollmentService::storeEnrollments`:
 ## Business Constraints
 - An enrollment must define `days_per_week` and `session_duration` to establish the schedule shape.
 - Deleting an enrollment (via `EnrollmentService::deleteEnrollment`) triggers a cascading deletion of related Payments, Schedules, and Attendances wrapped in a strict Database Transaction to maintain integrity.
+- The enrollment remains the pricing and ownership source of truth; session multiplicity is a schedule concern, not an enrollment rewrite.
 
 ---
 **Last Scan Date:** June 2026

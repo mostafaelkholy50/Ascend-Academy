@@ -187,17 +187,26 @@
                             <span class="ml-3 text-sm font-medium text-gray-700 w-24">{{ $day }}</span>
                         </label>
                         
-                        <div class="flex flex-col gap-2 time-input-container flex-1" id="time-container-{{ $day }}" style="display: none;">
-                            <i class="fa-solid fa-clock text-vibrant-green"></i>
-                            <div class="time-input-list flex flex-wrap gap-2" data-day="{{ $day }}">
-                                <input type="time"
-                                    name="schedule_times[{{ $day }}][]"
-                                    id="time-{{ $day }}-0"
-                                    value="{{ old('schedule_times.' . $day . '.0', '17:00') }}"
-                                    class="time-input px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vibrant-green focus:border-transparent text-sm">
+                        <div class="flex flex-col gap-3 time-input-container flex-1" id="time-container-{{ $day }}" style="display: none;">
+                            <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-gray-500">
+                                <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-vibrant-green/10 text-vibrant-green">
+                                    <i class="fa-solid fa-clock"></i>
+                                </span>
+                                <span>Time Slots</span>
                             </div>
-                            <button type="button" class="self-start text-xs font-semibold text-vibrant-green" onclick="addTimeInput('{{ $day }}')">
-                                + Add another time
+                            <div class="time-input-list grid grid-cols-1 sm:grid-cols-2 gap-2" data-day="{{ $day }}">
+                                <div class="time-input-wrap relative">
+                                    <input type="time"
+                                        name="schedule_times[{{ $day }}][]"
+                                        id="time-{{ $day }}-0"
+                                        value="{{ old('schedule_times.' . $day . '.0', '17:00') }}"
+                                        class="time-input w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-xl bg-white shadow-sm focus:ring-2 focus:ring-vibrant-green focus:border-transparent text-sm">
+                                    <i class="fa-solid fa-clock absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"></i>
+                                </div>
+                            </div>
+                            <button type="button" class="self-start inline-flex items-center gap-2 text-xs font-bold text-vibrant-green bg-vibrant-green/10 hover:bg-vibrant-green/15 px-3 py-2 rounded-full transition" onclick="addTimeInput('{{ $day }}')">
+                                <i class="fa-solid fa-circle-plus"></i>
+                                Add another time
                             </button>
                         </div>
                     </div>
@@ -358,13 +367,23 @@
         function addTimeInput(day) {
             const list = document.querySelector(`.time-input-list[data-day="${day}"]`);
             const index = list.querySelectorAll('.time-input').length;
+            const wrapper = document.createElement('div');
+            wrapper.className = 'time-input-wrap relative';
+
             const input = document.createElement('input');
             input.type = 'time';
             input.name = `schedule_times[${day}][]`;
             input.id = `time-${day}-${index}`;
             input.required = true;
-            input.className = 'time-input px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vibrant-green focus:border-transparent text-sm';
-            list.appendChild(input);
+            input.value = '17:00';
+            input.className = 'time-input w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-xl bg-white shadow-sm focus:ring-2 focus:ring-vibrant-green focus:border-transparent text-sm';
+
+            const icon = document.createElement('i');
+            icon.className = 'fa-solid fa-clock absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none';
+
+            wrapper.appendChild(input);
+            wrapper.appendChild(icon);
+            list.appendChild(wrapper);
         }
     </script>
 </x-dashboard-layout>

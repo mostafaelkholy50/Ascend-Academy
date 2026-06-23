@@ -28,6 +28,8 @@ Compatibility rules:
 - The normalized stored pattern is now day -> list of times.
 - Payment-driven generation, monthly cron generation, and pattern editing all expand every day into every selected time.
 - Conflict detection is performed for each generated session independently.
+- Each generated session is still bounded by its own `starts_at` / `ends_at` pair, so overlap checks, dashboards, and attendance views continue to work per session instead of per day.
+- The public UI and admin UI both preserve backward compatibility with the old single-time pattern shape while migrating to the multi-time shape internally.
 
 ## Bulk Schedule Pattern Editing
 Admins can modify the schedule pattern (days of the week, times, session duration, and teacher) for an active enrollment.
@@ -70,5 +72,10 @@ The conflict and transaction logic is covered by automated feature tests located
 - `tests/Feature/Admin/ScheduleCreationConflictTest.php`
 - `tests/Feature/Admin/SchedulePatternEditTest.php`
 - `tests/Feature/Admin/ScheduleTest.php`
+
+## Operational Notes
+- The payment flow does not create schedules by day anymore; it creates one schedule row per selected time in the target month.
+- Cron-based monthly regeneration uses the same normalized pattern, so it will generate the same set of sessions whether the enrollment was created through the old single-time format or the new multi-time format.
+- Dashboard views, teacher views, student views, and parent views all read the same schedule rows, so they automatically reflect the additional sessions with no extra business rules.
 
 This ensures that any future changes to the system will not inadvertently reintroduce partial bookings or vague error messages.

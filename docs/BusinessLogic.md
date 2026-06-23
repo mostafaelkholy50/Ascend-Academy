@@ -3,12 +3,13 @@
 This document maps the core business logic of Ascend-Academy, which is heavily centralized within the `app/Services/` directory.
 
 ## 1. Scheduling (`ScheduleService`, `TeacherScheduleService`, etc.)
-- **Logic**: Handles the complex logic of generating class schedules based on enrollments, managing recurrences (`schedule_pattern`), handling conflicts, and allowing flexible scheduling.
+- **Logic**: Handles the complex logic of generating class schedules based on enrollments, managing recurrences (`schedule_pattern`), handling conflicts, and allowing flexible scheduling. A weekday may expand to multiple session rows.
 - **Constraints**: Teachers must have availability that matches the scheduled time. 
 
 ## 2. Enrollments (`EnrollmentService`, `PaymentService`)
 - **Logic**: Manages enrolling students into courses. Tracks `pricing_tiers`, the currency used, and linking the enrollment to specific payments.
 - **Constraints**: Enrollments must define session duration and rate.
+- **Schedule Interaction**: The enrollment's stored schedule pattern is normalized into `day => [times...]` so all recurring generation flows stay compatible.
 
 ## 3. Attendances & Reports (`AttendanceService`, `ReportService`, `TeacherReportService`)
 - **Logic**: Tracks if a student or teacher attended a scheduled class. Teachers must submit a report for completed classes.
@@ -21,6 +22,7 @@ This document maps the core business logic of Ascend-Academy, which is heavily c
 ## 5. Dashboards (`*DashboardService`)
 - **Logic**: Prepares customized data sets for the various role-based dashboards (Admin, Teacher, Student, Parent, Scheduler).
 - **Constraints**: Data must be tightly scoped to the authenticated user's role and relations (e.g., a parent only sees their children's data).
+- **Timezone Rule**: Dashboards render each schedule row in the viewer's timezone; multi-session days simply appear as additional rows with the same date.
 
 ## Handling Side Effects
 When a business action occurs (e.g., a schedule is changed), side effects must be handled via **Events and Listeners** or **Jobs** (e.g., sending email notifications). Services should dispatch events rather than sending emails directly inline to maintain fast response times and decoupled logic.
