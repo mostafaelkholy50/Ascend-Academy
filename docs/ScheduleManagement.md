@@ -9,6 +9,26 @@ When creating a new recurring schedule for a student from the admin panel:
 - **Subsequent Months**: When the enrollment is renewed or the CronJob generates the next month's payment/schedule, the system will automatically generate a fresh set of sessions for the full next month (e.g., July 1st to July 31st).
 This guarantees that class schedules are strictly bounded by calendar months without missing any expected days.
 
+### Multiple Sessions Per Day
+The schedule builder now supports more than one session on the same weekday for the same enrollment.
+
+Supported input shape:
+```php
+[
+    'days' => ['Monday', 'Wednesday'],
+    'schedule_times' => [
+        'Monday' => ['10:00', '14:00'],
+        'Wednesday' => ['16:00'],
+    ],
+]
+```
+
+Compatibility rules:
+- Legacy single-time input like `schedule_times[Monday] = "10:00"` is still accepted.
+- The normalized stored pattern is now day -> list of times.
+- Payment-driven generation, monthly cron generation, and pattern editing all expand every day into every selected time.
+- Conflict detection is performed for each generated session independently.
+
 ## Bulk Schedule Pattern Editing
 Admins can modify the schedule pattern (days of the week, times, session duration, and teacher) for an active enrollment.
 
@@ -43,11 +63,12 @@ The system ensures that partial bookings never occur. It does this by wrapping t
 
 ### Code Locations
 - **`App\Models\Schedule`**: Contains the `getTeacherConflict()` and `getStudentConflict()` methods which retrieve the conflicting schedule along with its associated student, teacher, and course models.
-- **`App\Services\ScheduleService`**: Contains `storeSchedule()`, `generateMonthlySchedules()`, and `updateSchedulePattern()`. All methods are fully transactional and rely on the model's conflict detection to abort and throw descriptive exceptions.
+- **`App\Services\ScheduleService`**: Contains `storeSchedule()`, `generateMonthlySchedules()`, and `updateSchedulePattern()`. All methods are fully transactional and rely on the model's conflict detection to abort and throw descriptive exceptions. The service now normalizes schedule patterns into `day => [times...]` so the rest of the system can treat multi-session days consistently.
 
 ## Testing
 The conflict and transaction logic is covered by automated feature tests located in:
 - `tests/Feature/Admin/ScheduleCreationConflictTest.php`
 - `tests/Feature/Admin/SchedulePatternEditTest.php`
+- `tests/Feature/Admin/ScheduleTest.php`
 
 This ensures that any future changes to the system will not inadvertently reintroduce partial bookings or vague error messages.

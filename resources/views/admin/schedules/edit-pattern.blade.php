@@ -76,7 +76,7 @@
             </h2>
 
             <p class="text-sm text-gray-600 mb-4">
-                Select the days of the week and set a specific time for each day. Each day can have a different time.
+                Select the days of the week and set one or more times for each day.
             </p>
 
             @php
@@ -87,7 +87,13 @@
                 @foreach(['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] as $day)
                     @php
                         $isChecked = in_array($day, old('days', array_keys($pattern)));
-                        $timeValue = old('schedule_times.' . $day, $pattern[$day] ?? '17:00');
+                        $timeValues = old('schedule_times.' . $day, $pattern[$day] ?? ['17:00']);
+                        if (is_string($timeValues)) {
+                            $timeValues = [$timeValues];
+                        }
+                        if (empty($timeValues)) {
+                            $timeValues = ['17:00'];
+                        }
                     @endphp
                     <div class="flex items-center gap-4 p-3 border-2 border-gray-200 rounded-lg hover:border-vibrant-green transition day-time-row">
                         <label class="flex items-center cursor-pointer flex-1">
@@ -99,14 +105,21 @@
                             <span class="ml-3 text-sm font-medium text-gray-700 w-24">{{ $day }}</span>
                         </label>
                         
-                        <div class="flex items-center gap-2 time-input-container" id="time-container-{{ $day }}" style="display: {{ $isChecked ? 'flex' : 'none' }};">
+                        <div class="flex flex-col gap-2 time-input-container flex-1" id="time-container-{{ $day }}" style="display: {{ $isChecked ? 'flex' : 'none' }};">
                             <i class="fa-solid fa-clock text-vibrant-green"></i>
-                            <input type="time" 
-                                name="schedule_times[{{ $day }}]" 
-                                id="time-{{ $day }}"
-                                value="{{ $timeValue }}"
-                                {{ $isChecked ? 'required' : '' }}
-                                class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vibrant-green focus:border-transparent text-sm">
+                            <div class="time-input-list flex flex-wrap gap-2" data-day="{{ $day }}">
+                                @foreach($timeValues as $index => $timeValue)
+                                    <input type="time"
+                                        name="schedule_times[{{ $day }}][]"
+                                        id="time-{{ $day }}-{{ $index }}"
+                                        value="{{ $timeValue }}"
+                                        {{ $isChecked ? 'required' : '' }}
+                                        class="time-input px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vibrant-green focus:border-transparent text-sm">
+                                @endforeach
+                            </div>
+                            <button type="button" class="self-start text-xs font-semibold text-vibrant-green" onclick="addTimeInput('{{ $day }}')">
+                                + Add another time
+                            </button>
                         </div>
                     </div>
                 @endforeach
@@ -177,15 +190,27 @@
         function toggleTimeInput(day) {
             const checkbox = document.querySelector(`input[data-day="${day}"]`);
             const timeContainer = document.getElementById(`time-container-${day}`);
-            const timeInput = document.getElementById(`time-${day}`);
+            const timeInputs = timeContainer.querySelectorAll('.time-input');
             
             if (checkbox.checked) {
                 timeContainer.style.display = 'flex';
-                timeInput.required = true;
+                timeInputs.forEach(input => input.required = true);
             } else {
                 timeContainer.style.display = 'none';
-                timeInput.required = false;
+                timeInputs.forEach(input => input.required = false);
             }
+        }
+
+        function addTimeInput(day) {
+            const list = document.querySelector(`.time-input-list[data-day="${day}"]`);
+            const index = list.querySelectorAll('.time-input').length;
+            const input = document.createElement('input');
+            input.type = 'time';
+            input.name = `schedule_times[${day}][]`;
+            input.id = `time-${day}-${index}`;
+            input.required = true;
+            input.className = 'time-input px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vibrant-green focus:border-transparent text-sm';
+            list.appendChild(input);
         }
     </script>
 </x-dashboard-layout>

@@ -125,7 +125,8 @@ class ScheduleController extends Controller
             'days' => 'required|array|min:1',
             'days.*' => 'string|in:Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday',
             'schedule_times' => 'required|array',
-            'schedule_times.*' => 'date_format:H:i',
+            'schedule_times.*' => 'required',
+            'schedule_times.*.*' => 'nullable|date_format:H:i',
         ]);
 
         try {

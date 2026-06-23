@@ -51,7 +51,7 @@ test('storeSchedule rolls back and throws exception with names on conflict', fun
         'duration_minutes' => 60,
         'days' => ['Sunday'],
         'schedule_times' => [
-            'Sunday' => '20:30',
+            'Sunday' => ['20:30', '21:45'],
         ],
     ];
 
@@ -83,7 +83,7 @@ test('storeSchedule rolls back and throws exception for student conflict', funct
         'duration_minutes' => 60,
         'days' => ['Sunday'],
         'schedule_times' => [
-            'Sunday' => '20:30',
+            'Sunday' => ['20:30'],
         ],
     ];
 

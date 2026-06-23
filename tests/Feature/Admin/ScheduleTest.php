@@ -98,7 +98,7 @@ class ScheduleTest extends TestCase
             'course_id' => $this->enrollment->course_id,
             'teacher_id' => $this->teacher->id,
             'days' => ['Monday'],
-            'schedule_times' => ['Monday' => '10:00'],
+            'schedule_times' => ['Monday' => ['10:00', '14:00']],
             'duration_minutes' => 60,
             'start_date' => now()->format('Y-m-d'),
         ]);
@@ -109,6 +109,12 @@ class ScheduleTest extends TestCase
             'student_id' => $this->student->id,
             'course_id' => $this->enrollment->course_id,
             'teacher_id' => $this->teacher->id,
+        ]);
+
+        $scheduledDate = now()->copy()->next('Monday')->setTime(14, 0)->format('Y-m-d H:i:s');
+        $this->assertDatabaseHas('schedules', [
+            'enrollment_id' => $this->enrollment->id,
+            'starts_at' => $scheduledDate,
         ]);
     }
 
@@ -123,7 +129,7 @@ class ScheduleTest extends TestCase
             'course_id' => $newCourse->id,
             'teacher_id' => $this->teacher->id,
             'days' => ['Monday'],
-            'schedule_times' => ['Monday' => '10:00'],
+            'schedule_times' => ['Monday' => ['10:00', '14:00']],
             'duration_minutes' => 60,
             'start_date' => now()->format('Y-m-d'),
         ]);
@@ -190,7 +196,7 @@ class ScheduleTest extends TestCase
             'course_id' => $this->enrollment->course_id,
             'teacher_id' => $this->teacher->id,
             'days' => ['Monday'],
-            'schedule_times' => ['Monday' => '10:00'],
+            'schedule_times' => ['Monday' => ['10:00']],
             'duration_minutes' => 60,
             'start_date' => $startDate->format('Y-m-d'),
         ]);
@@ -264,8 +270,8 @@ class ScheduleTest extends TestCase
         ]));
 
         $response->assertStatus(200);
-        $response->assertSee('12:30 AM');
-        $response->assertSee('1:30 AM');
+        $response->assertSee('12:30am');
+        $response->assertSee('1:30am');
         $response->assertSee($this->student->name);
     }
 

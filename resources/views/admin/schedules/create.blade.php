@@ -172,7 +172,7 @@
             </div>
 
             <p class="text-sm text-gray-600 mb-4">
-                Select the days of the week and set a specific time for each day. Each day can have a different time.
+                Select the days of the week and set one or more times for each day.
             </p>
 
             <div class="space-y-3">
@@ -187,13 +187,18 @@
                             <span class="ml-3 text-sm font-medium text-gray-700 w-24">{{ $day }}</span>
                         </label>
                         
-                        <div class="flex items-center gap-2 time-input-container" id="time-container-{{ $day }}" style="display: none;">
+                        <div class="flex flex-col gap-2 time-input-container flex-1" id="time-container-{{ $day }}" style="display: none;">
                             <i class="fa-solid fa-clock text-vibrant-green"></i>
-                            <input type="time" 
-                                name="schedule_times[{{ $day }}]" 
-                                id="time-{{ $day }}"
-                                value="{{ old('schedule_times.' . $day, '17:00') }}"
-                                class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vibrant-green focus:border-transparent text-sm">
+                            <div class="time-input-list flex flex-wrap gap-2" data-day="{{ $day }}">
+                                <input type="time"
+                                    name="schedule_times[{{ $day }}][]"
+                                    id="time-{{ $day }}-0"
+                                    value="{{ old('schedule_times.' . $day . '.0', '17:00') }}"
+                                    class="time-input px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vibrant-green focus:border-transparent text-sm">
+                            </div>
+                            <button type="button" class="self-start text-xs font-semibold text-vibrant-green" onclick="addTimeInput('{{ $day }}')">
+                                + Add another time
+                            </button>
                         </div>
                     </div>
                 @endforeach
@@ -209,7 +214,7 @@
             <div class="mt-4 p-3 bg-blue-50 rounded-lg">
                 <p class="text-sm text-blue-800">
                     <i class="fa-solid fa-info-circle mr-1"></i>
-                    <strong>Tip:</strong> You can set different times for each day. For example, Monday at 4:00 PM, Wednesday at 6:00 PM, Friday at 5:00 PM.
+                    <strong>Tip:</strong> You can set multiple times for the same day. For example, Monday at 4:00 PM and 6:00 PM.
                 </p>
             </div>
         </div>
@@ -339,15 +344,27 @@
         function toggleTimeInput(day) {
             const checkbox = document.querySelector(`input[data-day="${day}"]`);
             const timeContainer = document.getElementById(`time-container-${day}`);
-            const timeInput = document.getElementById(`time-${day}`);
+            const timeInputs = timeContainer.querySelectorAll('.time-input');
             
             if (checkbox.checked) {
                 timeContainer.style.display = 'flex';
-                timeInput.required = true;
+                timeInputs.forEach(input => input.required = true);
             } else {
                 timeContainer.style.display = 'none';
-                timeInput.required = false;
+                timeInputs.forEach(input => input.required = false);
             }
+        }
+
+        function addTimeInput(day) {
+            const list = document.querySelector(`.time-input-list[data-day="${day}"]`);
+            const index = list.querySelectorAll('.time-input').length;
+            const input = document.createElement('input');
+            input.type = 'time';
+            input.name = `schedule_times[${day}][]`;
+            input.id = `time-${day}-${index}`;
+            input.required = true;
+            input.className = 'time-input px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vibrant-green focus:border-transparent text-sm';
+            list.appendChild(input);
         }
     </script>
 </x-dashboard-layout>

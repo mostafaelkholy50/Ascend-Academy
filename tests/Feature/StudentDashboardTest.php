@@ -48,8 +48,8 @@ test('student dashboard shows schedule in student timezone', function () {
         'course_id' => $course->id,
         'teacher_id' => $teacher->id,
         'student_id' => $student->id,
-        'starts_at' => Carbon::create(2026, 6, 4, 10, 0, 0, 'Africa/Cairo'),
-        'ends_at' => Carbon::create(2026, 6, 4, 11, 0, 0, 'Africa/Cairo'),
+        'starts_at' => Carbon::today('Africa/Cairo')->setTime(10, 0),
+        'ends_at' => Carbon::today('Africa/Cairo')->setTime(11, 0),
         'status' => 'scheduled',
     ]);
 

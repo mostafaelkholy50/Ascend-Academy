@@ -75,8 +75,8 @@ test('updateSchedulePattern successfully replaces upcoming schedules', function 
         'duration_minutes' => 60,
         'days' => ['Saturday', 'Thursday'],
         'schedule_times' => [
-            'Saturday' => '12:00',
-            'Thursday' => '12:00',
+            'Saturday' => ['12:00', '18:00'],
+            'Thursday' => ['12:00'],
         ],
     ];
 
@@ -87,8 +87,11 @@ test('updateSchedulePattern successfully replaces upcoming schedules', function 
 
     $this->enrollment->refresh();
     expect($this->enrollment->days_per_week)->toBe(2);
-    expect($this->enrollment->schedule_pattern)->toHaveKey('Saturday', '12:00');
-    expect($this->enrollment->schedule_pattern)->toHaveKey('Thursday', '12:00');
+    expect($this->enrollment->schedule_pattern)->toHaveKey('Saturday');
+    expect($this->enrollment->schedule_pattern['Saturday'])->toContain('12:00');
+    expect($this->enrollment->schedule_pattern['Saturday'])->toContain('18:00');
+    expect($this->enrollment->schedule_pattern)->toHaveKey('Thursday');
+    expect($this->enrollment->schedule_pattern['Thursday'])->toContain('12:00');
 
     // Past schedules matching old pattern should be gone
     $oldPastSchedules = Schedule::where('enrollment_id', $this->enrollment->id)
@@ -137,8 +140,8 @@ test('updateSchedulePattern rolls back on conflict', function () {
         'duration_minutes' => 60,
         'days' => ['Saturday', 'Thursday'],
         'schedule_times' => [
-            'Saturday' => '12:00',
-            'Thursday' => '12:00',
+            'Saturday' => ['12:00', '18:00'],
+            'Thursday' => ['12:00'],
         ],
     ];
 

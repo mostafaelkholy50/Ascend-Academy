@@ -86,8 +86,8 @@ test('parent dashboard shows schedule in parent timezone', function () {
         'course_id' => $course->id,
         'teacher_id' => $teacher->id,
         'student_id' => $student->id,
-        'starts_at' => Carbon::create(2026, 6, 4, 16, 0, 0, 'Africa/Cairo'),
-        'ends_at' => Carbon::create(2026, 6, 4, 17, 0, 0, 'Africa/Cairo'),
+        'starts_at' => Carbon::today('Africa/Cairo')->setTime(16, 0),
+        'ends_at' => Carbon::today('Africa/Cairo')->setTime(17, 0),
         'status' => 'scheduled',
     ]);
 

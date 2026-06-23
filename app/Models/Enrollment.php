@@ -126,7 +126,7 @@ class Enrollment extends Model
      */
     public function getSchedulePattern(): ?array
     {
-        return $this->schedule_pattern;
+        return $this->normalizeSchedulePattern($this->schedule_pattern ?? []);
     }
 
     /**
@@ -135,7 +135,7 @@ class Enrollment extends Model
      */
     public function setSchedulePattern(array $pattern): void
     {
-        $this->schedule_pattern = $pattern;
+        $this->schedule_pattern = $this->normalizeSchedulePattern($pattern);
         $this->save();
     }
 
@@ -164,6 +164,44 @@ class Enrollment extends Model
      */
     public function getTimeForDay(string $day): ?string
     {
-        return $this->schedule_pattern[$day] ?? null;
+        $pattern = $this->getSchedulePattern() ?? [];
+        $times = $pattern[$day] ?? [];
+        return is_array($times) ? ($times[0] ?? null) : $times;
+    }
+
+    public function getTimesForDay(string $day): array
+    {
+        $pattern = $this->getSchedulePattern() ?? [];
+        $times = $pattern[$day] ?? [];
+        if (!is_array($times)) {
+            return $times ? [$times] : [];
+        }
+
+        return $times;
+    }
+
+    protected function normalizeSchedulePattern(array $pattern): array
+    {
+        $normalized = [];
+
+        foreach ($pattern as $day => $times) {
+            if (is_string($times)) {
+                $times = [$times];
+            }
+
+            if (!is_array($times)) {
+                continue;
+            }
+
+            $cleanTimes = array_values(array_filter(array_map(function ($time) {
+                return is_string($time) ? trim($time) : null;
+            }, $times)));
+
+            if (!empty($cleanTimes)) {
+                $normalized[$day] = array_values(array_unique($cleanTimes));
+            }
+        }
+
+        return $normalized;
     }
 }

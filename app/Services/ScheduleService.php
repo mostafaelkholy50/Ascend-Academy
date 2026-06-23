@@ -166,12 +166,7 @@ class ScheduleService
             }
 
             $days = $data['days'];
-            $scheduleTimes = $data['schedule_times'];
-            
-            $schedulePattern = [];
-            foreach ($days as $day) {
-                $schedulePattern[$day] = $scheduleTimes[$day];
-            }
+            $schedulePattern = $this->normalizeSchedulePattern($days, $data['schedule_times']);
             $enrollment->setSchedulePattern($schedulePattern);
 
             $monthStart = Carbon::parse($data['start_date']);
@@ -191,7 +186,7 @@ class ScheduleService
                 if (in_array($dayName, $days)) {
                     $sessionDates[] = [
                         'date' => $currentDate->copy(),
-                        'time' => $scheduleTimes[$dayName],
+                        'times' => $schedulePattern[$dayName] ?? [],
                     ];
                 }
                 $currentDate->addDay();
@@ -203,21 +198,23 @@ class ScheduleService
 
             $conflicts = [];
             foreach ($sessionDates as $session) {
-                $startsAt = Carbon::parse($session['date']->format('Y-m-d') . ' ' . $session['time']);
-                $endsAt = $startsAt->copy()->addMinutes($durationMinutes);
+                foreach ($session['times'] as $time) {
+                    $startsAt = Carbon::parse($session['date']->format('Y-m-d') . ' ' . $time);
+                    $endsAt = $startsAt->copy()->addMinutes($durationMinutes);
 
-                if ($conflict = Schedule::getTeacherConflict($data['teacher_id'], $startsAt, $endsAt)) {
-                    $studentName = $conflict->student ? $conflict->student->name : 'Unknown Student';
-                    $teacherName = $conflict->teacher ? $conflict->teacher->name : 'Unknown Teacher';
-                    $courseName = $conflict->course ? $conflict->course->title : 'Unknown Course';
-                    $conflicts[] = "Teacher conflict on {$startsAt->format('l, M d, Y')} at {$startsAt->format('g:i A')} (Teacher {$teacherName} is booked with Student {$studentName} for {$courseName})";
-                }
+                    if ($conflict = Schedule::getTeacherConflict($data['teacher_id'], $startsAt, $endsAt)) {
+                        $studentName = $conflict->student ? $conflict->student->name : 'Unknown Student';
+                        $teacherName = $conflict->teacher ? $conflict->teacher->name : 'Unknown Teacher';
+                        $courseName = $conflict->course ? $conflict->course->title : 'Unknown Course';
+                        $conflicts[] = "Teacher conflict on {$startsAt->format('l, M d, Y')} at {$startsAt->format('g:i A')} (Teacher {$teacherName} is booked with Student {$studentName} for {$courseName})";
+                    }
 
-                if ($conflict = Schedule::getStudentConflict($enrollment->student_id, $startsAt, $endsAt)) {
-                    $teacherName = $conflict->teacher ? $conflict->teacher->name : 'Unknown Teacher';
-                    $studentName = $conflict->student ? $conflict->student->name : 'Unknown Student';
-                    $courseName = $conflict->course ? $conflict->course->title : 'Unknown Course';
-                    $conflicts[] = "Student conflict on {$startsAt->format('l, M d, Y')} at {$startsAt->format('g:i A')} (Student {$studentName} is booked with Teacher {$teacherName} for {$courseName})";
+                    if ($conflict = Schedule::getStudentConflict($enrollment->student_id, $startsAt, $endsAt)) {
+                        $teacherName = $conflict->teacher ? $conflict->teacher->name : 'Unknown Teacher';
+                        $studentName = $conflict->student ? $conflict->student->name : 'Unknown Student';
+                        $courseName = $conflict->course ? $conflict->course->title : 'Unknown Course';
+                        $conflicts[] = "Student conflict on {$startsAt->format('l, M d, Y')} at {$startsAt->format('g:i A')} (Student {$studentName} is booked with Teacher {$teacherName} for {$courseName})";
+                    }
                 }
             }
 
@@ -226,26 +223,28 @@ class ScheduleService
             }
 
             foreach ($sessionDates as $session) {
-                $startsAt = Carbon::parse($session['date']->format('Y-m-d') . ' ' . $session['time']);
-                $endsAt = $startsAt->copy()->addMinutes($durationMinutes);
+                foreach ($session['times'] as $time) {
+                    $startsAt = Carbon::parse($session['date']->format('Y-m-d') . ' ' . $time);
+                    $endsAt = $startsAt->copy()->addMinutes($durationMinutes);
 
-                $schedule = $this->repository->create([
-                    'enrollment_id' => $enrollment->id,
-                    'student_id' => $enrollment->student_id,
-                    'teacher_id' => $data['teacher_id'],
-                    'course_id' => $enrollment->course_id,
-                    'starts_at' => $startsAt,
-                    'ends_at' => $endsAt,
-                    'zoom_link' => $data['zoom_link'] ?? null,
-                    'notes' => $data['notes'] ?? null,
-                    'status' => 'scheduled',
-                ]);
+                    $schedule = $this->repository->create([
+                        'enrollment_id' => $enrollment->id,
+                        'student_id' => $enrollment->student_id,
+                        'teacher_id' => $data['teacher_id'],
+                        'course_id' => $enrollment->course_id,
+                        'starts_at' => $startsAt,
+                        'ends_at' => $endsAt,
+                        'zoom_link' => $data['zoom_link'] ?? null,
+                        'notes' => $data['notes'] ?? null,
+                        'status' => 'scheduled',
+                    ]);
 
-                if (!$firstSchedule) {
-                    $firstSchedule = $schedule;
+                    if (!$firstSchedule) {
+                        $firstSchedule = $schedule;
+                    }
+
+                    $createdCount++;
                 }
-
-                $createdCount++;
             }
         });
 
@@ -421,9 +420,13 @@ class ScheduleService
                         foreach ($previousSchedules as $prevSchedule) {
                             $dayName = $prevSchedule->starts_at->format('l');
                             $time = $prevSchedule->starts_at->format('H:i');
-                            
+
                             if (!isset($schedulePattern[$dayName])) {
-                                $schedulePattern[$dayName] = $time;
+                                $schedulePattern[$dayName] = [];
+                            }
+
+                            if (!in_array($time, $schedulePattern[$dayName], true)) {
+                                $schedulePattern[$dayName][] = $time;
                             }
                         }
                         $daysOfWeek = array_keys($schedulePattern);
@@ -437,7 +440,7 @@ class ScheduleService
                     
                     $schedulePattern = [];
                     foreach ($daysOfWeek as $day) {
-                        $schedulePattern[$day] = $defaultTime;
+                        $schedulePattern[$day] = [$defaultTime];
                     }
                 }
             }
@@ -468,7 +471,7 @@ class ScheduleService
                 if (in_array($dayName, $daysOfWeek)) {
                     $sessionDates[] = [
                         'date' => $currentDate->copy(),
-                        'time' => $schedulePattern[$dayName],
+                        'times' => is_array($schedulePattern[$dayName]) ? $schedulePattern[$dayName] : [$schedulePattern[$dayName]],
                     ];
                 }
                 $currentDate->addDay();
@@ -486,46 +489,48 @@ class ScheduleService
             \Illuminate\Support\Facades\DB::beginTransaction();
             try {
                 foreach ($sessionDates as $session) {
-                    $startsAt = Carbon::parse($session['date']->format('Y-m-d') . ' ' . $session['time']);
-                    $endsAt = $startsAt->copy()->addMinutes($durationMinutes);
+                    foreach ($session['times'] as $time) {
+                        $startsAt = Carbon::parse($session['date']->format('Y-m-d') . ' ' . $time);
+                        $endsAt = $startsAt->copy()->addMinutes($durationMinutes);
 
-                    $exists = Schedule::where('enrollment_id', $enrollment->id)
-                        ->whereDate('starts_at', $session['date'])
-                        ->exists();
-                    
-                    if ($exists) {
-                        continue;
+                        $exists = Schedule::where('enrollment_id', $enrollment->id)
+                            ->where('starts_at', $startsAt)
+                            ->exists();
+                        
+                        if ($exists) {
+                            continue;
+                        }
+
+                        if ($conflict = Schedule::getTeacherConflict($teacherId, $startsAt, $endsAt)) {
+                            $studentName = $conflict->student ? $conflict->student->name : 'Unknown Student';
+                            $teacherName = $conflict->teacher ? $conflict->teacher->name : 'Unknown Teacher';
+                            $courseName = $conflict->course ? $conflict->course->title : 'Unknown Course';
+                            throw new \Exception("Teacher conflict on {$startsAt->format('l, M d, Y')} at {$startsAt->format('g:i A')} (Teacher {$teacherName} is booked with Student {$studentName} for {$courseName})");
+                        }
+
+                        if ($conflict = Schedule::getStudentConflict($enrollment->student_id, $startsAt, $endsAt)) {
+                            $teacherName = $conflict->teacher ? $conflict->teacher->name : 'Unknown Teacher';
+                            $studentName = $conflict->student ? $conflict->student->name : 'Unknown Student';
+                            $courseName = $conflict->course ? $conflict->course->title : 'Unknown Course';
+                            throw new \Exception("Student conflict on {$startsAt->format('l, M d, Y')} at {$startsAt->format('g:i A')} (Student {$studentName} is booked with Teacher {$teacherName} for {$courseName})");
+                        }
+
+                        $schedule = Schedule::create([
+                            'enrollment_id' => $enrollment->id,
+                            'student_id' => $enrollment->student_id,
+                            'teacher_id' => $teacherId,
+                            'course_id' => $enrollment->course_id,
+                            'starts_at' => $startsAt,
+                            'ends_at' => $endsAt,
+                            'status' => 'scheduled',
+                        ]);
+
+                        if (!$firstSchedule) {
+                            $firstSchedule = $schedule;
+                        }
+
+                        $createdCount++;
                     }
-
-                    if ($conflict = Schedule::getTeacherConflict($teacherId, $startsAt, $endsAt)) {
-                        $studentName = $conflict->student ? $conflict->student->name : 'Unknown Student';
-                        $teacherName = $conflict->teacher ? $conflict->teacher->name : 'Unknown Teacher';
-                        $courseName = $conflict->course ? $conflict->course->title : 'Unknown Course';
-                        throw new \Exception("Teacher conflict on {$startsAt->format('l, M d, Y')} at {$startsAt->format('g:i A')} (Teacher {$teacherName} is booked with Student {$studentName} for {$courseName})");
-                    }
-
-                    if ($conflict = Schedule::getStudentConflict($enrollment->student_id, $startsAt, $endsAt)) {
-                        $teacherName = $conflict->teacher ? $conflict->teacher->name : 'Unknown Teacher';
-                        $studentName = $conflict->student ? $conflict->student->name : 'Unknown Student';
-                        $courseName = $conflict->course ? $conflict->course->title : 'Unknown Course';
-                        throw new \Exception("Student conflict on {$startsAt->format('l, M d, Y')} at {$startsAt->format('g:i A')} (Student {$studentName} is booked with Teacher {$teacherName} for {$courseName})");
-                    }
-
-                    $schedule = Schedule::create([
-                        'enrollment_id' => $enrollment->id,
-                        'student_id' => $enrollment->student_id,
-                        'teacher_id' => $teacherId,
-                        'course_id' => $enrollment->course_id,
-                        'starts_at' => $startsAt,
-                        'ends_at' => $endsAt,
-                        'status' => 'scheduled',
-                    ]);
-
-                    if (!$firstSchedule) {
-                        $firstSchedule = $schedule;
-                    }
-
-                    $createdCount++;
                 }
                 \Illuminate\Support\Facades\DB::commit();
             } catch (\Exception $e) {
@@ -594,10 +599,7 @@ class ScheduleService
         $durationMinutes = (int) $data['duration_minutes'];
         $teacherId = $data['teacher_id'];
 
-        $schedulePattern = [];
-        foreach ($days as $day) {
-            $schedulePattern[$day] = $scheduleTimes[$day];
-        }
+        $schedulePattern = $this->normalizeSchedulePattern($days, $scheduleTimes);
 
         $createdCount = 0;
         $deletedCount = 0;
@@ -639,45 +641,47 @@ class ScheduleService
                 if (in_array($dayName, $days)) {
                     $sessionDates[] = [
                         'date' => $currentDate->copy(),
-                        'time' => $scheduleTimes[$dayName],
+                        'times' => $schedulePattern[$dayName] ?? [],
                     ];
                 }
                 $currentDate->addDay();
             }
 
             foreach ($sessionDates as $session) {
-                $startsAt = Carbon::parse($session['date']->format('Y-m-d') . ' ' . $session['time']);
-                $endsAt = $startsAt->copy()->addMinutes($durationMinutes);
+                foreach ($session['times'] as $time) {
+                    $startsAt = Carbon::parse($session['date']->format('Y-m-d') . ' ' . $time);
+                    $endsAt = $startsAt->copy()->addMinutes($durationMinutes);
 
-                if ($conflict = Schedule::getTeacherConflict($teacherId, $startsAt, $endsAt)) {
-                    $studentName = $conflict->student ? $conflict->student->name : 'Unknown Student';
-                    $teacherName = $conflict->teacher ? $conflict->teacher->name : 'Unknown Teacher';
-                    $courseName = $conflict->course ? $conflict->course->title : 'Unknown Course';
-                    throw new \Exception("Teacher conflict on {$startsAt->format('l, M d, Y')} at {$startsAt->format('g:i A')} (Teacher {$teacherName} is booked with Student {$studentName} for {$courseName})");
+                    if ($conflict = Schedule::getTeacherConflict($teacherId, $startsAt, $endsAt)) {
+                        $studentName = $conflict->student ? $conflict->student->name : 'Unknown Student';
+                        $teacherName = $conflict->teacher ? $conflict->teacher->name : 'Unknown Teacher';
+                        $courseName = $conflict->course ? $conflict->course->title : 'Unknown Course';
+                        throw new \Exception("Teacher conflict on {$startsAt->format('l, M d, Y')} at {$startsAt->format('g:i A')} (Teacher {$teacherName} is booked with Student {$studentName} for {$courseName})");
+                    }
+
+                    if ($conflict = Schedule::getStudentConflict($enrollment->student_id, $startsAt, $endsAt)) {
+                        $teacherName = $conflict->teacher ? $conflict->teacher->name : 'Unknown Teacher';
+                        $studentName = $conflict->student ? $conflict->student->name : 'Unknown Student';
+                        $courseName = $conflict->course ? $conflict->course->title : 'Unknown Course';
+                        throw new \Exception("Student conflict on {$startsAt->format('l, M d, Y')} at {$startsAt->format('g:i A')} (Student {$studentName} is booked with Teacher {$teacherName} for {$courseName})");
+                    }
+
+                    $schedule = Schedule::create([
+                        'enrollment_id' => $enrollment->id,
+                        'student_id' => $enrollment->student_id,
+                        'teacher_id' => $teacherId,
+                        'course_id' => $enrollment->course_id,
+                        'starts_at' => $startsAt,
+                        'ends_at' => $endsAt,
+                        'status' => 'scheduled',
+                    ]);
+
+                    if (!$firstSchedule) {
+                        $firstSchedule = $schedule;
+                    }
+
+                    $createdCount++;
                 }
-
-                if ($conflict = Schedule::getStudentConflict($enrollment->student_id, $startsAt, $endsAt)) {
-                    $teacherName = $conflict->teacher ? $conflict->teacher->name : 'Unknown Teacher';
-                    $studentName = $conflict->student ? $conflict->student->name : 'Unknown Student';
-                    $courseName = $conflict->course ? $conflict->course->title : 'Unknown Course';
-                    throw new \Exception("Student conflict on {$startsAt->format('l, M d, Y')} at {$startsAt->format('g:i A')} (Student {$studentName} is booked with Teacher {$teacherName} for {$courseName})");
-                }
-
-                $schedule = Schedule::create([
-                    'enrollment_id' => $enrollment->id,
-                    'student_id' => $enrollment->student_id,
-                    'teacher_id' => $teacherId,
-                    'course_id' => $enrollment->course_id,
-                    'starts_at' => $startsAt,
-                    'ends_at' => $endsAt,
-                    'status' => 'scheduled',
-                ]);
-
-                if (!$firstSchedule) {
-                    $firstSchedule = $schedule;
-                }
-
-                $createdCount++;
             }
 
             \Illuminate\Support\Facades\DB::commit();
@@ -731,5 +735,32 @@ class ScheduleService
         ];
 
         return $dayMappings[$daysPerWeek] ?? ['Monday', 'Wednesday', 'Friday'];
+    }
+
+    protected function normalizeSchedulePattern(array $days, array $scheduleTimes): array
+    {
+        $schedulePattern = [];
+
+        foreach ($days as $day) {
+            $times = $scheduleTimes[$day] ?? [];
+
+            if (is_string($times)) {
+                $times = [$times];
+            }
+
+            if (!is_array($times)) {
+                continue;
+            }
+
+            $cleanTimes = array_values(array_filter(array_map(function ($time) {
+                return is_string($time) ? trim($time) : null;
+            }, $times)));
+
+            if (!empty($cleanTimes)) {
+                $schedulePattern[$day] = array_values(array_unique($cleanTimes));
+            }
+        }
+
+        return $schedulePattern;
     }
 }

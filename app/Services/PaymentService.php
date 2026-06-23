@@ -181,7 +181,7 @@ class PaymentService
                 EnrollmentPayment::create([
                     'enrollment_id' => $enrollment->id,
                     'month' => $currentMonth,
-                    'amount' => $enrollment->admin_price,
+                    'amount' => $enrollment->admin_price ?? 0,
                     'currency' => $enrollment->currency,
                     'payment_status' => 'unpaid',
                 ]);
@@ -210,7 +210,7 @@ class PaymentService
                 EnrollmentPayment::create([
                     'enrollment_id' => $enrollment->id,
                     'month' => $enrollmentMonth->copy(),
-                    'amount' => $enrollment->admin_price,
+                    'amount' => $enrollment->admin_price ?? 0,
                     'currency' => $enrollment->currency,
                     'payment_status' => 'unpaid',
                 ]);
@@ -239,7 +239,7 @@ class PaymentService
                     $payment = EnrollmentPayment::create([
                         'enrollment_id' => $enrollment->id,
                         'month' => $month,
-                        'amount' => $enrollment->admin_price,
+                        'amount' => $enrollment->admin_price ?? 0,
                         'currency' => $enrollment->currency,
                         'payment_status' => 'unpaid',
                     ]);
