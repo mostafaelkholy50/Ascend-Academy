@@ -71,6 +71,16 @@ class ScheduleService
             $query->where('status', $request->status);
         }
 
+        if ($request->filled('student_id')) {
+            $query->where('student_id', $request->student_id);
+        }
+
+        if ($request->filled('teacher_id')) {
+            $query->whereHas('schedules', function($q) use ($request) {
+                $q->where('teacher_id', $request->teacher_id);
+            });
+        }
+
         $enrollments = $query->latest()->paginate($perPage);
         $stats = $this->getStats();
 
@@ -575,6 +585,144 @@ class ScheduleService
             Log::error('Failed to generate schedules: ' . $e->getMessage());
             return ['success' => false, 'message' => 'Failed to generate schedules: ' . $e->getMessage()];
         }
+    }
+
+    public function updateSchedulePattern(Enrollment $enrollment, array $data)
+    {
+        $days = $data['days'];
+        $scheduleTimes = $data['schedule_times'];
+        $durationMinutes = (int) $data['duration_minutes'];
+        $teacherId = $data['teacher_id'];
+
+        $schedulePattern = [];
+        foreach ($days as $day) {
+            $schedulePattern[$day] = $scheduleTimes[$day];
+        }
+
+        $createdCount = 0;
+        $deletedCount = 0;
+        $firstSchedule = null;
+
+        \Illuminate\Support\Facades\DB::beginTransaction();
+        try {
+            // Update enrollment pattern
+            $enrollment->setSchedulePattern($schedulePattern);
+            $enrollment->update([
+                'days_per_week' => count($days),
+                'session_duration' => $durationMinutes,
+            ]);
+
+            // Find all upcoming schedules
+            $upcomingSchedules = Schedule::where('enrollment_id', $enrollment->id)
+                ->where('starts_at', '>', now())
+                ->where('status', 'scheduled')
+                ->get();
+
+            if ($upcomingSchedules->isEmpty()) {
+                \Illuminate\Support\Facades\DB::commit();
+                return ['success' => true, 'message' => 'Pattern updated. No upcoming schedules to modify.'];
+            }
+
+            // Find the maximum date of the upcoming schedules to know how far to generate
+            $maxDate = $upcomingSchedules->max('starts_at');
+            $minDate = $upcomingSchedules->min('starts_at')->copy()->startOfDay();
+
+            // We will delete all upcoming schedules
+            foreach ($upcomingSchedules as $schedule) {
+                $schedule->delete();
+                $deletedCount++;
+            }
+
+            // Generate new schedules from minDate to maxDate matching the new pattern
+            $sessionDates = [];
+            $currentDate = $minDate->copy();
+
+            while ($currentDate->lte($maxDate)) {
+                $dayName = $currentDate->format('l');
+                if (in_array($dayName, $days)) {
+                    // Only add if it's strictly in the future (greater than now)
+                    $startsAtTest = Carbon::parse($currentDate->format('Y-m-d') . ' ' . $scheduleTimes[$dayName]);
+                    if ($startsAtTest->gt(now())) {
+                        $sessionDates[] = [
+                            'date' => $currentDate->copy(),
+                            'time' => $scheduleTimes[$dayName],
+                        ];
+                    }
+                }
+                $currentDate->addDay();
+            }
+
+            foreach ($sessionDates as $session) {
+                $startsAt = Carbon::parse($session['date']->format('Y-m-d') . ' ' . $session['time']);
+                $endsAt = $startsAt->copy()->addMinutes($durationMinutes);
+
+                if ($conflict = Schedule::getTeacherConflict($teacherId, $startsAt, $endsAt)) {
+                    $studentName = $conflict->student ? $conflict->student->name : 'Unknown Student';
+                    $teacherName = $conflict->teacher ? $conflict->teacher->name : 'Unknown Teacher';
+                    $courseName = $conflict->course ? $conflict->course->title : 'Unknown Course';
+                    throw new \Exception("Teacher conflict on {$startsAt->format('l, M d, Y')} at {$startsAt->format('g:i A')} (Teacher {$teacherName} is booked with Student {$studentName} for {$courseName})");
+                }
+
+                if ($conflict = Schedule::getStudentConflict($enrollment->student_id, $startsAt, $endsAt)) {
+                    $teacherName = $conflict->teacher ? $conflict->teacher->name : 'Unknown Teacher';
+                    $studentName = $conflict->student ? $conflict->student->name : 'Unknown Student';
+                    $courseName = $conflict->course ? $conflict->course->title : 'Unknown Course';
+                    throw new \Exception("Student conflict on {$startsAt->format('l, M d, Y')} at {$startsAt->format('g:i A')} (Student {$studentName} is booked with Teacher {$teacherName} for {$courseName})");
+                }
+
+                $schedule = Schedule::create([
+                    'enrollment_id' => $enrollment->id,
+                    'student_id' => $enrollment->student_id,
+                    'teacher_id' => $teacherId,
+                    'course_id' => $enrollment->course_id,
+                    'starts_at' => $startsAt,
+                    'ends_at' => $endsAt,
+                    'status' => 'scheduled',
+                ]);
+
+                if (!$firstSchedule) {
+                    $firstSchedule = $schedule;
+                }
+
+                $createdCount++;
+            }
+
+            \Illuminate\Support\Facades\DB::commit();
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\DB::rollBack();
+            throw new \Exception($e->getMessage());
+        }
+
+        if ($firstSchedule && $createdCount > 0) {
+            try {
+                $teacher = User::find($teacherId);
+                $firstSchedule->load(['student.parents', 'teacher', 'course']);
+                
+                // Notify Teacher
+                $teacher->notify(new \App\Notifications\ScheduleAssignedNotification(
+                    $firstSchedule,
+                    $createdCount > 1,
+                    $createdCount
+                ));
+
+                // Notify Student
+                $student = $firstSchedule->student;
+                if ($student) {
+                    $student->notify(new \App\Notifications\StudentScheduleAssignedNotification(
+                        $firstSchedule,
+                        $createdCount > 1,
+                        $createdCount
+                    ));
+                }
+            } catch (\Exception $e) {
+                Log::error('Failed to send schedule notification: ' . $e->getMessage());
+            }
+        }
+
+        return [
+            'success' => true,
+            'message' => "Pattern updated successfully. Deleted {$deletedCount} old sessions and created {$createdCount} new sessions."
+        ];
     }
 
     private function getDefaultDaysForWeek($daysPerWeek)

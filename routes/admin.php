@@ -82,6 +82,8 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::resource('schedules', ScheduleController::class);
     Route::post('schedules/bulk-cancel/{enrollment}', [ScheduleController::class, 'bulkCancel'])->name('schedules.bulk-cancel');
     Route::delete('schedules/bulk-delete/{enrollment}', [ScheduleController::class, 'bulkDelete'])->name('schedules.bulk-delete');
+    Route::get('schedules/enrollment/{enrollment}/edit-pattern', [ScheduleController::class, 'editPattern'])->name('schedules.edit-pattern');
+    Route::put('schedules/enrollment/{enrollment}/update-pattern', [ScheduleController::class, 'updatePattern'])->name('schedules.update-pattern');
 
     // Teacher Hours Management
     Route::patch('/teacher-hours/{teacher}/update-rate', [AdminTeacherController::class, 'updateRate'])->name('teacher-hours.update-rate');

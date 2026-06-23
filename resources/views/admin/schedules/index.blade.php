@@ -245,7 +245,23 @@
                             class="w-full pl-11 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                     </div>
                 </div>
-                <div class="w-48">
+                <div class="w-full md:w-48">
+                    <select name="teacher_id" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        <option value="">All Teachers</option>
+                        @foreach($teachers as $teacher)
+                            <option value="{{ $teacher->id }}" {{ request('teacher_id') == $teacher->id ? 'selected' : '' }}>{{ $teacher->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="w-full md:w-48">
+                    <select name="student_id" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        <option value="">All Students</option>
+                        @foreach($students as $student)
+                            <option value="{{ $student->id }}" {{ request('student_id') == $student->id ? 'selected' : '' }}>{{ $student->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="w-full md:w-48">
                     <select name="status" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                         <option value="">All Statuses</option>
                         <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Active</option>
@@ -306,6 +322,11 @@
                                         <i class="fa-solid fa-chevron-down transition-transform" id="icon-enrollment-{{ $enrollment->id }}"></i>
                                     </button>
                                     @can('manage schedules')
+                                    <a href="{{ route('admin.schedules.edit-pattern', $enrollment->id) }}" 
+                                        class="px-5 py-3 bg-white text-indigo-600 border border-indigo-200 rounded-xl hover:bg-indigo-50 hover:shadow-lg transition font-semibold text-sm flex items-center gap-2">
+                                        <i class="fa-solid fa-calendar-alt"></i>
+                                        <span>Edit Pattern</span>
+                                    </a>
                                     <form action="{{ route('admin.schedules.bulk-delete', $enrollment->id) }}" method="POST" 
                                         onsubmit="return confirm('Are you sure you want to delete ALL {{ $enrollment->schedules->count() }} sessions for this enrollment? This action cannot be undone!');">
                                         @csrf

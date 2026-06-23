@@ -25,13 +25,14 @@ class ScheduleController extends Controller
     {
         $viewType = $request->get('view', 'calendar');
         $teachers = User::where('role', 'Teacher')->where('active', true)->orderBy('name')->get();
+        $students = User::where('role', 'Student')->where('active', true)->orderBy('name')->get();
         
         if ($viewType === 'calendar') {
             $data = $this->scheduleService->getCalendarData($request);
-            return view('admin.schedules.index', array_merge($data, compact('viewType', 'teachers')));
+            return view('admin.schedules.index', array_merge($data, compact('viewType', 'teachers', 'students')));
         } else {
             $data = $this->scheduleService->getEnrollmentGroupedData($request);
-            return view('admin.schedules.index', array_merge($data, compact('viewType', 'teachers')));
+            return view('admin.schedules.index', array_merge($data, compact('viewType', 'teachers', 'students')));
         }
     }
 
@@ -99,6 +100,42 @@ class ScheduleController extends Controller
 
         } catch (\Exception $e) {
             return back()->with('error', 'Failed to update schedule: ' . $e->getMessage());
+        }
+    }
+
+    public function editPattern(Enrollment $enrollment)
+    {
+        $teachers = User::where('role', 'Teacher')->where('active', true)->orderBy('name')->get();
+        $enrollment->load(['student', 'course']);
+        
+        $currentTeacherId = null;
+        $lastSchedule = $enrollment->schedules()->latest('starts_at')->first();
+        if ($lastSchedule) {
+            $currentTeacherId = $lastSchedule->teacher_id;
+        }
+
+        return view('admin.schedules.edit-pattern', compact('enrollment', 'teachers', 'currentTeacherId'));
+    }
+
+    public function updatePattern(Request $request, Enrollment $enrollment)
+    {
+        $request->validate([
+            'teacher_id' => 'required|exists:users,id',
+            'duration_minutes' => 'required|integer|min:15|max:240',
+            'days' => 'required|array|min:1',
+            'days.*' => 'string|in:Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday',
+            'schedule_times' => 'required|array',
+            'schedule_times.*' => 'date_format:H:i',
+        ]);
+
+        try {
+            $result = $this->scheduleService->updateSchedulePattern($enrollment, $request->all());
+
+            return redirect()->route('admin.schedules.index', ['view' => 'list'])
+                ->with('success', $result['message']);
+
+        } catch (\Exception $e) {
+            return back()->with('error', $e->getMessage())->withInput();
         }
     }
 
