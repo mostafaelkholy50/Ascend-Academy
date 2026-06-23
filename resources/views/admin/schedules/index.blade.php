@@ -350,7 +350,7 @@
                                                                     <i class="fa-solid fa-calendar-day text-indigo-600"></i>
                                                                 </div>
                                                                 <div>
-                                                                    <p class="font-semibold text-gray-800">{{ $schedule->starts_at->format('M d, Y') }}</p>
+                                                                    <p class="font-semibold text-gray-800">{{ $schedule->getStartsAtInTimezone(auth()->user()->getUserTimezone())->format('l, M d, Y') }}</p>
                                                                     <p class="text-sm text-gray-600">{{ $schedule->getStartsAtInTimezone(auth()->user()->getUserTimezone())->format('g:i A') }} - {{ $schedule->getEndsAtInTimezone(auth()->user()->getUserTimezone())->format('g:i A') }} {{ $schedule->getStartsAtInTimezone(auth()->user()->getUserTimezone())->format('T') }}</p>
                                                                 </div>
                                                             </div>
