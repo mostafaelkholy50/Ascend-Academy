@@ -177,4 +177,28 @@ class Schedule extends Model
             ->when($excludeId, fn($q) => $q->where('id', '!=', $excludeId))
             ->exists();
     }
+
+    public static function getTeacherConflict($teacherId, $startsAt, $endsAt, $excludeId = null)
+    {
+        return self::with(['student', 'course'])->where('teacher_id', $teacherId)
+            ->where('status', '!=', 'cancelled')
+            ->where(function ($q) use ($startsAt, $endsAt) {
+                $q->where('starts_at', '<', $endsAt)
+                  ->where('ends_at', '>', $startsAt);
+            })
+            ->when($excludeId, fn($q) => $q->where('id', '!=', $excludeId))
+            ->first();
+    }
+
+    public static function getStudentConflict($studentId, $startsAt, $endsAt, $excludeId = null)
+    {
+        return self::with(['teacher', 'course'])->where('student_id', $studentId)
+            ->where('status', '!=', 'cancelled')
+            ->where(function ($q) use ($startsAt, $endsAt) {
+                $q->where('starts_at', '<', $endsAt)
+                  ->where('ends_at', '>', $startsAt);
+            })
+            ->when($excludeId, fn($q) => $q->where('id', '!=', $excludeId))
+            ->first();
+    }
 }
