@@ -36,3 +36,19 @@ test('teacher can view daily schedule', function () {
     $response->assertViewIs('teacher.schedule-daily');
     $response->assertViewHas('schedules');
 });
+
+test('teacher redirects to schedule after login', function () {
+    // Arrange
+    $user = User::factory()->teacher()->create(['role' => 'Teacher', 'password' => bcrypt('password')]);
+    $user->assignRole('Teacher');
+    
+    // Act
+    $response = $this->withoutMiddleware(\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class)
+        ->post('/login', [
+        'email' => $user->email,
+        'password' => 'password',
+    ]);
+    
+    // Assert
+    $response->assertRedirect(route('teacher.schedule.index'));
+});

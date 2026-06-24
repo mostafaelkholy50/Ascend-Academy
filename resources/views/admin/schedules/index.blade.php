@@ -125,110 +125,156 @@
                 </div>
             </div>
 
-            <!-- Calendar - Day by Day View -->
-            <div class="space-y-4 md:space-y-6">
-                @foreach($weekDays as $day)
-                    <div class="bg-white rounded-2xl shadow-lg overflow-hidden border-2 {{ $day['date']->isToday() ? 'border-indigo-500' : 'border-gray-100' }}">
-                        <!-- Day Header -->
-                        <div class="p-4 md:p-6 {{ $day['date']->isToday() ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white' : 'bg-gradient-to-r from-gray-50 to-gray-100 text-gray-800' }}">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <h3 class="text-xl md:text-2xl font-bold">{{ $day['date']->format('l') }}</h3>
-                                    <p class="text-sm {{ $day['date']->isToday() ? 'text-white/80' : 'text-gray-600' }} mt-1">
-                                        {{ $day['date']->format('F d, Y') }}
-                                    </p>
+            <!-- Google Calendar Style Grid -->
+            <div class="overflow-x-auto relative scroll-smooth border-t border-gray-200" id="calendar-container">
+                <div class="min-w-[900px] lg:w-full flex flex-col relative select-none">
+                    
+                    <!-- Header: Days -->
+                    <div class="flex border-b border-gray-200 sticky top-0 bg-white/95 backdrop-blur-md z-30 shadow-sm">
+                        <!-- Top Left Empty Cell for Time Column -->
+                        <div class="w-20 flex-shrink-0 border-r border-gray-100 flex items-end justify-center pb-2">
+                            <span class="text-[10px] text-gray-400 font-medium uppercase tracking-wider">GMT+3</span>
+                        </div>
+                        
+                        <!-- Days Columns -->
+                        @foreach ($weekDays as $dayData)
+                            @php $isToday = $dayData['date']->isToday(); @endphp
+                            <div class="flex-1 py-3 px-2 text-center border-r border-gray-100 {{ $isToday ? 'bg-indigo-50' : '' }} group transition-colors">
+                                <div class="text-xs font-semibold uppercase tracking-wider {{ $isToday ? 'text-indigo-600' : 'text-gray-500 group-hover:text-gray-700' }}">
+                                    {{ $dayData['date']->format('D') }}
                                 </div>
-                                @if($day['date']->isToday())
-                                    <span class="px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full text-sm font-bold">
-                                        Today
-                                    </span>
-                                @endif
+                                <div class="mt-1 flex justify-center">
+                                    <div class="w-10 h-10 flex items-center justify-center rounded-full text-xl font-bold transition-all {{ $isToday ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30 scale-110' : 'text-gray-700 group-hover:bg-gray-100' }}">
+                                        {{ $dayData['date']->format('d') }}
+                                    </div>
+                                </div>
                             </div>
+                        @endforeach
+                    </div>
+
+                    <!-- Grid Body -->
+                    <div class="flex relative h-[2160px] bg-gray-50/30">
+                        
+                        <!-- Time Labels Column -->
+                        <div class="w-20 flex-shrink-0 border-r border-gray-100 bg-white z-20 relative">
+                            @for ($i = 0; $i < 24; $i++)
+                                <div class="h-[90px] border-b border-gray-100/0 relative">
+                                    <div class="absolute -top-3 right-3 text-[11px] font-medium text-gray-400">
+                                        {{ $i == 0 ? '12 AM' : ($i < 12 ? $i . ' AM' : ($i == 12 ? '12 PM' : ($i - 12) . ' PM')) }}
+                                    </div>
+                                </div>
+                            @endfor
                         </div>
 
-                        <!-- Schedules for this day -->
-                        <div class="p-4 md:p-6">
-                            @if(count($day['schedules']) > 0)
-                                <div class="space-y-3">
-                                    @foreach($day['schedules']->sortBy('starts_at') as $schedule)
-                                        <a href="{{ route('admin.schedules.show', $schedule->id) }}" 
-                                            class="block p-4 rounded-xl border-2 transition hover:shadow-lg hover:-translate-y-1
-                                                {{ $schedule->status === 'scheduled' ? 'bg-green-50 border-green-200 hover:border-green-400' : '' }}
-                                                {{ $schedule->status === 'completed' ? 'bg-blue-50 border-blue-200 hover:border-blue-400' : '' }}
-                                                {{ $schedule->status === 'cancelled' ? 'bg-red-50 border-red-200 hover:border-red-400' : '' }}">
+                        <!-- Days Grid & Appointments -->
+                        <div class="flex flex-1 relative bg-white">
+                            
+                            <!-- Horizontal Grid Lines -->
+                            <div class="absolute inset-0 pointer-events-none z-0">
+                                @for ($i = 0; $i < 24; $i++)
+                                    <div class="h-[90px] border-b border-gray-100 w-full"></div>
+                                @endfor
+                            </div>
+
+                            <!-- Day Columns -->
+                            @foreach ($weekDays as $dayData)
+                                <div class="flex-1 border-r border-gray-100 relative z-10">
+                                    
+                                    <!-- Render Appointments for this Day -->
+                                    @foreach ($dayData['schedules'] as $schedule)
+                                        @php
+                                            $startHour = (int) $schedule->starts_at->format('G');
+                                            $startMinute = (int) $schedule->starts_at->format('i');
+                                            $durationMinutes = $schedule->getDurationInMinutes();
                                             
-                                            <div class="flex items-start gap-3">
-                                                <!-- Time Badge -->
-                                                <div class="flex-shrink-0 w-20 md:w-24 text-center">
-                                                    <div class="px-3 py-2 rounded-lg font-bold text-sm md:text-base
-                                                        {{ $schedule->status === 'scheduled' ? 'bg-green-600 text-white' : '' }}
-                                                        {{ $schedule->status === 'completed' ? 'bg-blue-600 text-white' : '' }}
-                                                        {{ $schedule->status === 'cancelled' ? 'bg-red-600 text-white' : '' }}">
-                                                        {{ $schedule->getStartsAtInTimezone(auth()->user()->getUserTimezone())->format('g:i A') }}
-                                                    </div>
-                                                    <div class="text-xs text-gray-500 mt-1">{{ $schedule->getDurationInMinutes() }} min</div>
-                                                </div>
+                                            // 1.5px per minute
+                                            $top = ($startHour * 60 + $startMinute) * 1.5;
+                                            $height = $durationMinutes * 1.5;
+                                            
+                                            $now = now();
+                                            $isPast = $now->greaterThan($schedule->ends_at);
+                                            $isInProgress = $now->between($schedule->starts_at, $schedule->ends_at);
+                                            
+                                            // Determine Status & Styling
+                                            $statusClass = 'bg-blue-50 border-blue-200 text-blue-800 shadow-blue-100/50';
+                                            $statusText = 'Not Yet';
+                                            $iconClass = 'fa-calendar';
+                                            $statusColor = 'blue';
 
-                                                <!-- Schedule Details -->
-                                                <div class="flex-1 min-w-0">
-                                                    <!-- Student -->
-                                                    <div class="flex items-center gap-2 mb-2">
-                                                        <div class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-sm md:text-base font-bold flex-shrink-0">
-                                                            {{ strtoupper(substr($schedule->student->name, 0, 1)) }}
-                                                        </div>
-                                                        <div class="min-w-0 flex-1">
-                                                            <h4 class="font-bold text-gray-900 text-sm md:text-base truncate">{{ $schedule->student->name }}</h4>
-                                                            <p class="text-xs text-gray-500 truncate">Student</p>
-                                                        </div>
-                                                    </div>
-
-                                                    <!-- Course & Teacher -->
-                                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
-                                                        <div class="flex items-center gap-2 text-gray-700">
-                                                            <i class="fa-solid fa-book-quran text-indigo-600"></i>
-                                                            <span class="truncate">{{ $schedule->course->title }}</span>
-                                                        </div>
-                                                        <div class="flex items-center gap-2 text-gray-700">
-                                                            <i class="fa-solid fa-chalkboard-teacher text-purple-600"></i>
-                                                            <span class="truncate">{{ $schedule->teacher->name }}</span>
-                                                        </div>
-                                                    </div>
-
-                                                    <!-- Status Badge -->
-                                                    <div class="mt-2">
-                                                        <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold
-                                                            {{ $schedule->status === 'scheduled' ? 'bg-green-100 text-green-700' : '' }}
-                                                            {{ $schedule->status === 'completed' ? 'bg-blue-100 text-blue-700' : '' }}
-                                                            {{ $schedule->status === 'cancelled' ? 'bg-red-100 text-red-700' : '' }}">
-                                                            @if($schedule->status === 'scheduled')
-                                                                <i class="fa-solid fa-clock"></i>
-                                                            @elseif($schedule->status === 'completed')
-                                                                <i class="fa-solid fa-check-circle"></i>
-                                                            @else
-                                                                <i class="fa-solid fa-times-circle"></i>
-                                                            @endif
-                                                            {{ ucfirst($schedule->status) }}
+                                            if ($schedule->status === 'completed') {
+                                                $statusClass = 'bg-green-50 border-green-200 text-green-800 shadow-green-100/50';
+                                                $statusText = 'Completed';
+                                                $iconClass = 'fa-check-circle';
+                                                $statusColor = 'green';
+                                            } elseif ($schedule->attendance) {
+                                                if ($schedule->attendance->student_present && $schedule->attendance->teacher_present) {
+                                                    $statusClass = 'bg-emerald-50 border-emerald-200 text-emerald-800 shadow-emerald-100/50';
+                                                    $statusText = 'Attended';
+                                                    $iconClass = 'fa-check-double';
+                                                    $statusColor = 'emerald';
+                                                } elseif (!$schedule->attendance->teacher_present) {
+                                                    $statusClass = 'bg-red-50 border-red-200 text-red-800 shadow-red-100/50';
+                                                    $statusText = 'Teacher Absent';
+                                                    $iconClass = 'fa-times-circle';
+                                                    $statusColor = 'red';
+                                                } elseif (!$schedule->attendance->student_present) {
+                                                    $statusClass = 'bg-orange-50 border-orange-200 text-orange-800 shadow-orange-100/50';
+                                                    $statusText = 'Student Absent';
+                                                    $iconClass = 'fa-user-slash';
+                                                    $statusColor = 'orange';
+                                                }
+                                            } elseif ($isPast) {
+                                                $statusClass = 'bg-gray-100 border-gray-200 text-gray-600 shadow-none';
+                                                $statusText = 'Past';
+                                                $iconClass = 'fa-history';
+                                                $statusColor = 'gray';
+                                            } elseif ($isInProgress) {
+                                                $statusClass = 'bg-yellow-50 border-yellow-300 text-yellow-900 shadow-yellow-200/50 ring-2 ring-yellow-400 ring-offset-1';
+                                                $statusText = 'In Progress';
+                                                $iconClass = 'fa-spinner fa-spin';
+                                                $statusColor = 'yellow';
+                                            }
+                                        @endphp
+                                        
+                                        <!-- Base Appointment Card -->
+                                        <div class="absolute left-[2px] right-[4px] rounded-lg border shadow-sm transition-all duration-200 hover:z-50 cursor-pointer overflow-hidden flex flex-col {{ $statusClass }} {{ 'border-'.$statusColor.'-300' }}"
+                                             style="top: {{ $top }}px; min-height: {{ max($height, 50) }}px; z-index: 10;"
+                                             onclick="window.location='{{ route('admin.schedules.show', $schedule->id) }}'">
+                                             
+                                            <div class="p-1.5 flex flex-col gap-1 h-full bg-{{$statusColor}}-50/90 relative">
+                                                <!-- Header: Time and Status -->
+                                                <div class="flex flex-wrap justify-between items-start gap-1">
+                                                    <div class="flex items-center gap-1">
+                                                        <span class="text-[10px] font-black text-{{$statusColor}}-800 tracking-tight leading-none whitespace-nowrap">
+                                                            {{ $schedule->starts_at->format('g:i A') }} - {{ $schedule->ends_at->format('g:i A') }}
                                                         </span>
+                                                        @if($isInProgress)
+                                                            <span class="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse mt-0.5"></span>
+                                                        @endif
                                                     </div>
                                                 </div>
-
-                                                <!-- Arrow Icon -->
-                                                <div class="flex-shrink-0 hidden md:flex items-center">
-                                                    <i class="fa-solid fa-chevron-right text-gray-400"></i>
+                                                
+                                                <!-- Body: Student and Teacher -->
+                                                <div class="flex-1 mt-0.5">
+                                                    <!-- Student Info -->
+                                                    <div class="flex items-center gap-1 mb-1">
+                                                        <i class="fa-solid fa-user-graduate text-[9px] text-gray-500"></i>
+                                                        <h4 class="text-[10px] font-bold text-gray-900 leading-tight truncate" title="Student: {{ $schedule->student->name }}">{{ $schedule->student->name }}</h4>
+                                                    </div>
+                                                    <!-- Teacher Info -->
+                                                    <div class="flex items-center gap-1">
+                                                        <i class="fa-solid fa-chalkboard-teacher text-[9px] text-gray-500"></i>
+                                                        <p class="text-[9px] font-medium text-gray-700 leading-tight truncate" title="Teacher: {{ $schedule->teacher->name }}">{{ $schedule->teacher->name }}</p>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </a>
+                                        </div>
                                     @endforeach
                                 </div>
-                            @else
-                                <div class="text-center py-8">
-                                    <i class="fa-solid fa-calendar-xmark text-4xl text-gray-300 mb-3"></i>
-                                    <p class="text-gray-500">No schedules for this day</p>
-                                </div>
-                            @endif
+                            @endforeach
                         </div>
                     </div>
-                @endforeach
+                </div>
             </div>
         </div>
     @else
@@ -300,7 +346,7 @@
                                     <div class="flex flex-wrap gap-4 text-sm text-gray-600 ml-20">
                                         <div class="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg">
                                             <i class="fa-solid fa-calendar text-indigo-600"></i>
-                                            <span>Started: {{ $enrollment->start_date->format('M d, Y') }}</span>
+                                            <span>Started: {{ $enrollment->start_date ? $enrollment->start_date->format('M d, Y') : 'N/A' }}</span>
                                         </div>
                                         <div class="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg">
                                             <i class="fa-solid fa-graduation-cap text-indigo-600"></i>

@@ -50,8 +50,15 @@ class PaymentService
         $enrollments = $query->orderBy('created_at', 'desc')->paginate(12);
 
         // Make sure every visible enrollment has payment records for the months shown
+        $newPaymentsGenerated = false;
         foreach ($enrollments as $enrollment) {
-            $this->generatePaymentsForEnrollment($enrollment, $visibleEndMonth);
+            if ($this->generatePaymentsForEnrollment($enrollment, $visibleEndMonth)) {
+                $newPaymentsGenerated = true;
+            }
+        }
+        
+        if ($newPaymentsGenerated) {
+            $enrollments->load('payments');
         }
 
         // Filter data for students
@@ -200,6 +207,7 @@ class PaymentService
             : now()->startOfMonth();
         $enrollmentMonth = Carbon::parse($startDate)->startOfMonth();
 
+        $generated = false;
         while ($enrollmentMonth->lte($currentMonth)) {
             $exists = EnrollmentPayment::where('enrollment_id', $enrollment->id)
                 ->whereMonth('month', $enrollmentMonth->month)
@@ -214,10 +222,13 @@ class PaymentService
                     'currency' => $enrollment->currency,
                     'payment_status' => 'unpaid',
                 ]);
+                $generated = true;
             }
 
             $enrollmentMonth->addMonth();
         }
+        
+        return $generated;
     }
 
     public function markAllPaid(Enrollment $enrollment, $baseMonth)

@@ -34,7 +34,7 @@ class AuthService
         if ($user->isAdmin()) {
             return route('admin.dashboard');
         } elseif ($user->isTeacher()) {
-            return route('teacher.dashboard');
+            return route('teacher.schedule.index');
         } elseif ($user->isStudent()) {
             return route('student.dashboard');
         } elseif ($user->isParent()) {

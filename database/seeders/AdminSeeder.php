@@ -24,7 +24,10 @@ class AdminSeeder extends Seeder
             ]
         );
         $superAdmin->assignRole('SuperAdmin');
-
+        
+        // Give SuperAdmin user all permissions explicitly
+        $permissions = \Spatie\Permission\Models\Permission::all();
+        $superAdmin->syncPermissions($permissions);
         // 2. Create Regular Admin user
         $admin = User::firstOrCreate(
             ['email' => 'admin@ascend.com'],

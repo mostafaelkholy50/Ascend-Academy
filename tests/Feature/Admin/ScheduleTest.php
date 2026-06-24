@@ -23,11 +23,17 @@ class ScheduleTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        $this->withoutMiddleware(\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class);
 
-        // Create roles
+        // Create roles and permissions
         Role::create(['name' => 'Admin']);
         Role::create(['name' => 'Teacher']);
         Role::create(['name' => 'Student']);
+        \Spatie\Permission\Models\Permission::create(['name' => 'manage schedules']);
+        
+        $adminRole = Role::findByName('Admin');
+        $adminRole->givePermissionTo('manage schedules');
+        
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
         $this->admin = User::factory()->create(['role' => 'Admin']);
@@ -53,9 +59,12 @@ class ScheduleTest extends TestCase
     {
         $this->actingAs($this->admin);
 
-        $response = $this->get(route('admin.schedules.index'));
+        $response = $this->get(route('admin.schedules.index', ['view' => 'calendar']));
 
         $response->assertStatus(200);
+        $response->assertSee('Print Schedule');
+        $response->assertSee('Create New Schedule');
+        $response->assertSee('id="calendar-container"', false);
     }
 
     public function test_admin_can_view_schedule_create_page()
