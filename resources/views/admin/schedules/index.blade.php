@@ -153,157 +153,109 @@
                     </div>
 
                     <!-- Grid Body -->
-                    <div class="flex relative h-[2160px] bg-gray-50/30">
+                    <div class="flex flex-col relative bg-gray-50/30">
                         
-                        <!-- Time Labels Column -->
-                        <div class="w-20 flex-shrink-0 border-r border-gray-100 bg-white z-30 sticky left-0">
-                            @for ($i = 0; $i < 24; $i++)
-                                <div class="h-[90px] border-b border-gray-100/0 relative">
-                                    <div class="absolute -top-3 right-3 text-[11px] font-medium text-gray-400 bg-white px-1">
-                                        {{ $i == 0 ? '12 AM' : ($i < 12 ? $i . ' AM' : ($i == 12 ? '12 PM' : ($i - 12) . ' PM')) }}
-                                    </div>
+                        @for ($hour = 0; $hour < 24; $hour++)
+                            <div class="flex border-b border-gray-100 min-h-[90px] w-full">
+                                
+                                <!-- Time Label -->
+                                <div class="w-20 flex-shrink-0 border-r border-gray-100 bg-white sticky left-0 z-30 flex items-start justify-end pr-2 pt-2">
+                                    <span class="text-[11px] font-medium text-gray-400">
+                                        {{ $hour == 0 ? '12 AM' : ($hour < 12 ? $hour . ' AM' : ($hour == 12 ? '12 PM' : ($hour - 12) . ' PM')) }}
+                                    </span>
                                 </div>
-                            @endfor
-                        </div>
 
-                        <!-- Days Grid & Appointments -->
-                        <div class="flex flex-1 relative bg-white">
-                            
-                            <!-- Horizontal Grid Lines -->
-                            <div class="absolute inset-0 pointer-events-none z-0">
-                                @for ($i = 0; $i < 24; $i++)
-                                    <div class="h-[90px] border-b border-gray-100 w-full"></div>
-                                @endfor
-                            </div>
-
-                            <!-- Day Columns -->
-                            @foreach ($weekDays as $dayData)
-                                <div class="flex-1 border-r border-gray-100 relative z-10 min-w-[150px]">
-                                    
-                                    <!-- Render Appointments for this Day -->
-                                    @php
-                                        // Calculate overlaps
-                                        $schedules = collect($dayData['schedules'])->sortBy('starts_at')->values();
-                                        $positions = [];
-                                        $columns = [];
+                                <!-- Day Cells for this Hour -->
+                                @foreach ($weekDays as $dayData)
+                                    <div class="flex-1 border-r border-gray-100 p-1 flex flex-col gap-1 min-w-[150px] relative bg-white transition-colors hover:bg-gray-50/50">
                                         
-                                        foreach($schedules as $idx => $schedule) {
-                                            $placed = false;
-                                            foreach($columns as $colIdx => &$column) {
-                                                $conflict = false;
-                                                foreach($column as $colSchedule) {
-                                                    if ($schedule->starts_at->lt($colSchedule->ends_at) && $schedule->ends_at->gt($colSchedule->starts_at)) {
-                                                        $conflict = true;
-                                                        break;
+                                        <!-- Render Appointments for this specific hour -->
+                                        @foreach ($dayData['schedules'] as $schedule)
+                                            @if ((int) $schedule->starts_at->format('G') === $hour)
+                                                @php
+                                                    $now = now();
+                                                    $isPast = $now->greaterThan($schedule->ends_at);
+                                                    $isInProgress = $now->between($schedule->starts_at, $schedule->ends_at);
+                                                    
+                                                    // Determine Status & Styling
+                                                    $statusClass = 'bg-blue-50 border-blue-200 text-blue-800 shadow-blue-100/50';
+                                                    $statusText = 'Not Yet';
+                                                    $iconClass = 'fa-calendar';
+                                                    $statusColor = 'blue';
+
+                                                    if ($schedule->status === 'completed') {
+                                                        $statusClass = 'bg-green-50 border-green-200 text-green-800 shadow-green-100/50';
+                                                        $statusText = 'Completed';
+                                                        $iconClass = 'fa-check-circle';
+                                                        $statusColor = 'green';
+                                                    } elseif ($schedule->attendance) {
+                                                        if ($schedule->attendance->student_present && $schedule->attendance->teacher_present) {
+                                                            $statusClass = 'bg-emerald-50 border-emerald-200 text-emerald-800 shadow-emerald-100/50';
+                                                            $statusText = 'Attended';
+                                                            $iconClass = 'fa-check-double';
+                                                            $statusColor = 'emerald';
+                                                        } elseif (!$schedule->attendance->teacher_present) {
+                                                            $statusClass = 'bg-red-50 border-red-200 text-red-800 shadow-red-100/50';
+                                                            $statusText = 'Teacher Absent';
+                                                            $iconClass = 'fa-times-circle';
+                                                            $statusColor = 'red';
+                                                        } elseif (!$schedule->attendance->student_present) {
+                                                            $statusClass = 'bg-orange-50 border-orange-200 text-orange-800 shadow-orange-100/50';
+                                                            $statusText = 'Student Absent';
+                                                            $iconClass = 'fa-user-slash';
+                                                            $statusColor = 'orange';
+                                                        }
+                                                    } elseif ($isPast) {
+                                                        $statusClass = 'bg-gray-100 border-gray-200 text-gray-600 shadow-none';
+                                                        $statusText = 'Past';
+                                                        $iconClass = 'fa-history';
+                                                        $statusColor = 'gray';
+                                                    } elseif ($isInProgress) {
+                                                        $statusClass = 'bg-yellow-50 border-yellow-300 text-yellow-900 shadow-yellow-200/50 ring-2 ring-yellow-400 ring-offset-1';
+                                                        $statusText = 'In Progress';
+                                                        $iconClass = 'fa-spinner fa-spin';
+                                                        $statusColor = 'yellow';
                                                     }
-                                                }
-                                                if (!$conflict) {
-                                                    $column[] = $schedule;
-                                                    $positions[$schedule->id] = $colIdx;
-                                                    $placed = true;
-                                                    break;
-                                                }
-                                            }
-                                            if (!$placed) {
-                                                $columns[] = [$schedule];
-                                                $positions[$schedule->id] = count($columns) - 1;
-                                            }
-                                        }
-                                        $totalCols = max(1, count($columns));
-                                    @endphp
-                                    @foreach ($schedules as $schedule)
-                                        @php
-                                            $startHour = (int) $schedule->starts_at->format('G');
-                                            $startMinute = (int) $schedule->starts_at->format('i');
-                                            $durationMinutes = $schedule->getDurationInMinutes();
-                                            
-                                            // 1.5px per minute
-                                            $top = ($startHour * 60 + $startMinute) * 1.5;
-                                            $height = $durationMinutes * 1.5;
-                                            
-                                            $now = now();
-                                            $isPast = $now->greaterThan($schedule->ends_at);
-                                            $isInProgress = $now->between($schedule->starts_at, $schedule->ends_at);
-                                            
-                                            // Determine Status & Styling
-                                            $statusClass = 'bg-blue-50 border-blue-200 text-blue-800 shadow-blue-100/50';
-                                            $statusText = 'Not Yet';
-                                            $iconClass = 'fa-calendar';
-                                            $statusColor = 'blue';
-
-                                            if ($schedule->status === 'completed') {
-                                                $statusClass = 'bg-green-50 border-green-200 text-green-800 shadow-green-100/50';
-                                                $statusText = 'Completed';
-                                                $iconClass = 'fa-check-circle';
-                                                $statusColor = 'green';
-                                            } elseif ($schedule->attendance) {
-                                                if ($schedule->attendance->student_present && $schedule->attendance->teacher_present) {
-                                                    $statusClass = 'bg-emerald-50 border-emerald-200 text-emerald-800 shadow-emerald-100/50';
-                                                    $statusText = 'Attended';
-                                                    $iconClass = 'fa-check-double';
-                                                    $statusColor = 'emerald';
-                                                } elseif (!$schedule->attendance->teacher_present) {
-                                                    $statusClass = 'bg-red-50 border-red-200 text-red-800 shadow-red-100/50';
-                                                    $statusText = 'Teacher Absent';
-                                                    $iconClass = 'fa-times-circle';
-                                                    $statusColor = 'red';
-                                                } elseif (!$schedule->attendance->student_present) {
-                                                    $statusClass = 'bg-orange-50 border-orange-200 text-orange-800 shadow-orange-100/50';
-                                                    $statusText = 'Student Absent';
-                                                    $iconClass = 'fa-user-slash';
-                                                    $statusColor = 'orange';
-                                                }
-                                            } elseif ($isPast) {
-                                                $statusClass = 'bg-gray-100 border-gray-200 text-gray-600 shadow-none';
-                                                $statusText = 'Past';
-                                                $iconClass = 'fa-history';
-                                                $statusColor = 'gray';
-                                            } elseif ($isInProgress) {
-                                                $statusClass = 'bg-yellow-50 border-yellow-300 text-yellow-900 shadow-yellow-200/50 ring-2 ring-yellow-400 ring-offset-1';
-                                                $statusText = 'In Progress';
-                                                $iconClass = 'fa-spinner fa-spin';
-                                                $statusColor = 'yellow';
-                                            }
-                                        @endphp
-                                        
-                                        <!-- Base Appointment Card -->
-                                        <!-- Base Appointment Card -->
-                                        <div class="absolute rounded-lg border shadow-sm transition-all duration-200 hover:z-50 cursor-pointer overflow-hidden flex flex-col {{ $statusClass }} {{ 'border-'.$statusColor.'-300' }}"
-                                             style="top: {{ $top }}px; min-height: {{ max($height, 50) }}px; z-index: 10; left: calc({{ ($positions[$schedule->id] / $totalCols) * 100 }}% + 2px); width: calc({{ 100 / $totalCols }}% - 4px);"
-                                             onclick="window.location='{{ route('admin.schedules.show', $schedule->id) }}'">
-                                             
-                                            <div class="p-1.5 flex flex-col gap-1 h-full bg-{{$statusColor}}-50/90 relative overflow-hidden">
-                                                <!-- Header: Time and Status -->
-                                                <div class="flex flex-wrap justify-between items-start gap-1">
-                                                    <div class="flex items-center gap-1 min-w-0">
-                                                        <span class="text-[10px] font-black text-{{$statusColor}}-800 tracking-tight leading-none whitespace-nowrap truncate">
-                                                            {{ $schedule->starts_at->format('g:i A') }} - {{ $schedule->ends_at->format('g:i A') }}
-                                                        </span>
-                                                        @if($isInProgress)
-                                                            <span class="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse mt-0.5 flex-shrink-0"></span>
-                                                        @endif
-                                                    </div>
-                                                </div>
+                                                @endphp
                                                 
-                                                <!-- Body: Student and Teacher -->
-                                                <div class="flex-1 mt-0.5 min-w-0">
-                                                    <!-- Student Info -->
-                                                    <div class="flex items-center gap-1 mb-1 min-w-0">
-                                                        <i class="fa-solid fa-user-graduate text-[9px] text-gray-500 flex-shrink-0"></i>
-                                                        <h4 class="text-[10px] font-bold text-gray-900 leading-tight truncate min-w-0 w-full" title="Student: {{ $schedule->student->name }}">{{ $schedule->student->name }}</h4>
-                                                    </div>
-                                                    <!-- Teacher Info -->
-                                                    <div class="flex items-center gap-1 min-w-0">
-                                                        <i class="fa-solid fa-chalkboard-teacher text-[9px] text-gray-500 flex-shrink-0"></i>
-                                                        <p class="text-[9px] font-medium text-gray-700 leading-tight truncate min-w-0 w-full" title="Teacher: {{ $schedule->teacher->name }}">{{ $schedule->teacher->name }}</p>
+                                                <!-- Base Appointment Card -->
+                                                <div class="rounded-lg border shadow-sm transition-all duration-200 hover:shadow-md cursor-pointer flex flex-col {{ $statusClass }} {{ 'border-'.$statusColor.'-300' }} w-full"
+                                                     onclick="window.location='{{ route('admin.schedules.show', $schedule->id) }}'">
+                                                     
+                                                    <div class="p-1.5 flex flex-col gap-1 h-full bg-{{$statusColor}}-50/90 relative">
+                                                        <!-- Header: Time and Status -->
+                                                        <div class="flex flex-wrap justify-between items-start gap-1">
+                                                            <div class="flex items-center gap-1 min-w-0">
+                                                                <span class="text-[10px] font-black text-{{$statusColor}}-800 tracking-tight leading-none whitespace-nowrap">
+                                                                    {{ $schedule->starts_at->format('g:i A') }} - {{ $schedule->ends_at->format('g:i A') }}
+                                                                </span>
+                                                                @if($isInProgress)
+                                                                    <span class="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse mt-0.5 flex-shrink-0"></span>
+                                                                @endif
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        <!-- Body: Student and Teacher -->
+                                                        <div class="flex-1 mt-0.5 min-w-0">
+                                                            <!-- Student Info -->
+                                                            <div class="flex items-center gap-1 mb-1 min-w-0">
+                                                                <i class="fa-solid fa-user-graduate text-[9px] text-gray-500 flex-shrink-0"></i>
+                                                                <h4 class="text-[10px] font-bold text-gray-900 leading-tight min-w-0 break-words whitespace-normal" title="Student: {{ $schedule->student->name }}">{{ $schedule->student->name }}</h4>
+                                                            </div>
+                                                            <!-- Teacher Info -->
+                                                            <div class="flex items-center gap-1 min-w-0">
+                                                                <i class="fa-solid fa-chalkboard-teacher text-[9px] text-gray-500 flex-shrink-0"></i>
+                                                                <p class="text-[9px] font-medium text-gray-700 leading-tight min-w-0 break-words whitespace-normal" title="Teacher: {{ $schedule->teacher->name }}">{{ $schedule->teacher->name }}</p>
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </div>
-                                        </div>
-                                    @endforeach
-                                </div>
-                            @endforeach
-                        </div>
+                                            @endif
+                                        @endforeach
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endfor
                     </div>
                 </div>
             </div>
