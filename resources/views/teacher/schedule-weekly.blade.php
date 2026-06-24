@@ -31,10 +31,10 @@
     </div>
 
     <!-- Google Calendar Style Grid -->
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col h-[calc(100vh-12rem)] min-h-[600px]">
         
         <!-- Scrollable Container -->
-        <div class="overflow-auto relative scroll-smooth max-h-[75vh]" id="calendar-container">
+        <div class="overflow-auto relative scroll-smooth flex-1" id="calendar-container">
             <div class="min-w-[900px] lg:w-full flex flex-col relative select-none">
                 
                 <!-- Header: Days -->

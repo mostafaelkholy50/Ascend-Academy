@@ -126,7 +126,7 @@
             </div>
 
             <!-- Scrollable Container -->
-            <div class="overflow-auto relative scroll-smooth max-h-[75vh]" id="calendar-container">
+            <div class="overflow-auto relative scroll-smooth flex-1 h-[calc(100vh-14rem)] min-h-[600px]" id="calendar-container">
                 <div class="min-w-[900px] lg:w-full flex flex-col relative select-none">
                     
                     <!-- Header: Days -->
