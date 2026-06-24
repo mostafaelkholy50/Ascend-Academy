@@ -34,7 +34,7 @@
     <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
         
         <!-- Scrollable Container -->
-        <div class="overflow-x-auto relative scroll-smooth" id="calendar-container">
+        <div class="overflow-auto relative scroll-smooth max-h-[75vh]" id="calendar-container">
             <div class="min-w-[900px] lg:w-full flex flex-col relative select-none">
                 
                 <!-- Header: Days -->

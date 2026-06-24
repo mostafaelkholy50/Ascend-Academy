@@ -125,8 +125,8 @@
                 </div>
             </div>
 
-            <!-- Google Calendar Style Grid -->
-            <div class="overflow-x-auto relative scroll-smooth border-t border-gray-200" id="calendar-container">
+            <!-- Scrollable Container -->
+            <div class="overflow-auto relative scroll-smooth max-h-[75vh]" id="calendar-container">
                 <div class="min-w-[900px] lg:w-full flex flex-col relative select-none">
                     
                     <!-- Header: Days -->
