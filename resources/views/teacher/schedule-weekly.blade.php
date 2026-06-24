@@ -38,16 +38,16 @@
             <div class="min-w-[900px] lg:w-full flex flex-col relative select-none">
                 
                 <!-- Header: Days -->
-                <div class="flex border-b border-gray-200 sticky top-0 bg-white/95 backdrop-blur-md z-30 shadow-sm">
+                <div class="flex border-b border-gray-200 sticky top-0 bg-white/95 backdrop-blur-md z-40 shadow-sm">
                     <!-- Top Left Empty Cell for Time Column -->
-                    <div class="w-20 flex-shrink-0 border-r border-gray-100 flex items-end justify-center pb-2">
+                    <div class="w-20 flex-shrink-0 border-r border-gray-100 flex items-end justify-center pb-2 sticky left-0 bg-white/95 z-50">
                         <span class="text-[10px] text-gray-400 font-medium uppercase tracking-wider">GMT+3</span>
                     </div>
                     
                     <!-- Days Columns -->
                     @foreach ($schedulesByDay as $dayData)
                         @php $isToday = $dayData['date']->isToday(); @endphp
-                        <div class="flex-1 py-3 px-2 text-center border-r border-gray-100 {{ $isToday ? 'bg-vibrant-green/5' : '' }} group transition-colors">
+                        <div class="flex-1 py-3 px-2 text-center border-r border-gray-100 {{ $isToday ? 'bg-vibrant-green/5' : '' }} group transition-colors min-w-[150px]">
                             <div class="text-xs font-semibold uppercase tracking-wider {{ $isToday ? 'text-vibrant-green' : 'text-gray-500 group-hover:text-gray-700' }}">
                                 {{ $dayData['date']->format('D') }}
                             </div>
@@ -65,10 +65,10 @@
                 <div class="flex relative h-[2160px] bg-gray-50/30">
                     
                     <!-- Time Labels Column -->
-                    <div class="w-20 flex-shrink-0 border-r border-gray-100 bg-white z-20 relative">
+                    <div class="w-20 flex-shrink-0 border-r border-gray-100 bg-white z-30 sticky left-0">
                         @for ($i = 0; $i < 24; $i++)
                             <div class="h-[90px] border-b border-gray-100/0 relative">
-                                <div class="absolute -top-3 right-3 text-[11px] font-medium text-gray-400">
+                                <div class="absolute -top-3 right-3 text-[11px] font-medium text-gray-400 bg-white px-1">
                                     {{ $i == 0 ? '12 AM' : ($i < 12 ? $i . ' AM' : ($i == 12 ? '12 PM' : ($i - 12) . ' PM')) }}
                                 </div>
                             </div>
@@ -87,10 +87,40 @@
 
                         <!-- Day Columns -->
                         @foreach ($schedulesByDay as $dayData)
-                            <div class="flex-1 border-r border-gray-100 relative z-10">
+                            <div class="flex-1 border-r border-gray-100 relative z-10 min-w-[150px]">
                                 
                                 <!-- Render Appointments for this Day -->
-                                @foreach ($dayData['schedules'] as $schedule)
+                                @php
+                                    // Calculate overlaps
+                                    $schedules = collect($dayData['schedules'])->sortBy('starts_at')->values();
+                                    $positions = [];
+                                    $columns = [];
+                                    
+                                    foreach($schedules as $idx => $schedule) {
+                                        $placed = false;
+                                        foreach($columns as $colIdx => &$column) {
+                                            $conflict = false;
+                                            foreach($column as $colSchedule) {
+                                                if ($schedule->starts_at->lt($colSchedule->ends_at) && $schedule->ends_at->gt($colSchedule->starts_at)) {
+                                                    $conflict = true;
+                                                    break;
+                                                }
+                                            }
+                                            if (!$conflict) {
+                                                $column[] = $schedule;
+                                                $positions[$schedule->id] = $colIdx;
+                                                $placed = true;
+                                                break;
+                                            }
+                                        }
+                                        if (!$placed) {
+                                            $columns[] = [$schedule];
+                                            $positions[$schedule->id] = count($columns) - 1;
+                                        }
+                                    }
+                                    $totalCols = max(1, count($columns));
+                                @endphp
+                                @foreach ($schedules as $schedule)
                                     @php
                                         $startHour = (int) $schedule->starts_at->format('G');
                                         $startMinute = (int) $schedule->starts_at->format('i');
@@ -146,31 +176,31 @@
                                     @endphp
                                     
                                     <!-- Base Appointment Card -->
-                                    <div class="absolute left-[2px] right-[4px] rounded-lg border shadow-sm transition-all duration-200 hover:z-50 cursor-pointer overflow-hidden flex flex-col {{ $statusClass }} {{ 'border-'.$statusColor.'-300' }}"
-                                         style="top: {{ $top }}px; min-height: {{ max($height, 45) }}px; z-index: 10;"
+                                    <div class="absolute rounded-lg border shadow-sm transition-all duration-200 hover:z-50 cursor-pointer overflow-hidden flex flex-col {{ $statusClass }} {{ 'border-'.$statusColor.'-300' }}"
+                                         style="top: {{ $top }}px; min-height: {{ max($height, 45) }}px; z-index: 10; left: calc({{ ($positions[$schedule->id] / $totalCols) * 100 }}% + 2px); width: calc({{ 100 / $totalCols }}% - 4px);"
                                          onclick="window.location='{{ route('teacher.schedule.daily', ['date' => $dayData['date']->format('Y-m-d')]) }}'">
                                          
-                                        <div class="p-1.5 flex flex-col gap-1 h-full bg-{{$statusColor}}-50/90 relative">
+                                        <div class="p-1.5 flex flex-col gap-1 h-full bg-{{$statusColor}}-50/90 relative overflow-hidden">
                                             <!-- Header: Time and Status -->
                                             <div class="flex flex-wrap justify-between items-start gap-1">
-                                                <div class="flex items-center gap-1">
-                                                    <span class="text-[10px] font-black text-{{$statusColor}}-800 tracking-tight leading-none whitespace-nowrap">
+                                                <div class="flex items-center gap-1 min-w-0">
+                                                    <span class="text-[10px] font-black text-{{$statusColor}}-800 tracking-tight leading-none whitespace-nowrap truncate">
                                                         {{ $schedule->starts_at->format('g:i') }} - {{ $schedule->ends_at->format('g:i A') }}
                                                     </span>
                                                     @if($isInProgress)
-                                                        <span class="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse mt-0.5"></span>
+                                                        <span class="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse mt-0.5 flex-shrink-0"></span>
                                                     @endif
                                                 </div>
-                                                <span class="px-1 py-0.5 rounded bg-white/70 border border-{{$statusColor}}-200 text-{{$statusColor}}-700 text-[8px] font-bold uppercase tracking-wider flex items-center gap-1 whitespace-nowrap leading-none shadow-sm">
+                                                <span class="px-1 py-0.5 rounded bg-white/70 border border-{{$statusColor}}-200 text-{{$statusColor}}-700 text-[8px] font-bold uppercase tracking-wider flex items-center gap-1 whitespace-nowrap leading-none shadow-sm flex-shrink-0 hidden md:flex">
                                                     <i class="fa-solid {{ $iconClass }} text-[8px]"></i> {{ $statusText }}
                                                 </span>
                                             </div>
                                             
                                             <!-- Body: Student and Course -->
-                                            <div class="flex-1">
-                                                <h4 class="text-xs font-bold text-gray-900 leading-tight mb-0.5">{{ $schedule->student->name }}</h4>
-                                                <p class="text-[9px] font-medium text-gray-600 flex items-center gap-1 leading-none truncate" title="{{ $schedule->course->name }}">
-                                                    <i class="fa-solid fa-book-open text-gray-400"></i> {{ $schedule->course->name }}
+                                            <div class="flex-1 min-w-0">
+                                                <h4 class="text-xs font-bold text-gray-900 leading-tight mb-0.5 truncate min-w-0 w-full">{{ $schedule->student->name }}</h4>
+                                                <p class="text-[9px] font-medium text-gray-600 flex items-center gap-1 leading-none truncate min-w-0 w-full" title="{{ $schedule->course->name }}">
+                                                    <i class="fa-solid fa-book-open text-gray-400 flex-shrink-0"></i> <span class="truncate">{{ $schedule->course->name }}</span>
                                                 </p>
                                             </div>
 
