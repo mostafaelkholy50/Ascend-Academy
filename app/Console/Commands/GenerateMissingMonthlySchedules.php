@@ -34,7 +34,9 @@ class GenerateMissingMonthlySchedules extends Command
         $this->scheduleService = $scheduleService;
         
         $monthInput = $this->option('month');
-        $targetMonth = $monthInput ? Carbon::parse($monthInput)->startOfMonth() : now()->startOfMonth();
+        $targetMonth = $monthInput 
+            ? Carbon::parse($monthInput)->startOfMonth() 
+            : (now()->day >= 25 ? now()->addMonth()->startOfMonth() : now()->startOfMonth());
 
         $this->info("Generating missing schedules for {$targetMonth->format('F Y')}...");
 

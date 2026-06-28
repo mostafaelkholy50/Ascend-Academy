@@ -6,7 +6,8 @@ The Schedule Management system in Ascend Academy handles the booking of classes 
 ## Initial Schedule Creation and Continuation
 When creating a new recurring schedule for a student from the admin panel:
 - **Initial Generation**: The system generates the first set of sessions starting from the exact `start_date` up to the **end of that specific month** (e.g., if the `start_date` is June 15th, sessions are generated up to June 30th). This prevents the schedule from spilling over into the next month improperly.
-- **Subsequent Months**: When the enrollment is renewed or the CronJob generates the next month's payment/schedule, the system will automatically generate a fresh set of sessions for the full next month (e.g., July 1st to July 31st).
+- **Subsequent Months**: When the enrollment is renewed or the CronJob generates the next month's payment/schedule, the system will automatically generate a fresh set of sessions for the full next month (e.g., July 1st to July 31st). 
+  - **CronJob Timing**: The scheduled job (`schedules:generate-missing`) runs 3 days before the end of the current month (i.e. on the 28th for 30/31-day months, 27th for 29-day months, and 26th for 28-day months). This gives teachers enough time to see their schedules for the upcoming month.
 This guarantees that class schedules are strictly bounded by calendar months without missing any expected days.
 
 ### Multiple Sessions Per Day
