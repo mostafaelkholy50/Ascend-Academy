@@ -20,7 +20,7 @@ class DashboardController extends Controller
         try {
             $teacher = auth()->user();
 
-            if ($teacher->role !== 'Teacher') {
+            if (!$teacher->isTeacher() && !$teacher->isAdmin()) {
                 abort(403);
             }
 

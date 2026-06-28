@@ -11,7 +11,8 @@ class ParentDashboardRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return auth()->check() && auth()->user()->role === 'Parent';
+        $user = auth()->user();
+        return $user && ($user->isParent() || $user->isAdmin());
     }
 
     /**

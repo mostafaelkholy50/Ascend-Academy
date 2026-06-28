@@ -21,7 +21,7 @@ class DashboardController extends Controller
             $student = auth()->user();
             
             // تأكيد الأمان: التأكد من أن المستخدم طالب
-            if ($student->role !== 'Student') {
+            if (!$student->isStudent() && !$student->isAdmin()) {
                 abort(403);
             }
 
