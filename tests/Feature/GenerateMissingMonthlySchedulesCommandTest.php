@@ -8,7 +8,7 @@ beforeEach(function () {
     // Setup might be needed if there are global states, but we will mock the ScheduleService
 });
 
-test('it targets the next month if run on or after the 25th', function () {
+test('it targets both current and next month if run on or after the 25th', function () {
     // Mock the ScheduleService to verify the target month
     $mockService = Mockery::mock(ScheduleService::class);
     $this->app->instance(ScheduleService::class, $mockService);
@@ -19,13 +19,14 @@ test('it targets the next month if run on or after the 25th', function () {
 
     // Set the current date to the 28th of the current month
     Carbon::setTestNow(Carbon::now()->startOfMonth()->addDays(27)); // 28th day
-    $expectedMonth = Carbon::now()->addMonth()->startOfMonth();
+    $expectedCurrentMonth = Carbon::now()->startOfMonth();
+    $expectedNextMonth = Carbon::now()->addMonth()->startOfMonth();
 
     $mockService->shouldReceive('generateMonthlySchedules')
-        ->once()
-        ->withArgs(function ($passedEnrollment, $targetMonth) use ($enrollment, $expectedMonth) {
+        ->twice()
+        ->withArgs(function ($passedEnrollment, $targetMonth) use ($enrollment, $expectedCurrentMonth, $expectedNextMonth) {
             return $passedEnrollment->id === $enrollment->id && 
-                   $targetMonth->isSameDay($expectedMonth);
+                   ($targetMonth->isSameDay($expectedCurrentMonth) || $targetMonth->isSameDay($expectedNextMonth));
         })
         ->andReturn(['success' => true, 'count' => 4]);
 

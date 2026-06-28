@@ -67,12 +67,12 @@
     <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col h-[calc(100vh-18rem)] min-h-[600px]">
         
         <div class="overflow-auto relative scroll-smooth flex-1" id="calendar-container">
-            <div class="min-w-[500px] lg:w-full flex flex-col relative select-none">
+            <div class="min-w-full lg:w-full flex flex-col relative select-none">
                 
                 <!-- Header: Day -->
                 <div class="flex border-b border-gray-200 sticky top-0 bg-white/95 backdrop-blur-md z-30 shadow-sm">
-                    <div class="w-20 flex-shrink-0 border-r border-gray-100 flex items-end justify-center pb-2 sticky left-0 bg-white/95 z-40">
-                        <span class="text-[10px] text-gray-400 font-medium uppercase tracking-wider">GMT+3</span>
+                    <div class="w-12 md:w-20 flex-shrink-0 border-r border-gray-100 flex items-end justify-center pb-2 sticky left-0 bg-white/95 z-40">
+                        <span class="text-[8px] md:text-[10px] text-gray-400 font-medium uppercase tracking-wider">GMT+3</span>
                     </div>
                     
                     <div class="flex-1 py-3 px-2 text-center {{ $date->isToday() ? 'bg-vibrant-green/5' : '' }}">
@@ -91,17 +91,17 @@
                 <div class="flex flex-col relative bg-gray-50/30">
                     
                     @for ($hour = 0; $hour < 24; $hour++)
-                        <div class="flex border-b border-gray-100 min-h-[90px] w-full">
+                        <div class="flex border-b border-gray-100 min-h-[70px] md:min-h-[90px] w-full">
                             
                             <!-- Time Label -->
-                            <div class="w-20 flex-shrink-0 border-r border-gray-100 bg-white sticky left-0 z-20 flex items-start justify-end pr-2 pt-2">
-                                <span class="text-[11px] font-medium text-gray-400">
+                            <div class="w-12 md:w-20 flex-shrink-0 border-r border-gray-100 bg-white sticky left-0 z-20 flex items-start justify-end pr-1 md:pr-2 pt-1 md:pt-2">
+                                <span class="text-[9px] md:text-[11px] font-medium text-gray-400">
                                     {{ $hour == 0 ? '12 AM' : ($hour < 12 ? $hour . ' AM' : ($hour == 12 ? '12 PM' : ($hour - 12) . ' PM')) }}
                                 </span>
                             </div>
 
                             <!-- Single Day Cell for this Hour -->
-                            <div class="flex-1 border-r border-gray-100 p-2 md:px-12 lg:px-24 flex flex-col gap-2 relative bg-white transition-colors hover:bg-gray-50/50">
+                            <div class="flex-1 border-r border-gray-100 p-1 md:p-2 lg:px-24 flex flex-col gap-2 relative bg-white transition-colors hover:bg-gray-50/50">
                                 
                                 <!-- Render Appointments for this specific hour -->
                                 @foreach ($schedules as $schedule)
@@ -183,7 +183,7 @@
                                                 
                                                 <!-- Actions Column -->
                                                 <div class="flex items-center gap-2 flex-shrink-0 mt-2 md:mt-0">
-                                                    @if(!$schedule->attendance && !$isPast && $schedule->status !== 'completed')
+                                                    @if(!$schedule->attendance && $schedule->status !== 'completed')
                                                         <button onclick="openAttendanceModal({
                                                                 id: {{ $schedule->id }},
                                                                 student: { id: {{ $schedule->student->id }}, name: '{{ addslashes($schedule->student->name) }}' },
@@ -200,10 +200,6 @@
                                                             <i class="fa-solid fa-clock"></i> Waiting
                                                         </button>
                                                     @endif
-                                                    
-                                                    <button class="px-3 py-1.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 rounded-lg text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap">
-                                                        <i class="fa-solid fa-file-alt"></i> Report
-                                                    </button>
                                                 </div>
                                                 
                                             </div>

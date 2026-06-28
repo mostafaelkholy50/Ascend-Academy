@@ -34,11 +34,22 @@ class GenerateMissingMonthlySchedules extends Command
         $this->scheduleService = $scheduleService;
         
         $monthInput = $this->option('month');
-        $targetMonth = $monthInput 
-            ? Carbon::parse($monthInput)->startOfMonth() 
-            : (now()->day >= 25 ? now()->addMonth()->startOfMonth() : now()->startOfMonth());
+        $targetMonths = [];
+        
+        if ($monthInput) {
+            $targetMonths[] = Carbon::parse($monthInput)->startOfMonth();
+        } else {
+            // Always check current month
+            $targetMonths[] = now()->startOfMonth();
+            
+            // If it's near the end of the month, ALSO check next month
+            if (now()->day >= 25) {
+                $targetMonths[] = now()->addMonth()->startOfMonth();
+            }
+        }
 
-        $this->info("Generating missing schedules for {$targetMonth->format('F Y')}...");
+        $monthNames = collect($targetMonths)->map->format('F Y')->join(' and ');
+        $this->info("Generating missing schedules for {$monthNames}...");
 
         $totalEnrollments = 0;
         $totalSchedulesCreated = 0;
@@ -46,35 +57,45 @@ class GenerateMissingMonthlySchedules extends Command
         $totalSkipped = 0;
         $errors = 0;
 
-        Enrollment::where('status', 'active')->chunk(100, function ($enrollments) use ($targetMonth, &$totalEnrollments, &$totalSchedulesCreated, &$totalConflicts, &$totalSkipped, &$errors) {
+        Enrollment::where('status', 'active')->chunk(100, function ($enrollments) use ($targetMonths, &$totalEnrollments, &$totalSchedulesCreated, &$totalConflicts, &$totalSkipped, &$errors) {
             foreach ($enrollments as $enrollment) {
                 $totalEnrollments++;
-                try {
-                    $result = $this->scheduleService->generateMonthlySchedules($enrollment, $targetMonth);
-                    
-                    if ($result['success']) {
-                        if ($result['count'] == 0) {
-                            $totalSkipped++;
-                        } else {
-                            $totalSchedulesCreated += $result['count'];
-                            if (isset($result['conflicts']) && $result['conflicts'] > 0) {
-                                $totalConflicts += $result['conflicts'];
+                
+                $enrollmentSkippedAll = true;
+
+                foreach ($targetMonths as $month) {
+                    try {
+                        $result = $this->scheduleService->generateMonthlySchedules($enrollment, $month);
+                        
+                        if ($result['success']) {
+                            if ($result['count'] > 0) {
+                                $totalSchedulesCreated += $result['count'];
+                                $enrollmentSkippedAll = false;
+                                if (isset($result['conflicts']) && $result['conflicts'] > 0) {
+                                    $totalConflicts += $result['conflicts'];
+                                }
                             }
+                        } else {
+                            $this->error("Failed for enrollment #{$enrollment->id} ({$month->format('F Y')}): " . $result['message']);
+                            $errors++;
+                            $enrollmentSkippedAll = false;
                         }
-                    } else {
-                        $this->error("Failed for enrollment #{$enrollment->id}: " . $result['message']);
+                    } catch (\Exception $e) {
+                        $this->error("Exception for enrollment #{$enrollment->id} ({$month->format('F Y')}): " . $e->getMessage());
+                        Log::error("Schedule generation command failed for enrollment #{$enrollment->id} ({$month->format('F Y')}): " . $e->getMessage());
                         $errors++;
+                        $enrollmentSkippedAll = false;
                     }
-                } catch (\Exception $e) {
-                    $this->error("Exception for enrollment #{$enrollment->id}: " . $e->getMessage());
-                    Log::error("Schedule generation command failed for enrollment #{$enrollment->id}: " . $e->getMessage());
-                    $errors++;
+                }
+                
+                if ($enrollmentSkippedAll) {
+                    $totalSkipped++;
                 }
             }
         });
 
         $this->newLine();
-        $this->info("=== Report for {$targetMonth->format('F Y')} ===");
+        $this->info("=== Report for {$monthNames} ===");
         $this->info("Total Active Enrollments Processed: {$totalEnrollments}");
         $this->info("Total New Schedules Created: {$totalSchedulesCreated}");
         $this->info("Total Enrollments Skipped (already had schedules): {$totalSkipped}");

@@ -132,15 +132,15 @@
                     <!-- Header: Days -->
                     <div class="flex border-b border-gray-200 sticky top-0 bg-white/95 backdrop-blur-md z-40 shadow-sm">
                         <!-- Top Left Empty Cell for Time Column -->
-                        <div class="w-20 flex-shrink-0 border-r border-gray-100 flex items-end justify-center pb-2 sticky left-0 bg-white/95 z-50">
-                            <span class="text-[10px] text-gray-400 font-medium uppercase tracking-wider">GMT+3</span>
+                        <div class="w-12 md:w-20 flex-shrink-0 border-r border-gray-100 flex items-end justify-center pb-2 sticky left-0 bg-white/95 z-50">
+                            <span class="text-[8px] md:text-[10px] text-gray-400 font-medium uppercase tracking-wider">GMT+3</span>
                         </div>
                         
                         <!-- Days Columns -->
                         @foreach ($weekDays as $dayData)
                             @php $isToday = $dayData['date']->isToday(); @endphp
-                            <div class="flex-1 py-3 px-2 text-center border-r border-gray-100 {{ $isToday ? 'bg-indigo-50' : '' }} group transition-colors min-w-[150px]">
-                                <div class="text-xs font-semibold uppercase tracking-wider {{ $isToday ? 'text-indigo-600' : 'text-gray-500 group-hover:text-gray-700' }}">
+                            <div class="flex-1 py-2 md:py-3 px-1 md:px-2 text-center border-r border-gray-100 {{ $isToday ? 'bg-indigo-50' : '' }} group transition-colors min-w-[110px] md:min-w-[150px]">
+                                <div class="text-[10px] md:text-xs font-semibold uppercase tracking-wider {{ $isToday ? 'text-indigo-600' : 'text-gray-500 group-hover:text-gray-700' }}">
                                     {{ $dayData['date']->format('D') }}
                                 </div>
                                 <div class="mt-1 flex justify-center">
@@ -156,18 +156,18 @@
                     <div class="flex flex-col relative bg-gray-50/30">
                         
                         @for ($hour = 0; $hour < 24; $hour++)
-                            <div class="flex border-b border-gray-100 min-h-[90px] w-full">
+                            <div class="flex border-b border-gray-100 min-h-[70px] md:min-h-[90px] w-full">
                                 
                                 <!-- Time Label -->
-                                <div class="w-20 flex-shrink-0 border-r border-gray-100 bg-white sticky left-0 z-30 flex items-start justify-end pr-2 pt-2">
-                                    <span class="text-[11px] font-medium text-gray-400">
+                                <div class="w-12 md:w-20 flex-shrink-0 border-r border-gray-100 bg-white sticky left-0 z-30 flex items-start justify-end pr-1 md:pr-2 pt-1 md:pt-2">
+                                    <span class="text-[9px] md:text-[11px] font-medium text-gray-400">
                                         {{ $hour == 0 ? '12 AM' : ($hour < 12 ? $hour . ' AM' : ($hour == 12 ? '12 PM' : ($hour - 12) . ' PM')) }}
                                     </span>
                                 </div>
 
                                 <!-- Day Cells for this Hour -->
                                 @foreach ($weekDays as $dayData)
-                                    <div class="flex-1 border-r border-gray-100 p-1 flex flex-col gap-1 min-w-[150px] relative bg-white transition-colors hover:bg-gray-50/50">
+                                    <div class="flex-1 border-r border-gray-100 p-0.5 md:p-1 flex flex-col gap-1 min-w-[110px] md:min-w-[150px] relative bg-white transition-colors hover:bg-gray-50/50">
                                         
                                         <!-- Render Appointments for this specific hour -->
                                         @foreach ($dayData['schedules'] as $schedule)
