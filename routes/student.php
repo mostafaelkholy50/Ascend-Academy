@@ -9,7 +9,7 @@ use App\Http\Controllers\Student\ReportController;
 use App\Http\Controllers\Student\ProfileController;
 use App\Http\Controllers\NotificationController;
 
-Route::middleware(['auth'])->prefix('student')->name('student.')->group(function () {
+Route::middleware(['auth', 'role:Student'])->prefix('student')->name('student.')->group(function () {
     Route::get('/dashboard', [StudentDashboardController::class, 'index'])->name('dashboard');
 
     // Schedule Management

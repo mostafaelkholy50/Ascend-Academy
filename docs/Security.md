@@ -5,7 +5,8 @@ Security is the highest priority for the Ascend-Academy application. All develop
 ## 1. Authentication & Authorization
 - **Authentication**: Managed via Laravel's built-in auth system.
 - **Authorization**: Managed via `spatie/laravel-permission`. 
-- **Rule**: Every single route (except public landing/inquiry pages) must be protected by the `auth` middleware. Role-specific routes (e.g., `/admin/*`) must be protected by role-checking middleware.
+- **Rule**: Every single route (except public landing/inquiry pages) must be protected by the `auth` middleware.
+- **Route File Middleware**: Dashboard routes are split into separate files (`routes/admin.php`, `routes/teacher.php`, etc.). Each route file MUST have its root group protected by the corresponding Spatie middleware to prevent cross-role access (e.g., `['auth', 'role:Teacher']` for teacher routes, `['auth', 'role_or_permission:SuperAdmin|Admin']` for admin routes). This prevents a logged-in user from manually navigating to another role's dashboard.
 
 ## 2. Policies & Gates
 - **Rule**: Access to specific models (e.g., updating an Enrollment, viewing a Schedule) must be authorized using Policies (`app/Policies`).

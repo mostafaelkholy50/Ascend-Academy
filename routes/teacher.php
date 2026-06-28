@@ -11,7 +11,7 @@ use App\Http\Controllers\Teacher\ProfileController;
 use App\Http\Controllers\Teacher\ReportController;
 use App\Http\Controllers\NotificationController;
 
-Route::middleware(['auth'])->prefix('teacher')->name('teacher.')->group(function () {
+Route::middleware(['auth', 'role:Teacher'])->prefix('teacher')->name('teacher.')->group(function () {
     Route::get('/dashboard', [TeacherDashboardController::class, 'index'])->name('dashboard');
 
     // Reports Management
