@@ -10,7 +10,7 @@ use App\Http\Controllers\ParentUser\AttendanceController;
 use App\Http\Controllers\ParentUser\ProfileController;
 use App\Http\Controllers\NotificationController;
 
-Route::middleware(['auth', 'role:Parent'])->prefix('parent')->name('parent.')->group(function () {
+Route::middleware(['auth', 'role_or_permission:Parent|SuperAdmin|Admin'])->prefix('parent')->name('parent.')->group(function () {
     Route::get('/dashboard', [ParentDashboardController::class, 'index'])->name('dashboard');
 
     // Children Management
