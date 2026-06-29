@@ -247,6 +247,11 @@
                                                                 <i class="fa-solid fa-chalkboard-teacher text-[9px] text-gray-500 flex-shrink-0"></i>
                                                                 <p class="text-[9px] font-medium text-gray-700 leading-tight min-w-0 break-words whitespace-normal" title="Teacher: {{ $schedule->teacher->name }}">{{ $schedule->teacher->name }}</p>
                                                             </div>
+                                                            <!-- Status Info -->
+                                                            <div class="flex items-center gap-1 mt-1 pt-1 border-t border-{{$statusColor}}-200/50 min-w-0">
+                                                                <i class="fa-solid {{ $iconClass }} text-[9px] text-{{$statusColor}}-600 flex-shrink-0"></i>
+                                                                <p class="text-[9px] font-semibold text-{{$statusColor}}-700 leading-tight min-w-0 break-words whitespace-normal" title="Status: {{ $statusText }}">{{ $statusText }}</p>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
