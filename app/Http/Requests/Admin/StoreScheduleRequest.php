@@ -24,11 +24,13 @@ class StoreScheduleRequest extends FormRequest
             'schedule_times' => 'required|array|min:1',
             'schedule_times.*' => 'required',
             'schedule_times.*.*' => 'nullable|date_format:H:i',
-            'duration_minutes' => 'required|integer|min:15|max:240',
+            'durations' => 'required|array',
+            'durations.*' => 'required',
+            'durations.*.*' => 'required|integer|min:15|max:240',
             'zoom_link' => 'nullable|url|max:500',
             'notes' => 'nullable|string|max:1000',
             'month' => 'nullable|date_format:Y-m',
-            'start_date' => 'required|date',
+            'start_date' => 'required|date_format:Y-m',
         ];
     }
 }

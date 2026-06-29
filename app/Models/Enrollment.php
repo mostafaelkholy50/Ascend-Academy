@@ -184,21 +184,39 @@ class Enrollment extends Model
     {
         $normalized = [];
 
-        foreach ($pattern as $day => $times) {
-            if (is_string($times)) {
-                $times = [$times];
+        foreach ($pattern as $day => $items) {
+            if (is_string($items)) {
+                $items = [['time' => $items, 'duration' => (int)($this->session_duration ?? 60)]];
             }
 
-            if (!is_array($times)) {
+            if (!is_array($items)) {
                 continue;
             }
 
-            $cleanTimes = array_values(array_filter(array_map(function ($time) {
-                return is_string($time) ? trim($time) : null;
-            }, $times)));
+            $cleanItems = [];
+            foreach ($items as $item) {
+                if (is_string($item)) {
+                    $cleanItems[] = ['time' => trim($item), 'duration' => (int)($this->session_duration ?? 60)];
+                } elseif (is_array($item) && isset($item['time'])) {
+                    $cleanItems[] = [
+                        'time' => trim($item['time']), 
+                        'duration' => isset($item['duration']) ? (int)$item['duration'] : (int)($this->session_duration ?? 60)
+                    ];
+                }
+            }
 
-            if (!empty($cleanTimes)) {
-                $normalized[$day] = array_values(array_unique($cleanTimes));
+            // Remove duplicates based on time
+            $uniqueTimes = [];
+            $finalItems = [];
+            foreach ($cleanItems as $item) {
+                if (!in_array($item['time'], $uniqueTimes)) {
+                    $uniqueTimes[] = $item['time'];
+                    $finalItems[] = $item;
+                }
+            }
+
+            if (!empty($finalItems)) {
+                $normalized[$day] = $finalItems;
             }
         }
 

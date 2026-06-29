@@ -121,12 +121,14 @@ class ScheduleController extends Controller
     {
         $request->validate([
             'teacher_id' => 'required|exists:users,id',
-            'duration_minutes' => 'required|integer|min:15|max:240',
             'days' => 'required|array|min:1',
             'days.*' => 'string|in:Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday',
             'schedule_times' => 'required|array',
             'schedule_times.*' => 'required',
             'schedule_times.*.*' => 'nullable|date_format:H:i',
+            'durations' => 'required|array',
+            'durations.*' => 'required',
+            'durations.*.*' => 'required|integer|min:15|max:240',
         ]);
 
         try {

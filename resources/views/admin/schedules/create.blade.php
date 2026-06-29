@@ -160,12 +160,12 @@
 
             <div class="mb-6">
                 <label for="start_date" class="block text-sm font-semibold text-gray-700 mb-2">
-                    Schedule Start Date <span class="text-red-500">*</span>
+                    Schedule Start Month <span class="text-red-500">*</span>
                 </label>
-                <input type="date" name="start_date" id="start_date" required
-                    value="{{ old('start_date', now()->format('Y-m-d')) }}"
+                <input type="month" name="start_date" id="start_date" required
+                    value="{{ is_string(old('start_date')) ? old('start_date') : now()->format('Y-m') }}"
                     class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vibrant-green focus:border-transparent">
-                <p class="text-[10px] text-gray-500 mt-1 italic">The system will automatically generate sessions for 1 month starting from this date.</p>
+                <p class="text-[10px] text-gray-500 mt-1 italic">The system will automatically generate sessions for this full month starting from the 1st.</p>
                 @error('start_date')
                     <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                 @enderror
@@ -194,17 +194,48 @@
                                 </span>
                                 <span>Time Slots</span>
                             </div>
-                            <div class="time-input-list grid grid-cols-1 sm:grid-cols-2 gap-2" data-day="{{ $day }}">
-                                <div class="time-input-wrap relative">
-                                    <input type="time"
-                                        name="schedule_times[{{ $day }}][]"
-                                        id="time-{{ $day }}-0"
-                                        value="{{ old('schedule_times.' . $day . '.0', '17:00') }}"
-                                        class="time-input w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-xl bg-white shadow-sm focus:ring-2 focus:ring-vibrant-green focus:border-transparent text-sm">
-                                    <i class="fa-solid fa-clock absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"></i>
+                            <div class="time-input-list flex flex-col gap-2" data-day="{{ $day }}">
+                                @php
+                                    $oldTimes = old('schedule_times.' . $day, ['17:00']);
+                                    if (!is_array($oldTimes)) {
+                                        $oldTimes = is_string($oldTimes) ? [$oldTimes] : ['17:00'];
+                                    }
+                                    $oldDurations = old('durations.' . $day, [60]);
+                                    if (!is_array($oldDurations)) {
+                                        $oldDurations = is_numeric($oldDurations) ? [$oldDurations] : [60];
+                                    }
+                                @endphp
+                                @foreach($oldTimes as $index => $time)
+                                <div class="time-input-wrap flex items-center gap-2">
+                                    <div class="relative flex-1">
+                                        <input type="time"
+                                            name="schedule_times[{{ $day }}][]"
+                                            id="time-{{ $day }}-{{ $index }}"
+                                            value="{{ $time }}"
+                                            class="time-input w-full pl-10 pr-3 py-2 border border-gray-300 rounded-xl bg-white shadow-sm focus:ring-2 focus:ring-vibrant-green focus:border-transparent text-sm">
+                                        <i class="fa-solid fa-clock absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"></i>
+                                    </div>
+                                    <div class="relative flex-1">
+                                        <select name="durations[{{ $day }}][]"
+                                            class="time-input w-full pl-3 pr-8 py-2 border border-gray-300 rounded-xl bg-white shadow-sm focus:ring-2 focus:ring-vibrant-green focus:border-transparent text-sm appearance-none">
+                                            <option value="15" {{ ($oldDurations[$index] ?? 60) == 15 ? 'selected' : '' }}>15m</option>
+                                            <option value="30" {{ ($oldDurations[$index] ?? 60) == 30 ? 'selected' : '' }}>30m</option>
+                                            <option value="45" {{ ($oldDurations[$index] ?? 60) == 45 ? 'selected' : '' }}>45m</option>
+                                            <option value="60" {{ ($oldDurations[$index] ?? 60) == 60 ? 'selected' : '' }}>1h</option>
+                                            <option value="90" {{ ($oldDurations[$index] ?? 60) == 90 ? 'selected' : '' }}>1.5h</option>
+                                            <option value="120" {{ ($oldDurations[$index] ?? 60) == 120 ? 'selected' : '' }}>2h</option>
+                                        </select>
+                                        <i class="fa-solid fa-hourglass-half absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none text-xs"></i>
+                                    </div>
+                                    @if($index > 0)
+                                    <button type="button" class="text-red-500 hover:text-red-700 p-2" onclick="this.parentElement.remove()">
+                                        <i class="fa-solid fa-times"></i>
+                                    </button>
+                                    @endif
                                 </div>
+                                @endforeach
                             </div>
-                            <button type="button" class="self-start inline-flex items-center gap-2 text-xs font-bold text-vibrant-green bg-vibrant-green/10 hover:bg-vibrant-green/15 px-3 py-2 rounded-full transition" onclick="addTimeInput('{{ $day }}')">
+                            <button type="button" class="self-start inline-flex items-center gap-2 text-xs font-bold text-vibrant-green bg-vibrant-green/10 hover:bg-vibrant-green/15 px-3 py-2 rounded-full transition mt-1" onclick="addTimeInput('{{ $day }}')">
                                 <i class="fa-solid fa-circle-plus"></i>
                                 Add another time
                             </button>
@@ -236,28 +267,6 @@
             </h2>
 
             <div>
-                <label for="duration_minutes" class="block text-sm font-semibold text-gray-700 mb-2">
-                    Session Duration <span class="text-red-500">*</span>
-                </label>
-                <select name="duration_minutes" id="duration_minutes" required
-                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vibrant-green focus:border-transparent">
-                    <option value="30" {{ old('duration_minutes') == 30 ? 'selected' : '' }}>30 minutes</option>
-                    <option value="45" {{ old('duration_minutes') == 45 ? 'selected' : '' }}>45 minutes</option>
-                    <option value="60" {{ old('duration_minutes', 60) == 60 ? 'selected' : '' }}>1 hour</option>
-                    <option value="90" {{ old('duration_minutes') == 90 ? 'selected' : '' }}>1.5 hours</option>
-                    <option value="120" {{ old('duration_minutes') == 120 ? 'selected' : '' }}>2 hours</option>
-                </select>
-                @error('duration_minutes')
-                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                @enderror
-            </div>
-        </div>
-
-        <!-- Step 5: Optional Fields -->
-        <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
-            <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
-                <span class="w-8 h-8 bg-gray-300 text-white rounded-full flex items-center justify-center mr-3 text-sm">5</span>
-                Optional Details
             </h2>
 
             <div class="space-y-4">
@@ -366,9 +375,12 @@
 
         function addTimeInput(day) {
             const list = document.querySelector(`.time-input-list[data-day="${day}"]`);
-            const index = list.querySelectorAll('.time-input').length;
+            const index = list.querySelectorAll('.time-input-wrap').length;
             const wrapper = document.createElement('div');
-            wrapper.className = 'time-input-wrap relative';
+            wrapper.className = 'time-input-wrap flex items-center gap-2';
+
+            const timeDiv = document.createElement('div');
+            timeDiv.className = 'relative flex-1';
 
             const input = document.createElement('input');
             input.type = 'time';
@@ -376,13 +388,44 @@
             input.id = `time-${day}-${index}`;
             input.required = true;
             input.value = '17:00';
-            input.className = 'time-input w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-xl bg-white shadow-sm focus:ring-2 focus:ring-vibrant-green focus:border-transparent text-sm';
+            input.className = 'time-input w-full pl-10 pr-3 py-2 border border-gray-300 rounded-xl bg-white shadow-sm focus:ring-2 focus:ring-vibrant-green focus:border-transparent text-sm';
 
             const icon = document.createElement('i');
             icon.className = 'fa-solid fa-clock absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none';
 
-            wrapper.appendChild(input);
-            wrapper.appendChild(icon);
+            timeDiv.appendChild(input);
+            timeDiv.appendChild(icon);
+
+            const durDiv = document.createElement('div');
+            durDiv.className = 'relative flex-1';
+            
+            const durSelect = document.createElement('select');
+            durSelect.name = `durations[${day}][]`;
+            durSelect.className = 'time-input w-full pl-3 pr-8 py-2 border border-gray-300 rounded-xl bg-white shadow-sm focus:ring-2 focus:ring-vibrant-green focus:border-transparent text-sm appearance-none';
+            durSelect.innerHTML = `
+                <option value="15">15m</option>
+                <option value="30">30m</option>
+                <option value="45">45m</option>
+                <option value="60" selected>1h</option>
+                <option value="90">1.5h</option>
+                <option value="120">2h</option>
+            `;
+            const durIcon = document.createElement('i');
+            durIcon.className = 'fa-solid fa-hourglass-half absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none text-xs';
+            
+            durDiv.appendChild(durSelect);
+            durDiv.appendChild(durIcon);
+
+            const removeBtn = document.createElement('button');
+            removeBtn.type = 'button';
+            removeBtn.className = 'text-red-500 hover:text-red-700 p-2';
+            removeBtn.innerHTML = '<i class="fa-solid fa-times"></i>';
+            removeBtn.onclick = function() { wrapper.remove(); };
+
+            wrapper.appendChild(timeDiv);
+            wrapper.appendChild(durDiv);
+            wrapper.appendChild(removeBtn);
+            
             list.appendChild(wrapper);
         }
     </script>
