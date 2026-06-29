@@ -112,20 +112,22 @@ class ScheduleService
             $sessionDuration = (int) $data['duration_minutes'];
             $currency = $data['currency'] ?? 'CAD';
             $adminPrice = $data['admin_price'] ?? null;
+            $teacherId = $data['teacher_id'];
+            $newPattern = $this->normalizeSchedulePattern($data['days'], $data['schedule_times']);
+            $mergedPattern = $newPattern;
 
             if ($enrollment) {
                 $targetMonth = Carbon::parse($data['start_date'])->startOfMonth();
                 $existingSchedulesInMonth = Schedule::where('enrollment_id', $enrollment->id)
                     ->whereYear('starts_at', $targetMonth->year)
                     ->whereMonth('starts_at', $targetMonth->month)
-                    ->exists();
+                    ->get();
 
-                if ($existingSchedulesInMonth) {
-                    throw new \Exception('This student already has an enrollment and schedules for this month.');
-                }
+                $existingPattern = $enrollment->getSchedulePattern() ?? [];
+                $mergedPattern = $this->mergeSchedulePatterns($existingPattern, $newPattern);
 
                 $enrollment->update([
-                    'days_per_week' => $daysPerWeek,
+                    'days_per_week' => count($mergedPattern),
                     'session_duration' => $sessionDuration,
                     'admin_price' => $adminPrice ?? $enrollment->admin_price,
                     'currency' => $currency ?? $enrollment->currency,
@@ -165,9 +167,7 @@ class ScheduleService
                 );
             }
 
-            $days = $data['days'];
-            $schedulePattern = $this->normalizeSchedulePattern($days, $data['schedule_times']);
-            $enrollment->setSchedulePattern($schedulePattern);
+            $enrollment->setSchedulePattern($mergedPattern);
 
             $monthStart = Carbon::parse($data['start_date']);
             $monthEnd = $monthStart->copy()->endOfMonth();
@@ -177,13 +177,14 @@ class ScheduleService
             }
 
             $durationMinutes = $sessionDuration;
+            $schedulePattern = $enrollment->getSchedulePattern() ?? $this->normalizeSchedulePattern($data['days'], $data['schedule_times']);
 
             $sessionDates = [];
             $currentDate = $monthStart->copy();
 
             while ($currentDate->lte($monthEnd)) {
                 $dayName = $currentDate->format('l');
-                if (in_array($dayName, $days)) {
+                if (isset($schedulePattern[$dayName])) {
                     $sessionDates[] = [
                         'date' => $currentDate->copy(),
                         'times' => $schedulePattern[$dayName] ?? [],
@@ -196,11 +197,22 @@ class ScheduleService
                 throw new \Exception('No sessions would be created with the selected days for this month.');
             }
 
+            $existingStarts = Schedule::where('enrollment_id', $enrollment->id)
+                ->whereYear('starts_at', $monthStart->year)
+                ->whereMonth('starts_at', $monthStart->month)
+                ->pluck('starts_at')
+                ->map(fn ($date) => Carbon::parse($date)->format('Y-m-d H:i:s'))
+                ->flip();
+
             $conflicts = [];
             foreach ($sessionDates as $session) {
                 foreach ($session['times'] as $time) {
                     $startsAt = Carbon::parse($session['date']->format('Y-m-d') . ' ' . $time);
                     $endsAt = $startsAt->copy()->addMinutes($durationMinutes);
+
+                    if (isset($existingStarts[$startsAt->format('Y-m-d H:i:s')])) {
+                        continue;
+                    }
 
                     if ($conflict = Schedule::getTeacherConflict($data['teacher_id'], $startsAt, $endsAt)) {
                         $studentName = $conflict->student ? $conflict->student->name : 'Unknown Student';
@@ -227,10 +239,14 @@ class ScheduleService
                     $startsAt = Carbon::parse($session['date']->format('Y-m-d') . ' ' . $time);
                     $endsAt = $startsAt->copy()->addMinutes($durationMinutes);
 
+                    if (isset($existingStarts[$startsAt->format('Y-m-d H:i:s')])) {
+                        continue;
+                    }
+
                     $schedule = $this->repository->create([
                         'enrollment_id' => $enrollment->id,
                         'student_id' => $enrollment->student_id,
-                        'teacher_id' => $data['teacher_id'],
+                        'teacher_id' => $teacherId,
                         'course_id' => $enrollment->course_id,
                         'starts_at' => $startsAt,
                         'ends_at' => $endsAt,
@@ -392,10 +408,6 @@ class ScheduleService
                 ->whereYear('starts_at', $targetMonth->year)
                 ->whereMonth('starts_at', $targetMonth->month)
                 ->count();
-            
-            if ($existingCount > 0) {
-                return ['success' => true, 'count' => 0, 'message' => 'Schedules already exist for this month'];
-            }
 
             $schedulePattern = null;
             $daysOfWeek = [];
@@ -481,6 +493,13 @@ class ScheduleService
                 return ['success' => false, 'message' => 'No sessions to create for this month'];
             }
 
+            $existingStarts = Schedule::where('enrollment_id', $enrollment->id)
+                ->whereYear('starts_at', $targetMonth->year)
+                ->whereMonth('starts_at', $targetMonth->month)
+                ->pluck('starts_at')
+                ->map(fn ($date) => Carbon::parse($date)->format('Y-m-d H:i:s'))
+                ->flip();
+
             $createdCount = 0;
             $conflictsCount = 0;
             $firstSchedule = null;
@@ -493,11 +512,7 @@ class ScheduleService
                         $startsAt = Carbon::parse($session['date']->format('Y-m-d') . ' ' . $time);
                         $endsAt = $startsAt->copy()->addMinutes($durationMinutes);
 
-                        $exists = Schedule::where('enrollment_id', $enrollment->id)
-                            ->where('starts_at', $startsAt)
-                            ->exists();
-                        
-                        if ($exists) {
+                        if (isset($existingStarts[$startsAt->format('Y-m-d H:i:s')])) {
                             continue;
                         }
 
@@ -720,6 +735,18 @@ class ScheduleService
             'success' => true,
             'message' => "Pattern updated successfully. Deleted {$deletedCount} old sessions and created {$createdCount} new sessions."
         ];
+    }
+
+    protected function mergeSchedulePatterns(array $existingPattern, array $newPattern): array
+    {
+        $merged = $existingPattern;
+
+        foreach ($newPattern as $day => $times) {
+            $times = is_array($times) ? $times : [$times];
+            $merged[$day] = array_values(array_unique(array_merge($merged[$day] ?? [], $times)));
+        }
+
+        return $merged;
     }
 
     private function getDefaultDaysForWeek($daysPerWeek)

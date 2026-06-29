@@ -10,6 +10,20 @@ When creating a new recurring schedule for a student from the admin panel:
   - **CronJob Timing**: The scheduled job (`schedules:generate-missing`) runs 3 days before the end of the current month (i.e. on the 28th for 30/31-day months, 27th for 29-day months, and 26th for 28-day months). This gives teachers enough time to see their schedules for the upcoming month. At this time, it also ensures schedules are generated for the **current month** in case a student was newly added with a past date but no schedule was created yet.
 This guarantees that class schedules are strictly bounded by calendar months without missing any expected days.
 
+### Appending New Sessions to an Existing Month
+The admin create flow now allows adding more sessions to an enrollment that already has schedules in the same month.
+
+Behavior:
+- If the student already has schedules in that month, the new days/times are merged with the enrollment's existing pattern.
+- Existing exact `starts_at` values are skipped so we do not duplicate the same session twice.
+- Only true overlaps with another teacher or the same student still block the transaction.
+
+This is what allows patterns like:
+- Saturday 1:30 PM to 2:30 PM
+- Sunday 1:00 PM to 1:30 PM
+
+to coexist for the same student in the same month, as long as the time ranges do not overlap.
+
 ### Multiple Sessions Per Day
 The schedule builder now supports more than one session on the same weekday for the same enrollment.
 
@@ -28,6 +42,7 @@ Compatibility rules:
 - Legacy single-time input like `schedule_times[Monday] = "10:00"` is still accepted.
 - The normalized stored pattern is now day -> list of times.
 - Payment-driven generation, monthly cron generation, and pattern editing all expand every day into every selected time.
+- Payment-driven generation and monthly cron generation now append missing sessions instead of refusing to run just because part of the month already exists.
 - Conflict detection is performed for each generated session independently.
 - Each generated session is still bounded by its own `starts_at` / `ends_at` pair, so overlap checks, dashboards, and attendance views continue to work per session instead of per day.
 - The public UI and admin UI both preserve backward compatibility with the old single-time pattern shape while migrating to the multi-time shape internally.

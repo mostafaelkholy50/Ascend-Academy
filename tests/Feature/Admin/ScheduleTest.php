@@ -102,29 +102,50 @@ class ScheduleTest extends TestCase
     {
         $this->actingAs($this->admin);
 
+        Carbon::setTestNow(Carbon::create(2026, 6, 1, 9, 0, 0, 'Africa/Cairo'));
+
+        Schedule::create([
+            'enrollment_id' => $this->enrollment->id,
+            'student_id' => $this->student->id,
+            'course_id' => $this->enrollment->course_id,
+            'teacher_id' => $this->teacher->id,
+            'starts_at' => Carbon::create(2026, 6, 7, 10, 0, 0, 'Africa/Cairo'),
+            'ends_at' => Carbon::create(2026, 6, 7, 11, 0, 0, 'Africa/Cairo'),
+            'status' => 'scheduled',
+        ]);
+
+        $beforeCount = Schedule::count();
+
         $response = $this->post(route('admin.schedules.store'), [
             'student_id' => $this->student->id,
             'course_id' => $this->enrollment->course_id,
             'teacher_id' => $this->teacher->id,
-            'days' => ['Monday'],
-            'schedule_times' => ['Monday' => ['10:00', '14:00']],
+            'days' => ['Monday', 'Wednesday'],
+            'schedule_times' => [
+                'Monday' => ['10:00'],
+                'Wednesday' => ['14:00'],
+            ],
             'duration_minutes' => 60,
-            'start_date' => now()->format('Y-m-d'),
+            'start_date' => '2026-06-01',
         ]);
 
         $response->assertRedirect();
+
+        expect(Schedule::count())->toBeGreaterThan($beforeCount);
+
         $this->assertDatabaseHas('schedules', [
             'enrollment_id' => $this->enrollment->id,
-            'student_id' => $this->student->id,
-            'course_id' => $this->enrollment->course_id,
+            'starts_at' => '2026-06-07 10:00:00',
             'teacher_id' => $this->teacher->id,
         ]);
 
-        $scheduledDate = now()->copy()->next('Monday')->setTime(14, 0)->format('Y-m-d H:i:s');
         $this->assertDatabaseHas('schedules', [
             'enrollment_id' => $this->enrollment->id,
-            'starts_at' => $scheduledDate,
+            'starts_at' => '2026-06-03 14:00:00',
+            'teacher_id' => $this->teacher->id,
         ]);
+
+        Carbon::setTestNow();
     }
 
     public function test_admin_can_store_schedule_and_auto_create_enrollment()
@@ -215,6 +236,42 @@ class ScheduleTest extends TestCase
         // Assert error message exists in session
         $this->assertTrue(session()->has('error'));
         $this->assertStringContainsString('Teacher conflict', session('error'));
+    }
+
+    public function test_generate_monthly_schedule_adds_missing_sessions_without_duplicates()
+    {
+        $this->actingAs($this->admin);
+
+        Carbon::setTestNow(Carbon::create(2026, 6, 1, 9, 0, 0, 'Africa/Cairo'));
+
+        $this->enrollment->setSchedulePattern([
+            'Monday' => ['10:00'],
+        ]);
+
+        Schedule::create([
+            'enrollment_id' => $this->enrollment->id,
+            'student_id' => $this->student->id,
+            'course_id' => $this->enrollment->course_id,
+            'teacher_id' => $this->teacher->id,
+            'starts_at' => Carbon::create(2026, 6, 1, 10, 0, 0, 'Africa/Cairo'),
+            'ends_at' => Carbon::create(2026, 6, 1, 11, 0, 0, 'Africa/Cairo'),
+            'status' => 'scheduled',
+        ]);
+
+        $beforeCount = Schedule::where('enrollment_id', $this->enrollment->id)->count();
+
+        $result = app(\App\Services\ScheduleService::class)->generateMonthlySchedules(
+            $this->enrollment,
+            '2026-06',
+            $this->teacher->id
+        );
+
+        expect($result['success'])->toBeTrue();
+        expect($result['count'])->toBeGreaterThan(0);
+        expect(Schedule::where('enrollment_id', $this->enrollment->id)->count())->toBeGreaterThan($beforeCount);
+        expect(Schedule::where('enrollment_id', $this->enrollment->id)->where('starts_at', '2026-06-01 10:00:00')->count())->toBe(1);
+
+        Carbon::setTestNow();
     }
     public function test_admin_can_print_monthly_schedule()
     {
