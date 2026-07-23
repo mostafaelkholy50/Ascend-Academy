@@ -351,9 +351,16 @@
                                         @php
                                             $pattern = $enrollment->getSchedulePattern();
                                             $allActive = collect($pattern)->every(fn ($dayData) => !empty($dayData['active']));
+                                            $activeDaysCount = collect($pattern)->filter(fn ($dayData) => !empty($dayData['active']))->count();
+                                            $totalDaysCount = collect($pattern)->count();
                                         @endphp
                                         <div class="mt-3 ml-20 flex flex-wrap gap-2 items-center">
                                             <span class="text-xs font-semibold text-gray-500 mr-1">Recurring Days:</span>
+                                            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border
+                                                {{ $allActive ? 'bg-green-50 text-green-700 border-green-200' : 'bg-amber-50 text-amber-700 border-amber-200' }}">
+                                                <i class="fa-solid {{ $allActive ? 'fa-circle-check' : 'fa-circle-exclamation' }}"></i>
+                                                <span>{{ $allActive ? 'All Sessions Active' : "{$activeDaysCount}/{$totalDaysCount} Active" }}</span>
+                                            </span>
                                             
                                             <form action="{{ route('admin.schedules.toggle-all', $enrollment->id) }}" method="POST" class="inline">
                                                 @csrf
