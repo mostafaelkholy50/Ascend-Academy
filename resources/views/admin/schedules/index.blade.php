@@ -350,13 +350,7 @@
                                     @if($enrollment->hasSchedulePattern())
                                         @php
                                             $pattern = $enrollment->getSchedulePattern();
-                                            $anyActive = false;
-                                            foreach($pattern as $dayData) {
-                                                if (!isset($dayData['active']) || $dayData['active']) {
-                                                    $anyActive = true;
-                                                    break;
-                                                }
-                                            }
+                                            $allActive = collect($pattern)->every(fn ($dayData) => !empty($dayData['active']));
                                         @endphp
                                         <div class="mt-3 ml-20 flex flex-wrap gap-2 items-center">
                                             <span class="text-xs font-semibold text-gray-500 mr-1">Recurring Days:</span>
@@ -364,12 +358,12 @@
                                             <form action="{{ route('admin.schedules.toggle-all', $enrollment->id) }}" method="POST" class="inline">
                                                 @csrf
                                                 <button type="submit" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition border mr-2
-                                                    {{ $anyActive 
+                                                    {{ $allActive 
                                                         ? 'bg-green-100 text-green-700 border-green-300 hover:bg-green-200 hover:border-green-400' 
                                                         : 'bg-red-100 text-red-700 border-red-300 hover:bg-red-200 hover:border-red-400' }}"
-                                                    title="{{ $anyActive ? 'Pause all schedules' : 'Resume all schedules' }}">
-                                                    <i class="fa-solid {{ $anyActive ? 'fa-pause' : 'fa-play' }}"></i>
-                                                    <span>{{ $anyActive ? 'All Active (Pause)' : 'All Paused (Resume)' }}</span>
+                                                    title="{{ $allActive ? 'Pause all schedules' : 'Resume all schedules' }}">
+                                                    <i class="fa-solid {{ $allActive ? 'fa-pause' : 'fa-play' }}"></i>
+                                                    <span>{{ $allActive ? 'All Active (Pause)' : 'All Paused (Resume)' }}</span>
                                                 </button>
                                             </form>
 

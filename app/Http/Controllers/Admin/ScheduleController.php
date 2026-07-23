@@ -259,27 +259,26 @@ class ScheduleController extends Controller
                 $message = "Schedule for {$day} has been resumed, and {$count} upcoming session(s) have been restored.";
             }
 
-            return back()->with('success', $message);
+            return redirect()->route('admin.schedules.index', ['view' => 'list'])
+                ->with('success', $message);
         }
-        return back()->with('error', "Day {$day} not found in schedule pattern.");
+        return redirect()->route('admin.schedules.index', ['view' => 'list'])
+            ->with('error', "Day {$day} not found in schedule pattern.");
     }
 
     public function toggleAllDays(Enrollment $enrollment)
     {
         $pattern = $enrollment->getSchedulePattern() ?? [];
         if (empty($pattern)) {
-            return back()->with('error', 'No schedule pattern found.');
+            return redirect()->route('admin.schedules.index', ['view' => 'list'])
+                ->with('error', 'No schedule pattern found.');
         }
 
-        $anyActive = false;
-        foreach ($pattern as $day => $dayData) {
-            if ($dayData['active']) {
-                $anyActive = true;
-                break;
-            }
-        }
+        $allActive = collect($pattern)->every(function ($dayData) {
+            return !empty($dayData['active']);
+        });
 
-        $newStatus = !$anyActive;
+        $newStatus = !$allActive;
         
         foreach ($pattern as $day => $dayData) {
             $pattern[$day]['active'] = $newStatus;
@@ -311,6 +310,7 @@ class ScheduleController extends Controller
             $message = "All schedules have been resumed, and {$count} upcoming session(s) have been restored.";
         }
 
-        return back()->with('success', $message);
+        return redirect()->route('admin.schedules.index', ['view' => 'list'])
+            ->with('success', $message);
     }
 }
