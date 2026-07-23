@@ -282,14 +282,36 @@ class ScheduleTest extends TestCase
 
         $targetMonth = now()->format('Y-m');
 
-        // Create a schedule for the teacher
+        $this->enrollment->setSchedulePattern([
+            'Monday' => [
+                'active' => true,
+                'slots' => [['time' => '10:00', 'duration' => 60]],
+            ],
+            'Tuesday' => [
+                'active' => false,
+                'slots' => [['time' => '12:00', 'duration' => 60]],
+            ],
+        ]);
+
+        // Active schedule should show up in print
         Schedule::create([
             'enrollment_id' => $this->enrollment->id,
             'student_id' => $this->student->id,
             'course_id' => $this->enrollment->course_id,
             'teacher_id' => $this->teacher->id,
-            'starts_at' => now()->copy()->startOfMonth()->setTime(10, 0),
-            'ends_at' => now()->copy()->startOfMonth()->setTime(11, 0),
+            'starts_at' => Carbon::create(2026, 7, 6, 10, 0, 0, 'Africa/Cairo'),
+            'ends_at' => Carbon::create(2026, 7, 6, 11, 0, 0, 'Africa/Cairo'),
+            'status' => 'scheduled',
+        ]);
+
+        // Inactive schedule should be hidden from print
+        Schedule::create([
+            'enrollment_id' => $this->enrollment->id,
+            'student_id' => $this->student->id,
+            'course_id' => $this->enrollment->course_id,
+            'teacher_id' => $this->teacher->id,
+            'starts_at' => Carbon::create(2026, 7, 7, 12, 0, 0, 'Africa/Cairo'),
+            'ends_at' => Carbon::create(2026, 7, 7, 13, 0, 0, 'Africa/Cairo'),
             'status' => 'scheduled',
         ]);
 
@@ -303,8 +325,10 @@ class ScheduleTest extends TestCase
         $response->assertViewHas('teacher');
         $response->assertViewHas('monthDays');
         
-        // Assert the schedule is present in the response
+        // Assert active schedule is present and inactive schedule is hidden
         $response->assertSee($this->teacher->name);
+        $response->assertSee('10:00');
+        $response->assertDontSee('12:00');
     }
 
     public function test_admin_can_print_monthly_schedule_with_late_night_sessions()

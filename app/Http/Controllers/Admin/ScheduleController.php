@@ -181,7 +181,7 @@ class ScheduleController extends Controller
         $startOfMonthApp = $targetMonth->copy()->startOfMonth()->setTimezone(config('app.timezone'));
         $endOfMonthApp = $targetMonth->copy()->endOfMonth()->setTimezone(config('app.timezone'));
 
-        $schedules = Schedule::with(['student', 'course'])
+        $schedules = Schedule::with(['student', 'course', 'enrollment'])
             ->where('teacher_id', $teacherId)
             ->whereBetween('starts_at', [$startOfMonthApp, $endOfMonthApp])
             ->orderBy('starts_at')
@@ -201,6 +201,10 @@ class ScheduleController extends Controller
         }
 
         foreach ($schedules as $schedule) {
+            if (!$this->isPrintableSchedule($schedule, $timezone)) {
+                continue;
+            }
+
             $dateString = $schedule->getStartsAtInTimezone($timezone)->format('Y-m-d');
             if (isset($monthDays[$dateString])) {
                 $monthDays[$dateString]['schedules']->push($schedule);
@@ -359,5 +363,17 @@ class ScheduleController extends Controller
         }
 
         return $pattern;
+    }
+
+    protected function isPrintableSchedule(Schedule $schedule, string $timezone): bool
+    {
+        $enrollment = $schedule->enrollment;
+
+        if (!$enrollment || !$enrollment->hasSchedulePattern()) {
+            return true;
+        }
+
+        $dayName = $schedule->getStartsAtInTimezone($timezone)->format('l');
+        return $enrollment->isDayScheduleActive($dayName);
     }
 }
