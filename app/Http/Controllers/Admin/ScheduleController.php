@@ -218,4 +218,50 @@ class ScheduleController extends Controller
     {
         return app(ScheduleService::class)->generateMonthlySchedules($enrollment, $month, $teacherId);
     }
+
+    public function toggleDayStatus(Enrollment $enrollment, $day)
+    {
+        $pattern = $enrollment->schedule_pattern ?? [];
+        if (isset($pattern[$day])) {
+            $newStatus = !($pattern[$day]['active'] ?? true);
+            $pattern[$day]['active'] = $newStatus;
+            $enrollment->schedule_pattern = $pattern;
+            $enrollment->save();
+
+            if (!$newStatus) {
+                // If deactivated, cancel all upcoming scheduled sessions for this day
+                $upcomingSchedules = Schedule::where('enrollment_id', $enrollment->id)
+                    ->where('status', 'scheduled')
+                    ->where('starts_at', '>', now())
+                    ->get();
+
+                $count = 0;
+                foreach ($upcomingSchedules as $schedule) {
+                    if ($schedule->starts_at->format('l') === $day) {
+                        $schedule->update(['status' => 'cancelled']);
+                        $count++;
+                    }
+                }
+                $message = "Schedule for {$day} has been paused, and {$count} upcoming session(s) have been cancelled.";
+            } else {
+                // If activated, restore all upcoming cancelled sessions for this day
+                $upcomingSchedules = Schedule::where('enrollment_id', $enrollment->id)
+                    ->where('status', 'cancelled')
+                    ->where('starts_at', '>', now())
+                    ->get();
+
+                $count = 0;
+                foreach ($upcomingSchedules as $schedule) {
+                    if ($schedule->starts_at->format('l') === $day) {
+                        $schedule->update(['status' => 'scheduled']);
+                        $count++;
+                    }
+                }
+                $message = "Schedule for {$day} has been resumed, and {$count} upcoming session(s) have been restored.";
+            }
+
+            return back()->with('success', $message);
+        }
+        return back()->with('error', "Day {$day} not found in schedule pattern.");
+    }
 }

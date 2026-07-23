@@ -84,6 +84,7 @@ Route::middleware(['auth', 'role_or_permission:SuperAdmin|Admin'])->prefix('admi
     Route::delete('schedules/bulk-delete/{enrollment}', [ScheduleController::class, 'bulkDelete'])->name('schedules.bulk-delete');
     Route::get('schedules/enrollment/{enrollment}/edit-pattern', [ScheduleController::class, 'editPattern'])->name('schedules.edit-pattern');
     Route::put('schedules/enrollment/{enrollment}/update-pattern', [ScheduleController::class, 'updatePattern'])->name('schedules.update-pattern');
+    Route::post('schedules/enrollment/{enrollment}/toggle-day/{day}', [ScheduleController::class, 'toggleDayStatus'])->name('schedules.toggle-day');
 
     // Teacher Hours Management
     Route::patch('/teacher-hours/{teacher}/update-rate', [AdminTeacherController::class, 'updateRate'])->name('teacher-hours.update-rate');

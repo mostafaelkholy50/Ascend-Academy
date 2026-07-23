@@ -347,6 +347,31 @@
                                             {{ ucfirst($enrollment->status) }}
                                         </span>
                                     </div>
+                                    @if($enrollment->hasSchedulePattern())
+                                        <div class="mt-3 ml-20 flex flex-wrap gap-2 items-center">
+                                            <span class="text-xs font-semibold text-gray-500 mr-1">Recurring Days:</span>
+                                            @foreach($enrollment->getSchedulePattern() as $dayName => $dayData)
+                                                @php
+                                                    $dayActive = !empty($dayData['active']);
+                                                    $slots = $dayData['slots'] ?? [];
+                                                    $timeStr = '';
+                                                    if (!empty($slots)) {
+                                                        $timeStr = collect($slots)->map(fn($s) => is_array($s) ? $s['time'] : $s)->join(', ');
+                                                    }
+                                                @endphp
+                                                <form action="{{ route('admin.schedules.toggle-day', [$enrollment->id, $dayName]) }}" method="POST" class="inline">
+                                                    @csrf
+                                                    <button type="submit" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition border
+                                                        {{ $dayActive 
+                                                            ? 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100 hover:border-green-300' 
+                                                            : 'bg-gray-100 text-gray-500 border-gray-200 hover:bg-gray-200 hover:border-gray-300' }}">
+                                                        <i class="fa-solid {{ $dayActive ? 'fa-play' : 'fa-pause' }}"></i>
+                                                        <span>{{ $dayName }} {{ $timeStr ? "($timeStr)" : '' }}</span>
+                                                    </button>
+                                                </form>
+                                            @endforeach
+                                        </div>
+                                    @endif
                                 </div>
                                 <div class="flex gap-3">
                                     <button onclick="toggleSchedules('enrollment-{{ $enrollment->id }}')" 
@@ -356,7 +381,7 @@
                                         <i class="fa-solid fa-chevron-down transition-transform" id="icon-enrollment-{{ $enrollment->id }}"></i>
                                     </button>
                                     @can('manage schedules')
-                                    <a href="{{ route('admin.schedules.edit-pattern', $enrollment->id) }}" 
+                                     <a href="{{ route('admin.schedules.edit-pattern', $enrollment->id) }}" 
                                         class="px-5 py-3 bg-white text-indigo-600 border border-indigo-200 rounded-xl hover:bg-indigo-50 hover:shadow-lg transition font-semibold text-sm flex items-center gap-2">
                                         <i class="fa-solid fa-calendar-alt"></i>
                                         <span>Edit Pattern</span>

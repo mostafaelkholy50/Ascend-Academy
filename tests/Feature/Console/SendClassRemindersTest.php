@@ -11,6 +11,7 @@ use Carbon\Carbon;
 uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
 
 test('send class reminders successfully groups teacher schedules', function () {
+    Carbon::setTestNow(Carbon::today()->setTime(8, 0));
     Notification::fake();
 
     $teacher1 = User::factory()->create(['role' => 'Teacher']);
@@ -66,6 +67,7 @@ test('send class reminders successfully groups teacher schedules', function () {
 });
 
 test('send class reminders handles normal schedules without failing', function () {
+    Carbon::setTestNow(Carbon::today()->setTime(8, 0));
     Notification::fake();
 
     $teacher = User::factory()->create(['role' => 'Teacher']);
