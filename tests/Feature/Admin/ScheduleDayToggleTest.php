@@ -225,3 +225,49 @@ test('toggling all days from paused resumes all sessions and returns to list vie
     expect($mondaySession->status)->toBe('scheduled');
     expect($wednesdaySession->status)->toBe('scheduled');
 });
+
+test('toggling all days works when schedule pattern is missing but schedules exist', function () {
+    $this->enrollment->update([
+        'schedule_pattern' => null,
+    ]);
+
+    $mondaySession = Schedule::create([
+        'enrollment_id' => $this->enrollment->id,
+        'student_id' => $this->student->id,
+        'teacher_id' => $this->teacher->id,
+        'course_id' => $this->course->id,
+        'starts_at' => Carbon::now()->addDays(5)->next('Monday')->setTime(8, 0),
+        'ends_at' => Carbon::now()->addDays(5)->next('Monday')->setTime(9, 0),
+        'status' => 'scheduled',
+    ]);
+
+    $wednesdaySession = Schedule::create([
+        'enrollment_id' => $this->enrollment->id,
+        'student_id' => $this->student->id,
+        'teacher_id' => $this->teacher->id,
+        'course_id' => $this->course->id,
+        'starts_at' => Carbon::now()->addDays(5)->next('Wednesday')->setTime(8, 0),
+        'ends_at' => Carbon::now()->addDays(5)->next('Wednesday')->setTime(9, 0),
+        'status' => 'scheduled',
+    ]);
+
+    $this->actingAs($this->admin);
+
+    $response = $this->post(route('admin.schedules.toggle-all', $this->enrollment->id));
+
+    $response->assertRedirect(route('admin.schedules.index', ['view' => 'list']));
+    $response->assertSessionHas('success');
+
+    $this->enrollment->refresh();
+    $pattern = $this->enrollment->getSchedulePattern();
+
+    expect($pattern)->toHaveKey('Monday');
+    expect($pattern)->toHaveKey('Wednesday');
+    expect($pattern['Monday']['active'])->toBeFalse();
+    expect($pattern['Wednesday']['active'])->toBeFalse();
+
+    $mondaySession->refresh();
+    $wednesdaySession->refresh();
+    expect($mondaySession->status)->toBe('cancelled');
+    expect($wednesdaySession->status)->toBe('cancelled');
+});

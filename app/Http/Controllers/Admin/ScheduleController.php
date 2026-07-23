@@ -270,6 +270,10 @@ class ScheduleController extends Controller
     {
         $pattern = $enrollment->getSchedulePattern() ?? [];
         if (empty($pattern)) {
+            $pattern = $this->buildPatternFromSchedules($enrollment);
+        }
+
+        if (empty($pattern)) {
             return redirect()->route('admin.schedules.index', ['view' => 'list'])
                 ->with('error', 'No schedule pattern found.');
         }
@@ -312,5 +316,48 @@ class ScheduleController extends Controller
 
         return redirect()->route('admin.schedules.index', ['view' => 'list'])
             ->with('success', $message);
+    }
+
+    protected function buildPatternFromSchedules(Enrollment $enrollment): array
+    {
+        $pattern = [];
+
+        $enrollment->loadMissing('schedules');
+
+        foreach ($enrollment->schedules as $schedule) {
+            $day = $schedule->starts_at->format('l');
+            $time = $schedule->starts_at->format('H:i');
+            $duration = $schedule->getDurationInMinutes() ?: 60;
+
+            if (!isset($pattern[$day])) {
+                $pattern[$day] = [
+                    'active' => true,
+                    'slots' => [],
+                ];
+            }
+
+            $pattern[$day]['slots'][] = [
+                'time' => $time,
+                'duration' => $duration,
+            ];
+        }
+
+        foreach ($pattern as $day => $dayData) {
+            $uniqueSlots = [];
+            $seenTimes = [];
+
+            foreach ($dayData['slots'] as $slot) {
+                if (in_array($slot['time'], $seenTimes, true)) {
+                    continue;
+                }
+
+                $seenTimes[] = $slot['time'];
+                $uniqueSlots[] = $slot;
+            }
+
+            $pattern[$day]['slots'] = $uniqueSlots;
+        }
+
+        return $pattern;
     }
 }
