@@ -243,3 +243,55 @@ test('edit pattern page shows all days to allow adding new ones', function () {
     $response->assertSee('Tuesday');
     $response->assertSee('Thursday');
 });
+
+test('updateSchedulePattern ignores days that are not checked in the form', function () {
+    $service = app(ScheduleService::class);
+    
+    // Simulating a form submission where ALL days have schedule_times (because hidden inputs are submitted)
+    // BUT only Monday and Wednesday are checked (day_active = 1)
+    $data = [
+        'teacher_id' => $this->teacher->id,
+        'day_active' => [
+            'Sunday' => 0,
+            'Monday' => 1,
+            'Tuesday' => 0,
+            'Wednesday' => 1,
+            'Thursday' => 0,
+            'Friday' => 0,
+            'Saturday' => 0,
+        ],
+        'durations' => [
+            'Sunday' => [60],
+            'Monday' => [60],
+            'Tuesday' => [60],
+            'Wednesday' => [45],
+            'Thursday' => [60],
+            'Friday' => [60],
+            'Saturday' => [60],
+        ],
+        'schedule_times' => [
+            'Sunday' => ['12:00'], // Hidden input value
+            'Monday' => ['08:00'], // Checked day
+            'Tuesday' => ['12:00'], // Hidden input value
+            'Wednesday' => ['10:30'], // Checked day
+            'Thursday' => ['12:00'], // Hidden input value
+            'Friday' => ['12:00'], // Hidden input value
+            'Saturday' => ['12:00'], // Hidden input value
+        ],
+    ];
+
+    $result = $service->updateSchedulePattern($this->enrollment, $data);
+
+    expect($result['success'])->toBeTrue();
+
+    $this->enrollment->refresh();
+    $pattern = $this->enrollment->getSchedulePattern();
+
+    // Only Monday and Wednesday should exist in the pattern
+    expect(array_keys($pattern))->toEqualCanonicalizing(['Monday', 'Wednesday']);
+    
+    // The other days should NOT exist at all (they should not have times scheduled)
+    expect(isset($pattern['Sunday']))->toBeFalse();
+    expect(isset($pattern['Tuesday']))->toBeFalse();
+    expect(isset($pattern['Thursday']))->toBeFalse();
+});

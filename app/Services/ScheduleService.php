@@ -703,12 +703,18 @@ class ScheduleService
         $dayActive = $data['day_active'] ?? array_fill_keys($days, 1);
 
         $schedulePattern = $this->normalizeSchedulePattern($days, $scheduleTimes, $durations);
+        
+        $finalPattern = [];
         foreach ($schedulePattern as $day => $slots) {
-            $schedulePattern[$day] = [
+            if (empty($dayActive[$day])) {
+                continue; // Do not include unchecked days in the pattern
+            }
+            $finalPattern[$day] = [
                 'active' => true,
                 'slots' => $slots,
             ];
         }
+        $schedulePattern = $finalPattern;
 
         // Calculate a primary session duration to store in enrollment model
         $sessionDuration = 60;
