@@ -221,11 +221,11 @@ class ScheduleController extends Controller
 
     public function toggleDayStatus(Enrollment $enrollment, $day)
     {
-        $pattern = $enrollment->schedule_pattern ?? [];
+        $pattern = $enrollment->getSchedulePattern() ?? [];
         if (isset($pattern[$day])) {
-            $newStatus = !($pattern[$day]['active'] ?? true);
+            $newStatus = !$pattern[$day]['active'];
             $pattern[$day]['active'] = $newStatus;
-            $enrollment->update(['schedule_pattern' => $pattern]);
+            $enrollment->setSchedulePattern($pattern);
 
             if (!$newStatus) {
                 // If deactivated, cancel all upcoming scheduled sessions for this day
@@ -266,14 +266,14 @@ class ScheduleController extends Controller
 
     public function toggleAllDays(Enrollment $enrollment)
     {
-        $pattern = $enrollment->schedule_pattern ?? [];
+        $pattern = $enrollment->getSchedulePattern() ?? [];
         if (empty($pattern)) {
             return back()->with('error', 'No schedule pattern found.');
         }
 
         $anyActive = false;
         foreach ($pattern as $day => $dayData) {
-            if (!isset($dayData['active']) || $dayData['active']) {
+            if ($dayData['active']) {
                 $anyActive = true;
                 break;
             }
@@ -285,7 +285,7 @@ class ScheduleController extends Controller
             $pattern[$day]['active'] = $newStatus;
         }
         
-        $enrollment->update(['schedule_pattern' => $pattern]);
+        $enrollment->setSchedulePattern($pattern);
 
         if (!$newStatus) {
             $upcomingSchedules = Schedule::where('enrollment_id', $enrollment->id)

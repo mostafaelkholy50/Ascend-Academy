@@ -194,9 +194,12 @@ class Enrollment extends Model
             $active = true;
             $slots = [];
 
-            if (is_array($items) && array_key_exists('active', $items)) {
-                $active = (bool) $items['active'];
+            if (is_array($items) && array_key_exists('slots', $items)) {
+                $active = isset($items['active']) ? (bool) $items['active'] : true;
                 $items = $items['slots'] ?? [];
+            } elseif (is_array($items) && array_key_exists('active', $items)) {
+                $active = (bool) $items['active'];
+                $items = [];
             }
 
             if (is_string($items)) {
