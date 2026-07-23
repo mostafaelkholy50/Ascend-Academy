@@ -131,7 +131,7 @@ class ScheduleService
             $currency = $data['currency'] ?? 'CAD';
             $adminPrice = $data['admin_price'] ?? null;
             $teacherId = $data['teacher_id'];
-            $newPattern = $this->normalizeSchedulePattern($data['days'], $data['schedule_times'], $data['durations']);
+            $newPattern = $this->normalizeSchedulePattern($data['days'], $data['schedule_times'], $data['durations'] ?? []);
             $dayActive = $data['day_active'] ?? array_fill_keys($data['days'], 1);
             foreach ($newPattern as $day => $slots) {
                 $newPattern[$day] = [
@@ -201,7 +201,7 @@ class ScheduleService
                 $enrollment->update(['start_date' => $monthStart]);
             }
 
-            $schedulePattern = $enrollment->getSchedulePattern() ?? $this->normalizeSchedulePattern($data['days'], $data['schedule_times'], $data['durations']);
+            $schedulePattern = $enrollment->getSchedulePattern() ?? $this->normalizeSchedulePattern($data['days'], $data['schedule_times'], $data['durations'] ?? []);
 
             $sessionDates = [];
             $currentDate = $monthStart->copy();

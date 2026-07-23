@@ -72,7 +72,10 @@ test('updateSchedulePattern successfully replaces upcoming schedules', function 
     // We want to change the pattern to Saturday and Thursday at 12:00
     $data = [
         'teacher_id' => $this->teacher->id,
-        'duration_minutes' => 60,
+        'durations' => [
+            'Monday' => [60],
+            'Wednesday' => [60],
+        ],
         'days' => ['Saturday', 'Thursday'],
         'schedule_times' => [
             'Saturday' => ['12:00', '18:00'],
@@ -138,7 +141,10 @@ test('updateSchedulePattern rolls back on conflict', function () {
     // Our student tries to change pattern to Thursday at 12:00 with the same teacher
     $data = [
         'teacher_id' => $this->teacher->id,
-        'duration_minutes' => 60,
+        'durations' => [
+            'Monday' => [60],
+            'Wednesday' => [60],
+        ],
         'days' => ['Saturday', 'Thursday'],
         'schedule_times' => [
             'Saturday' => ['12:00', '18:00'],

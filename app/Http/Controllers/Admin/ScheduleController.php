@@ -264,4 +264,55 @@ class ScheduleController extends Controller
         }
         return back()->with('error', "Day {$day} not found in schedule pattern.");
     }
+
+    public function toggleAllDays(Enrollment $enrollment)
+    {
+        $pattern = $enrollment->schedule_pattern ?? [];
+        if (empty($pattern)) {
+            return back()->with('error', 'No schedule pattern found.');
+        }
+
+        $anyActive = false;
+        foreach ($pattern as $day => $dayData) {
+            if (!empty($dayData['active'])) {
+                $anyActive = true;
+                break;
+            }
+        }
+
+        $newStatus = !$anyActive;
+        
+        foreach ($pattern as $day => $dayData) {
+            $pattern[$day]['active'] = $newStatus;
+        }
+        
+        $enrollment->schedule_pattern = $pattern;
+        $enrollment->save();
+
+        if (!$newStatus) {
+            $upcomingSchedules = Schedule::where('enrollment_id', $enrollment->id)
+                ->where('status', 'scheduled')
+                ->where('starts_at', '>', now())
+                ->get();
+                
+            $count = $upcomingSchedules->count();
+            foreach ($upcomingSchedules as $schedule) {
+                $schedule->update(['status' => 'cancelled']);
+            }
+            $message = "All schedules have been paused, and {$count} upcoming session(s) have been cancelled.";
+        } else {
+            $upcomingSchedules = Schedule::where('enrollment_id', $enrollment->id)
+                ->where('status', 'cancelled')
+                ->where('starts_at', '>', now())
+                ->get();
+                
+            $count = $upcomingSchedules->count();
+            foreach ($upcomingSchedules as $schedule) {
+                $schedule->update(['status' => 'scheduled']);
+            }
+            $message = "All schedules have been resumed, and {$count} upcoming session(s) have been restored.";
+        }
+
+        return back()->with('success', $message);
+    }
 }

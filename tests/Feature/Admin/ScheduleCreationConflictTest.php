@@ -48,7 +48,9 @@ test('storeSchedule rolls back and throws exception with names on conflict', fun
         'course_id' => $this->course->id,
         'teacher_id' => $this->teacher->id,
         'start_date' => '2026-02-01',
-        'duration_minutes' => 60,
+        'durations' => [
+            'Sunday' => [60, 60],
+        ],
         'days' => ['Sunday'],
         'schedule_times' => [
             'Sunday' => ['20:30', '21:45'],
@@ -80,7 +82,9 @@ test('storeSchedule rolls back and throws exception for student conflict', funct
         'course_id' => $course2->id,
         'teacher_id' => $teacher2->id,
         'start_date' => '2026-02-01',
-        'duration_minutes' => 60,
+        'durations' => [
+            'Sunday' => [60, 60],
+        ],
         'days' => ['Sunday'],
         'schedule_times' => [
             'Sunday' => ['20:30'],

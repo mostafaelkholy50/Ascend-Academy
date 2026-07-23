@@ -125,7 +125,10 @@ class ScheduleTest extends TestCase
                 'Monday' => ['10:00'],
                 'Wednesday' => ['14:00'],
             ],
-            'duration_minutes' => 60,
+            'durations' => [
+                'Monday' => [60],
+                'Wednesday' => [60],
+            ],
             'start_date' => '2026-06-01',
         ]);
 
@@ -160,7 +163,7 @@ class ScheduleTest extends TestCase
             'teacher_id' => $this->teacher->id,
             'days' => ['Monday'],
             'schedule_times' => ['Monday' => ['10:00', '14:00']],
-            'duration_minutes' => 60,
+            'durations' => ['Monday' => [60, 60]],
             'start_date' => now()->format('Y-m-d'),
         ]);
 
@@ -227,7 +230,7 @@ class ScheduleTest extends TestCase
             'teacher_id' => $this->teacher->id,
             'days' => ['Monday'],
             'schedule_times' => ['Monday' => ['10:00']],
-            'duration_minutes' => 60,
+            'durations' => ['Monday' => [60]],
             'start_date' => $startDate->format('Y-m-d'),
         ]);
 
