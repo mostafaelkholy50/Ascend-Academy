@@ -57,7 +57,6 @@
         }
         body.noscroll { 
             overflow: hidden;
-            position: fixed;
             width: 100%;
         }
         .hide-scrollbar::-webkit-scrollbar { 

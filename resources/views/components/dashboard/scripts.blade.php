@@ -9,6 +9,7 @@
             sidebar.classList.add('drawer-active');
             overlay.classList.add('active');
             document.body.classList.add('noscroll');
+            sidebar.style.pointerEvents = 'auto';
             closeBtn.style.display = 'block';
             menuBtn.style.display = 'none';
             
@@ -34,24 +35,29 @@
     overlay.addEventListener('click', closeDrawer);
     closeBtn.addEventListener('click', closeDrawer);
 
-    // Close sidebar when clicking on links or buttons (mobile only)
-    // Use event delegation for better performance
+    // Close sidebar on mobile before following links so taps don't get stuck
     sidebar.addEventListener('click', (e) => {
-        // Check if clicked element is a link or inside a link/button
-        const link = e.target.closest('a');
-        const button = e.target.closest('button[type="submit"]');
-        
-        if ((link || button) && window.innerWidth < 1025) {
-            // For links, close drawer immediately and let navigation happen
-            if (link) {
-                closeDrawer();
-            }
-            // For form buttons (logout), let the form submit and close drawer
-            if (button) {
-                closeDrawer();
-            }
+        if (window.innerWidth >= 1025) {
+            return;
         }
-    });
+
+        const link = e.target.closest('a[href]');
+        const submitButton = e.target.closest('button[type="submit"]');
+
+        if (link) {
+            e.preventDefault();
+            const href = link.getAttribute('href');
+            closeDrawer();
+            window.setTimeout(() => {
+                window.location.href = href;
+            }, 30);
+            return;
+        }
+
+        if (submitButton) {
+            closeDrawer();
+        }
+    }, true);
 
     // Keyboard navigation - Escape key to close
     document.addEventListener('keydown', (e) => {
