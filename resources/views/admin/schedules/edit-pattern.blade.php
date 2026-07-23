@@ -79,6 +79,21 @@
                 Select the days of the week and set one or more times for each day.
             </p>
 
+            <div class="flex flex-wrap gap-3 mb-4">
+                <button type="button"
+                    class="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold bg-vibrant-green text-white hover:bg-deep-blue transition"
+                    onclick="setAllDaysActive(true)">
+                    <i class="fa-solid fa-check-double"></i>
+                    Activate All
+                </button>
+                <button type="button"
+                    class="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold bg-gray-200 text-gray-700 hover:bg-gray-300 transition"
+                    onclick="setAllDaysActive(false)">
+                    <i class="fa-solid fa-ban"></i>
+                    Deactivate All
+                </button>
+            </div>
+
             @php
                 $pattern = $enrollment->getSchedulePattern() ?? [];
             @endphp
@@ -223,6 +238,13 @@
                 timeContainer.style.display = 'none';
                 timeInputs.forEach(input => input.required = false);
             }
+        }
+
+        function setAllDaysActive(isActive) {
+            document.querySelectorAll('.day-checkbox').forEach(checkbox => {
+                checkbox.checked = isActive;
+                toggleTimeInput(checkbox.dataset.day);
+            });
         }
 
         function addTimeInput(day) {
