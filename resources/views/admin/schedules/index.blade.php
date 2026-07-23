@@ -350,7 +350,7 @@
                                     @if($enrollment->hasSchedulePattern())
                                         @php
                                             $pattern = $enrollment->getSchedulePattern();
-                                            $allActive = collect($pattern)->every(fn ($dayData) => !empty($dayData['active']));
+                                            $allActive = !empty($pattern) && collect($pattern)->every(fn ($dayData) => !empty($dayData['active']));
                                             $activeDaysCount = collect($pattern)->filter(fn ($dayData) => !empty($dayData['active']))->count();
                                             $totalDaysCount = collect($pattern)->count();
                                         @endphp
