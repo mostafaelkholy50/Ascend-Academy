@@ -86,8 +86,9 @@
             <div class="space-y-3">
                 @foreach(['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] as $day)
                     @php
-                        $isChecked = in_array($day, old('days', array_keys($pattern)));
-                        $timeValues = old('schedule_times.' . $day, $pattern[$day] ?? []);
+                        $dayData = $pattern[$day] ?? ['active' => false, 'slots' => []];
+                        $isActive = old('day_active.' . $day, $dayData['active'] ?? false);
+                        $timeValues = old('schedule_times.' . $day, $dayData['slots'] ?? []);
                         $durValues = old('durations.' . $day, []);
                         
                         // Normalizing $timeValues and $durValues for the view
@@ -114,15 +115,16 @@
                     @endphp
                     <div class="flex items-center gap-4 p-3 border-2 border-gray-200 rounded-lg hover:border-vibrant-green transition day-time-row">
                         <label class="flex items-center cursor-pointer flex-1">
-                            <input type="checkbox" name="days[]" value="{{ $day }}" 
-                                {{ $isChecked ? 'checked' : '' }}
+                            <input type="hidden" name="day_active[{{ $day }}]" value="0">
+                            <input type="checkbox" name="day_active[{{ $day }}]" value="1" 
+                                {{ $isActive ? 'checked' : '' }}
                                 class="w-5 h-5 text-vibrant-green focus:ring-vibrant-green rounded day-checkbox"
                                 data-day="{{ $day }}"
                                 onchange="toggleTimeInput('{{ $day }}')">
                             <span class="ml-3 text-sm font-medium text-gray-700 w-24">{{ $day }}</span>
                         </label>
                         
-                        <div class="flex flex-col gap-3 time-input-container flex-1" id="time-container-{{ $day }}" style="display: {{ $isChecked ? 'flex' : 'none' }};">
+                        <div class="flex flex-col gap-3 time-input-container flex-1" id="time-container-{{ $day }}" style="display: {{ $isActive ? 'flex' : 'none' }};">
                             <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-gray-500">
                                 <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-vibrant-green/10 text-vibrant-green">
                                     <i class="fa-solid fa-clock"></i>
@@ -137,7 +139,7 @@
                                                 name="schedule_times[{{ $day }}][]"
                                                 id="time-{{ $day }}-{{ $index }}"
                                                 value="{{ $slot['time'] }}"
-                                                {{ $isChecked ? 'required' : '' }}
+                                                {{ $isActive ? 'required' : '' }}
                                                 class="time-input w-full pl-10 pr-3 py-2 border border-gray-300 rounded-xl bg-white shadow-sm focus:ring-2 focus:ring-vibrant-green focus:border-transparent text-sm">
                                             <i class="fa-solid fa-clock absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"></i>
                                         </div>

@@ -38,10 +38,20 @@ class ScheduleService
         $weekDays = [];
         for ($i = 0; $i < 7; $i++) {
             $day = $weekStart->copy()->addDays($i);
+            $dayName = $day->format('l');
             $weekDays[] = [
                 'date' => $day,
                 'schedules' => $schedules->filter(function($schedule) use ($day) {
-                    return $schedule->starts_at->isSameDay($day);
+                    if (!$schedule->starts_at->isSameDay($day)) {
+                        return false;
+                    }
+
+                    $enrollment = $schedule->enrollment;
+                    if (!$enrollment || !$enrollment->hasSchedulePattern()) {
+                        return true;
+                    }
+
+                    return $enrollment->isDayScheduleActive($day->format('l'));
                 })->sortBy('starts_at')->values()
             ];
         }
@@ -122,6 +132,13 @@ class ScheduleService
             $adminPrice = $data['admin_price'] ?? null;
             $teacherId = $data['teacher_id'];
             $newPattern = $this->normalizeSchedulePattern($data['days'], $data['schedule_times'], $data['durations']);
+            $dayActive = $data['day_active'] ?? array_fill_keys($data['days'], 1);
+            foreach ($newPattern as $day => $slots) {
+                $newPattern[$day] = [
+                    'active' => !empty($dayActive[$day]),
+                    'slots' => $slots,
+                ];
+            }
             $mergedPattern = $newPattern;
 
             if ($enrollment) {
@@ -191,10 +208,14 @@ class ScheduleService
 
             while ($currentDate->lte($monthEnd)) {
                 $dayName = $currentDate->format('l');
-                if (isset($schedulePattern[$dayName])) {
+                $dayData = $schedulePattern[$dayName] ?? null;
+                $isActive = is_array($dayData) ? (($dayData['active'] ?? true) !== false) : false;
+                $hasSlots = is_array($dayData) && !empty($dayData['slots'] ?? $dayData);
+
+                if ($isActive && $hasSlots) {
                     $sessionDates[] = [
                         'date' => $currentDate->copy(),
-                        'times' => $schedulePattern[$dayName] ?? [],
+                        'times' => $dayData['slots'] ?? $dayData ?? [],
                     ];
                 }
                 $currentDate->addDay();
@@ -436,12 +457,13 @@ class ScheduleService
                 ->whereMonth('starts_at', $targetMonth->month)
                 ->count();
 
+            $sessionDuration = (int) ($enrollment->session_duration ?? 60);
             $schedulePattern = null;
             $daysOfWeek = [];
-            
+
             if ($enrollment->hasSchedulePattern()) {
                 $schedulePattern = $enrollment->getSchedulePattern();
-                $daysOfWeek = array_keys($schedulePattern);
+                $daysOfWeek = array_keys(array_filter($schedulePattern, fn ($dayData) => !empty($dayData['active'])));
             } else {
                 $lastSchedule = Schedule::where('enrollment_id', $enrollment->id)
                     ->latest('starts_at')
@@ -461,14 +483,14 @@ class ScheduleService
                             $time = $prevSchedule->starts_at->format('H:i');
 
                             if (!isset($schedulePattern[$dayName])) {
-                                $schedulePattern[$dayName] = [];
+                                $schedulePattern[$dayName] = ['active' => true, 'slots' => []];
                             }
 
-                            if (!in_array($time, $schedulePattern[$dayName], true)) {
-                                $schedulePattern[$dayName][] = $time;
+                            if (!in_array($time, array_column($schedulePattern[$dayName]['slots'], 'time'), true)) {
+                                $schedulePattern[$dayName]['slots'][] = ['time' => $time, 'duration' => $sessionDuration];
                             }
                         }
-                        $daysOfWeek = array_keys($schedulePattern);
+                        $daysOfWeek = array_keys(array_filter($schedulePattern, fn ($dayData) => !empty($dayData['active'])));
                     }
                 }
                 
@@ -479,7 +501,7 @@ class ScheduleService
                     
                     $schedulePattern = [];
                     foreach ($daysOfWeek as $day) {
-                        $schedulePattern[$day] = [$defaultTime];
+                        $schedulePattern[$day] = ['active' => true, 'slots' => [['time' => $defaultTime, 'duration' => $sessionDuration]]];
                     }
                 }
             }
@@ -500,19 +522,19 @@ class ScheduleService
                 }
             }
             
-            $sessionDuration = (int) ($enrollment->session_duration ?? 60);
-
             $sessionDates = [];
             $currentDate = $monthStart->copy();
 
             while ($currentDate->lte($monthEnd)) {
                 $dayName = $currentDate->format('l');
-                if (in_array($dayName, $daysOfWeek)) {
+                $dayData = $schedulePattern[$dayName] ?? null;
+                $isActive = is_array($dayData) ? (($dayData['active'] ?? true) !== false) : false;
+                $hasSlots = is_array($dayData) && !empty($dayData['slots'] ?? $dayData);
+
+                if ($isActive && $hasSlots && in_array($dayName, $daysOfWeek)) {
                     $sessionDates[] = [
                         'date' => $currentDate->copy(),
-                        'times' => is_array($schedulePattern[$dayName]) && !isset($schedulePattern[$dayName]['time']) 
-                            ? $schedulePattern[$dayName] 
-                            : [$schedulePattern[$dayName]],
+                        'times' => $dayData['slots'] ?? $dayData ?? [],
                     ];
                 }
                 $currentDate->addDay();
@@ -671,12 +693,22 @@ class ScheduleService
 
     public function updateSchedulePattern(Enrollment $enrollment, array $data)
     {
-        $days = $data['days'];
+        $days = array_keys($data['day_active'] ?? $data['schedule_times'] ?? []);
+        if (empty($days)) {
+            $days = $data['days'] ?? [];
+        }
         $scheduleTimes = $data['schedule_times'];
         $durations = $data['durations'] ?? [];
         $teacherId = $data['teacher_id'];
+        $dayActive = $data['day_active'] ?? array_fill_keys($days, 1);
 
         $schedulePattern = $this->normalizeSchedulePattern($days, $scheduleTimes, $durations);
+        foreach ($schedulePattern as $day => $slots) {
+            $schedulePattern[$day] = [
+                'active' => !empty($dayActive[$day]),
+                'slots' => $slots,
+            ];
+        }
 
         // Calculate a primary session duration to store in enrollment model
         $sessionDuration = 60;
@@ -726,10 +758,10 @@ class ScheduleService
 
             while ($currentDate->lte($maxDate)) {
                 $dayName = $currentDate->format('l');
-                if (in_array($dayName, $days)) {
+                if (!empty($schedulePattern[$dayName]['active']) && in_array($dayName, $days)) {
                     $sessionDates[] = [
                         'date' => $currentDate->copy(),
-                        'times' => $schedulePattern[$dayName] ?? [],
+                        'times' => $schedulePattern[$dayName]['slots'] ?? [],
                     ];
                 }
                 $currentDate->addDay();
@@ -737,6 +769,10 @@ class ScheduleService
 
             foreach ($sessionDates as $session) {
                 foreach ($session['times'] as $timeSlot) {
+                    if (is_array($timeSlot) && !isset($timeSlot['time'])) {
+                        continue;
+                    }
+
                     $time = is_array($timeSlot) ? $timeSlot['time'] : $timeSlot;
                     $durationMinutes = is_array($timeSlot) ? ($timeSlot['duration'] ?? $sessionDuration) : $sessionDuration;
 
@@ -815,11 +851,30 @@ class ScheduleService
 
     protected function mergeSchedulePatterns(array $existingPattern, array $newPattern): array
     {
-        $merged = $existingPattern;
+        $merged = [];
 
-        foreach ($newPattern as $day => $times) {
-            $times = is_array($times) ? $times : [$times];
-            $merged[$day] = array_values(array_unique(array_merge($merged[$day] ?? [], $times)));
+        foreach ($existingPattern as $day => $dayData) {
+            if (is_array($dayData) && array_key_exists('slots', $dayData)) {
+                $merged[$day] = [
+                    'active' => $dayData['active'] ?? true,
+                    'slots' => $dayData['slots'] ?? [],
+                ];
+                continue;
+            }
+
+            $merged[$day] = [
+                'active' => true,
+                'slots' => is_array($dayData) ? $dayData : (empty($dayData) ? [] : [['time' => $dayData, 'duration' => 60]]),
+            ];
+        }
+
+        foreach ($newPattern as $day => $dayData) {
+            $newSlots = $dayData['slots'] ?? [];
+            $existingSlots = $merged[$day]['slots'] ?? [];
+            $merged[$day] = [
+                'active' => $dayData['active'] ?? ($merged[$day]['active'] ?? true),
+                'slots' => array_values(array_unique(array_merge($existingSlots, $newSlots), SORT_REGULAR)),
+            ];
         }
 
         return $merged;

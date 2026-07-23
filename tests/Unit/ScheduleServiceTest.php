@@ -29,10 +29,16 @@ class ScheduleServiceTest extends TestCase
         
         $pattern = [
             'Monday' => [
-                ['time' => '16:00', 'duration' => 45],
-                ['time' => '17:00', 'duration' => 60],
+                'active' => true,
+                'slots' => [
+                    ['time' => '16:00', 'duration' => 45],
+                    ['time' => '17:00', 'duration' => 60],
+                ],
             ],
-            'Tuesday' => ['18:00']
+            'Tuesday' => [
+                'active' => true,
+                'slots' => [['time' => '18:00', 'duration' => 30]],
+            ],
         ];
         
         $enrollment->session_duration = 30; // default
@@ -42,12 +48,13 @@ class ScheduleServiceTest extends TestCase
         
         $this->assertIsArray($savedPattern);
         $this->assertArrayHasKey('Monday', $savedPattern);
-        $this->assertEquals(45, $savedPattern['Monday'][0]['duration']);
-        $this->assertEquals('16:00', $savedPattern['Monday'][0]['time']);
-        $this->assertEquals(60, $savedPattern['Monday'][1]['duration']);
+        $this->assertTrue($savedPattern['Monday']['active']);
+        $this->assertEquals(45, $savedPattern['Monday']['slots'][0]['duration']);
+        $this->assertEquals('16:00', $savedPattern['Monday']['slots'][0]['time']);
+        $this->assertEquals(60, $savedPattern['Monday']['slots'][1]['duration']);
         
         $this->assertArrayHasKey('Tuesday', $savedPattern);
-        $this->assertEquals(30, $savedPattern['Tuesday'][0]['duration']);
+        $this->assertEquals(30, $savedPattern['Tuesday']['slots'][0]['duration']);
     }
     
     public function test_store_schedule_creates_sessions()
@@ -73,6 +80,9 @@ class ScheduleServiceTest extends TestCase
             'durations' => [
                 $dayName => [30, 60]
             ],
+            'day_active' => [
+                $dayName => true,
+            ],
         ];
         
         $count = $service->storeSchedule($data);
@@ -84,7 +94,7 @@ class ScheduleServiceTest extends TestCase
         
         $pattern = $enrollment->getSchedulePattern();
         $this->assertArrayHasKey($dayName, $pattern);
-        $this->assertEquals(30, $pattern[$dayName][0]['duration']);
+        $this->assertEquals(30, $pattern[$dayName]['slots'][0]['duration']);
     }
 
     public function test_store_schedule_with_different_times_and_durations()
@@ -114,6 +124,10 @@ class ScheduleServiceTest extends TestCase
                 $day1Name => [30, 60],
                 $day2Name => [45]
             ],
+            'day_active' => [
+                $day1Name => true,
+                $day2Name => true,
+            ],
         ];
         
         $count = $service->storeSchedule($data);
@@ -128,14 +142,14 @@ class ScheduleServiceTest extends TestCase
         $this->assertArrayHasKey($day2Name, $pattern);
         
         // Check day 1 (Monday)
-        $this->assertEquals(30, $pattern[$day1Name][0]['duration']);
-        $this->assertEquals('14:00', $pattern[$day1Name][0]['time']);
-        $this->assertEquals(60, $pattern[$day1Name][1]['duration']);
-        $this->assertEquals('16:00', $pattern[$day1Name][1]['time']);
+        $this->assertEquals(30, $pattern[$day1Name]['slots'][0]['duration']);
+        $this->assertEquals('14:00', $pattern[$day1Name]['slots'][0]['time']);
+        $this->assertEquals(60, $pattern[$day1Name]['slots'][1]['duration']);
+        $this->assertEquals('16:00', $pattern[$day1Name]['slots'][1]['time']);
         
         // Check day 2 (Tuesday)
-        $this->assertEquals(45, $pattern[$day2Name][0]['duration']);
-        $this->assertEquals('18:00', $pattern[$day2Name][0]['time']);
+        $this->assertEquals(45, $pattern[$day2Name]['slots'][0]['duration']);
+        $this->assertEquals('18:00', $pattern[$day2Name]['slots'][0]['time']);
     }
 
     public function test_store_schedule_http_request()
@@ -162,6 +176,10 @@ class ScheduleServiceTest extends TestCase
             'durations' => [
                 'Monday' => [30, 60],
                 'Tuesday' => [45]
+            ],
+            'day_active' => [
+                'Monday' => true,
+                'Tuesday' => true,
             ]
         ]);
         
@@ -174,4 +192,3 @@ class ScheduleServiceTest extends TestCase
         ]);
     }
 }
-

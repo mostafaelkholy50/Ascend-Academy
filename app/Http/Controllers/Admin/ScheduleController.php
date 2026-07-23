@@ -121,8 +121,8 @@ class ScheduleController extends Controller
     {
         $request->validate([
             'teacher_id' => 'required|exists:users,id',
-            'days' => 'required|array|min:1',
-            'days.*' => 'string|in:Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday',
+            'day_active' => 'required|array|min:1',
+            'day_active.*' => 'nullable|boolean',
             'schedule_times' => 'required|array',
             'schedule_times.*' => 'required',
             'schedule_times.*.*' => 'nullable|date_format:H:i',

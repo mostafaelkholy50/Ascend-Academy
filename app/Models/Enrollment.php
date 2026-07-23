@@ -122,7 +122,7 @@ class Enrollment extends Model
     
     /**
      * Get the schedule pattern for this enrollment
-     * Returns array like: ['Monday' => '16:00', 'Wednesday' => '18:00']
+     * Returns array like: ['Monday' => ['active' => true, 'slots' => [['time' => '16:00', 'duration' => 60]]]]
      */
     public function getSchedulePattern(): ?array
     {
@@ -131,7 +131,7 @@ class Enrollment extends Model
 
     /**
      * Set the schedule pattern for this enrollment
-     * @param array $pattern Array like: ['Monday' => '16:00', 'Wednesday' => '18:00']
+     * @param array $pattern Schedule pattern data
      */
     public function setSchedulePattern(array $pattern): void
     {
@@ -147,6 +147,12 @@ class Enrollment extends Model
         return !empty($this->schedule_pattern);
     }
 
+    public function isDayScheduleActive(string $day): bool
+    {
+        $pattern = $this->getSchedulePattern() ?? [];
+        return !empty($pattern[$day]['active']);
+    }
+
     /**
      * Get days from the schedule pattern
      * Returns array like: ['Monday', 'Wednesday', 'Friday']
@@ -156,7 +162,7 @@ class Enrollment extends Model
         if (!$this->hasSchedulePattern()) {
             return [];
         }
-        return array_keys($this->schedule_pattern);
+        return array_keys(array_filter($this->getSchedulePattern() ?? [], fn ($dayData) => !empty($dayData['active'])));
     }
 
     /**
@@ -165,14 +171,14 @@ class Enrollment extends Model
     public function getTimeForDay(string $day): ?string
     {
         $pattern = $this->getSchedulePattern() ?? [];
-        $times = $pattern[$day] ?? [];
+        $times = $pattern[$day]['slots'] ?? [];
         return is_array($times) ? ($times[0] ?? null) : $times;
     }
 
     public function getTimesForDay(string $day): array
     {
         $pattern = $this->getSchedulePattern() ?? [];
-        $times = $pattern[$day] ?? [];
+        $times = $pattern[$day]['slots'] ?? [];
         if (!is_array($times)) {
             return $times ? [$times] : [];
         }
@@ -185,6 +191,14 @@ class Enrollment extends Model
         $normalized = [];
 
         foreach ($pattern as $day => $items) {
+            $active = true;
+            $slots = [];
+
+            if (is_array($items) && array_key_exists('active', $items)) {
+                $active = (bool) $items['active'];
+                $items = $items['slots'] ?? [];
+            }
+
             if (is_string($items)) {
                 $items = [['time' => $items, 'duration' => (int)($this->session_duration ?? 60)]];
             }
@@ -216,7 +230,10 @@ class Enrollment extends Model
             }
 
             if (!empty($finalItems)) {
-                $normalized[$day] = $finalItems;
+                $normalized[$day] = [
+                    'active' => $active,
+                    'slots' => $finalItems,
+                ];
             }
         }
 
