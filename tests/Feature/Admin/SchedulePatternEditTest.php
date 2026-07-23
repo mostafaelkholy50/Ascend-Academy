@@ -6,6 +6,7 @@ use App\Models\Enrollment;
 use App\Models\Schedule;
 use App\Services\ScheduleService;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Route;
 
 beforeEach(function () {
     $this->teacher = User::factory()->create(['role' => 'Teacher', 'name' => 'John Doe']);
@@ -166,4 +167,77 @@ test('updateSchedulePattern rolls back on conflict', function () {
     $this->enrollment->refresh();
     expect($this->enrollment->schedule_pattern)->toHaveKey('Saturday');
     expect($this->enrollment->schedule_pattern)->toHaveKey('Tuesday');
+});
+
+test('updateSchedulePattern keeps edited days active by default', function () {
+    $service = app(ScheduleService::class);
+
+    $this->enrollment->update([
+        'schedule_pattern' => [
+            'Monday' => [
+                'active' => false,
+                'slots' => [['time' => '10:00', 'duration' => 60]],
+            ],
+            'Wednesday' => [
+                'active' => false,
+                'slots' => [['time' => '10:00', 'duration' => 60]],
+            ],
+        ],
+    ]);
+
+    $data = [
+        'teacher_id' => $this->teacher->id,
+        'durations' => [
+            'Monday' => [60],
+            'Wednesday' => [60],
+        ],
+        'days' => ['Monday', 'Wednesday'],
+        'schedule_times' => [
+            'Monday' => ['10:00'],
+            'Wednesday' => ['10:00'],
+        ],
+    ];
+
+    $result = $service->updateSchedulePattern($this->enrollment, $data);
+
+    expect($result['success'])->toBeTrue();
+
+    $this->enrollment->refresh();
+    $pattern = $this->enrollment->getSchedulePattern();
+
+    expect($pattern['Monday']['active'])->toBeTrue();
+    expect($pattern['Wednesday']['active'])->toBeTrue();
+});
+
+test('edit pattern page only shows days that exist in the current schedule pattern', function () {
+    \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'Admin']);
+    $admin = User::factory()->create();
+    $admin->assignRole('Admin');
+    Route::get('/profile-fallback', fn () => 'ok')->name('.profile.show');
+
+    $this->enrollment->update([
+        'schedule_pattern' => [
+            'Monday' => [
+                'active' => true,
+                'slots' => [['time' => '08:00', 'duration' => 60]],
+            ],
+            'Wednesday' => [
+                'active' => false,
+                'slots' => [['time' => '10:30', 'duration' => 45]],
+            ],
+        ],
+    ]);
+
+    $this->actingAs($admin);
+
+    $response = $this->get(route('admin.schedules.edit-pattern', $this->enrollment->id));
+
+    $response->assertStatus(200);
+    $response->assertSee('Monday');
+    $response->assertSee('Wednesday');
+    $response->assertSee('08:00');
+    $response->assertSee('10:30');
+    $response->assertDontSee('Tuesday');
+    $response->assertDontSee('Thursday');
+    $response->assertDontSee('17:00');
 });

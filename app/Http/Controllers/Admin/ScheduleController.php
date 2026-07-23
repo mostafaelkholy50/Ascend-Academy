@@ -107,6 +107,10 @@ class ScheduleController extends Controller
     {
         $teachers = User::where('role', 'Teacher')->where('active', true)->orderBy('name')->get();
         $enrollment->load(['student', 'course']);
+        $pattern = $enrollment->getSchedulePattern() ?? [];
+        if (empty($pattern)) {
+            $pattern = $this->buildPatternFromSchedules($enrollment);
+        }
         
         $currentTeacherId = null;
         $lastSchedule = $enrollment->schedules()->latest('starts_at')->first();
@@ -114,7 +118,7 @@ class ScheduleController extends Controller
             $currentTeacherId = $lastSchedule->teacher_id;
         }
 
-        return view('admin.schedules.edit-pattern', compact('enrollment', 'teachers', 'currentTeacherId'));
+        return view('admin.schedules.edit-pattern', compact('enrollment', 'teachers', 'currentTeacherId', 'pattern'));
     }
 
     public function updatePattern(Request $request, Enrollment $enrollment)

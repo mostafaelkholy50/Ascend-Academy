@@ -705,7 +705,7 @@ class ScheduleService
         $schedulePattern = $this->normalizeSchedulePattern($days, $scheduleTimes, $durations);
         foreach ($schedulePattern as $day => $slots) {
             $schedulePattern[$day] = [
-                'active' => isset($dayActive[$day]) ? (bool) $dayActive[$day] : true,
+                'active' => true,
                 'slots' => $slots,
             ];
         }

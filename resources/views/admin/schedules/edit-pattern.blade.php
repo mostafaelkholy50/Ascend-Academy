@@ -79,15 +79,15 @@
                 Select the days of the week and set one or more times for each day.
             </p>
 
-            @php
-                $pattern = $enrollment->getSchedulePattern() ?? [];
-            @endphp
-
             <div class="space-y-3">
                 @foreach(['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] as $day)
                     @php
-                        $dayData = $pattern[$day] ?? ['active' => false, 'slots' => []];
-                        $isActive = old('day_active.' . $day, $dayData['active'] ?? false);
+                        $dayData = $pattern[$day] ?? null;
+                        if (!$dayData) {
+                            continue;
+                        }
+
+                        $isActive = old('day_active.' . $day, $dayData['active'] ?? true);
                         $timeValues = old('schedule_times.' . $day, $dayData['slots'] ?? []);
                         $durValues = old('durations.' . $day, []);
                         
@@ -99,18 +99,17 @@
                                 $slots[] = ['time' => $t, 'duration' => $durValues[$idx] ?? $enrollment->session_duration];
                             }
                         } else {
-                            // If coming from database pattern
-                            if (empty($timeValues)) {
-                                $slots = [['time' => '17:00', 'duration' => $enrollment->session_duration]];
-                            } else {
-                                foreach ($timeValues as $t) {
-                                    if (is_array($t)) {
-                                        $slots[] = ['time' => $t['time'], 'duration' => $t['duration'] ?? $enrollment->session_duration];
-                                    } else {
-                                        $slots[] = ['time' => $t, 'duration' => $enrollment->session_duration];
-                                    }
+                            foreach ($timeValues as $t) {
+                                if (is_array($t)) {
+                                    $slots[] = ['time' => $t['time'], 'duration' => $t['duration'] ?? $enrollment->session_duration];
+                                } else {
+                                    $slots[] = ['time' => $t, 'duration' => $enrollment->session_duration];
                                 }
                             }
+                        }
+
+                        if (empty($slots)) {
+                            continue;
                         }
                     @endphp
                     <div class="flex items-center gap-4 p-3 border-2 border-gray-200 rounded-lg hover:border-vibrant-green transition day-time-row">
