@@ -427,9 +427,6 @@
                                             </thead>
                                             <tbody class="divide-y divide-gray-100">
                                                 @foreach($enrollment->schedules->sortBy('starts_at') as $schedule)
-                                                    @php
-                                                        $isEnabled = $schedule->status !== 'cancelled';
-                                                    @endphp
                                                     <tr class="hover:bg-indigo-50/30 transition">
                                                         <td class="px-6 py-4">
                                                             <div class="flex items-center gap-3">
@@ -456,6 +453,12 @@
                                                             </span>
                                                         </td>
                                                         <td class="px-6 py-4">
+                                                            @php
+                                                                $pattern = $enrollment->getSchedulePattern() ?? [];
+                                                                $isEnabled = !empty($pattern) 
+                                                                    ? collect($pattern)->contains(fn ($dayData) => !empty($dayData['active']))
+                                                                    : $schedule->status !== 'cancelled';
+                                                            @endphp
                                                             <span class="px-4 py-2 rounded-lg text-sm font-bold
                                                                 {{ $isEnabled ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' }}">
                                                                 {{ $isEnabled ? 'Active' : 'Inactive' }}
