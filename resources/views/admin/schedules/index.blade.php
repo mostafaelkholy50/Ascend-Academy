@@ -374,26 +374,6 @@
                                                 </button>
                                             </form>
 
-                                            @foreach($pattern as $dayName => $dayData)
-                                                @php
-                                                    $dayActive = $dayData['active'] ?? true;
-                                                    $slots = $dayData['slots'] ?? [];
-                                                    $timeStr = '';
-                                                    if (!empty($slots)) {
-                                                        $timeStr = collect($slots)->map(fn($s) => is_array($s) ? $s['time'] : $s)->join(', ');
-                                                    }
-                                                @endphp
-                                                <form action="{{ route('admin.schedules.toggle-day', [$enrollment->id, $dayName]) }}" method="POST" class="inline">
-                                                    @csrf
-                                                    <button type="submit" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition border
-                                                        {{ $dayActive 
-                                                            ? 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100 hover:border-green-300' 
-                                                            : 'bg-gray-100 text-gray-500 border-gray-200 hover:bg-gray-200 hover:border-gray-300' }}">
-                                                        <i class="fa-solid {{ $dayActive ? 'fa-play' : 'fa-pause' }}"></i>
-                                                        <span>{{ $dayName }} {{ $timeStr ? "($timeStr)" : '' }} - {{ $dayActive ? 'Active' : 'Paused' }}</span>
-                                                    </button>
-                                                </form>
-                                            @endforeach
                                         </div>
                                     @endif
                                 </div>
@@ -441,12 +421,15 @@
                                                     <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Date & Time</th>
                                                     <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Teacher</th>
                                                     <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Duration</th>
-                                                    <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Status</th>
+                                                    <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Is Session Active?</th>
                                                     <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Actions</th>
                                                 </tr>
                                             </thead>
                                             <tbody class="divide-y divide-gray-100">
                                                 @foreach($enrollment->schedules->sortBy('starts_at') as $schedule)
+                                                    @php
+                                                        $isEnabled = $schedule->status !== 'cancelled';
+                                                    @endphp
                                                     <tr class="hover:bg-indigo-50/30 transition">
                                                         <td class="px-6 py-4">
                                                             <div class="flex items-center gap-3">
@@ -474,10 +457,8 @@
                                                         </td>
                                                         <td class="px-6 py-4">
                                                             <span class="px-4 py-2 rounded-lg text-sm font-bold
-                                                                {{ $schedule->status === 'scheduled' ? 'bg-green-100 text-green-700' : '' }}
-                                                                {{ $schedule->status === 'completed' ? 'bg-blue-100 text-blue-700' : '' }}
-                                                                {{ $schedule->status === 'cancelled' ? 'bg-red-100 text-red-700' : '' }}">
-                                                                {{ ucfirst($schedule->status) }}
+                                                                {{ $isEnabled ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' }}">
+                                                                {{ $isEnabled ? 'Active' : 'Inactive' }}
                                                             </span>
                                                         </td>
                                                         <td class="px-6 py-4">
