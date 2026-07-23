@@ -209,11 +209,12 @@ test('updateSchedulePattern keeps edited days active by default', function () {
     expect($pattern['Wednesday']['active'])->toBeTrue();
 });
 
-test('edit pattern page only shows days that exist in the current schedule pattern', function () {
+test('edit pattern page shows all days to allow adding new ones', function () {
     \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'Admin']);
-    $admin = User::factory()->create();
+    $admin = User::factory()->create(['role' => 'Admin']);
     $admin->assignRole('Admin');
-    Route::get('/profile-fallback', fn () => 'ok')->name('.profile.show');
+    Route::get('/profile-fallback', fn () => 'ok')->name('admin.profile.show');
+    Route::get('/profile-fallback-edit', fn () => 'ok')->name('admin.profile.edit');
 
     $this->enrollment->update([
         'schedule_pattern' => [
@@ -237,7 +238,8 @@ test('edit pattern page only shows days that exist in the current schedule patte
     $response->assertSee('Wednesday');
     $response->assertSee('08:00');
     $response->assertSee('10:30');
-    $response->assertDontSee('Tuesday');
-    $response->assertDontSee('Thursday');
-    $response->assertDontSee('17:00');
+    
+    // It should see other days because we want the admin to be able to add them
+    $response->assertSee('Tuesday');
+    $response->assertSee('Thursday');
 });

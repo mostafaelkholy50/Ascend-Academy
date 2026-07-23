@@ -83,22 +83,18 @@
                 @foreach(['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] as $day)
                     @php
                         $dayData = $pattern[$day] ?? null;
-                        if (!$dayData) {
-                            continue;
-                        }
 
-                        $isActive = old('day_active.' . $day, $dayData['active'] ?? true);
+                        $isActive = old('day_active.' . $day, !empty($dayData) ? ($dayData['active'] ?? true) : false);
                         $timeValues = old('schedule_times.' . $day, $dayData['slots'] ?? []);
                         $durValues = old('durations.' . $day, []);
                         
-                        // Normalizing $timeValues and $durValues for the view
                         $slots = [];
                         if (!empty(old('schedule_times.' . $day))) {
                             // If coming from old input
                             foreach ($timeValues as $idx => $t) {
                                 $slots[] = ['time' => $t, 'duration' => $durValues[$idx] ?? $enrollment->session_duration];
                             }
-                        } else {
+                        } else if (!empty($timeValues)) {
                             foreach ($timeValues as $t) {
                                 if (is_array($t)) {
                                     $slots[] = ['time' => $t['time'], 'duration' => $t['duration'] ?? $enrollment->session_duration];
@@ -109,7 +105,7 @@
                         }
 
                         if (empty($slots)) {
-                            continue;
+                            $slots[] = ['time' => '12:00', 'duration' => $enrollment->session_duration ?? 60];
                         }
                     @endphp
                     <div class="flex items-center gap-4 p-3 border-2 border-gray-200 rounded-lg hover:border-vibrant-green transition day-time-row">
