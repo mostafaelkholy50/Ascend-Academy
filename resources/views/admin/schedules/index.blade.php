@@ -352,7 +352,7 @@
                                             $pattern = $enrollment->getSchedulePattern();
                                             $anyActive = false;
                                             foreach($pattern as $dayData) {
-                                                if (!empty($dayData['active'])) {
+                                                if (!isset($dayData['active']) || $dayData['active']) {
                                                     $anyActive = true;
                                                     break;
                                                 }
@@ -375,7 +375,7 @@
 
                                             @foreach($pattern as $dayName => $dayData)
                                                 @php
-                                                    $dayActive = !empty($dayData['active']);
+                                                    $dayActive = $dayData['active'] ?? true;
                                                     $slots = $dayData['slots'] ?? [];
                                                     $timeStr = '';
                                                     if (!empty($slots)) {

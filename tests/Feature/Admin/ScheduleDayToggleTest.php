@@ -87,3 +87,88 @@ test('toggling active day cancels upcoming sessions and updates pattern status',
     expect($mondaySession->status)->toBe('cancelled');
     expect($wednesdaySession->status)->toBe('scheduled');
 });
+
+test('toggling all days cancels all upcoming sessions and updates pattern status', function () {
+    // Create upcoming sessions
+    $mondaySession = Schedule::create([
+        'enrollment_id' => $this->enrollment->id,
+        'student_id' => $this->student->id,
+        'teacher_id' => $this->teacher->id,
+        'course_id' => $this->course->id,
+        'starts_at' => Carbon::now()->addDays(5)->next('Monday')->setTime(8, 0),
+        'ends_at' => Carbon::now()->addDays(5)->next('Monday')->setTime(9, 0),
+        'status' => 'scheduled',
+    ]);
+
+    $wednesdaySession = Schedule::create([
+        'enrollment_id' => $this->enrollment->id,
+        'student_id' => $this->student->id,
+        'teacher_id' => $this->teacher->id,
+        'course_id' => $this->course->id,
+        'starts_at' => Carbon::now()->addDays(5)->next('Wednesday')->setTime(8, 0),
+        'ends_at' => Carbon::now()->addDays(5)->next('Wednesday')->setTime(9, 0),
+        'status' => 'scheduled',
+    ]);
+
+    $this->actingAs($this->admin);
+
+    // Toggle all (currently both are active, so it should pause them)
+    $response = $this->post(route('admin.schedules.toggle-all', $this->enrollment->id));
+    $response->assertRedirect();
+    $response->assertSessionHas('success');
+
+    // Verify both are deactivated in database pattern
+    $this->enrollment->refresh();
+    $pattern = $this->enrollment->getSchedulePattern();
+    expect($pattern['Monday']['active'])->toBeFalse();
+    expect($pattern['Wednesday']['active'])->toBeFalse();
+
+    // Verify sessions are cancelled
+    $mondaySession->refresh();
+    $wednesdaySession->refresh();
+    expect($mondaySession->status)->toBe('cancelled');
+    expect($wednesdaySession->status)->toBe('cancelled');
+
+    // Toggle all again (currently both are paused, so it should resume them)
+    $response2 = $this->post(route('admin.schedules.toggle-all', $this->enrollment->id));
+    $response2->assertRedirect();
+
+    $this->enrollment->refresh();
+    $pattern2 = $this->enrollment->getSchedulePattern();
+    expect($pattern2['Monday']['active'])->toBeTrue();
+    expect($pattern2['Wednesday']['active'])->toBeTrue();
+
+    // Verify sessions are restored
+    $mondaySession->refresh();
+    $wednesdaySession->refresh();
+    expect($mondaySession->status)->toBe('scheduled');
+    expect($wednesdaySession->status)->toBe('scheduled');
+});
+
+test('toggling all days with legacy pattern defaults to active', function () {
+    // Legacy pattern without 'active' key
+    $this->enrollment->update([
+        'schedule_pattern' => [
+            'Monday' => [
+                'slots' => [['time' => '08:00', 'duration' => 60]],
+            ],
+            'Wednesday' => [
+                'slots' => [['time' => '08:00', 'duration' => 60]],
+            ],
+        ],
+    ]);
+
+    $this->actingAs($this->admin);
+
+    // Toggle all. Since they don't have 'active' key, they should be treated as TRUE by default.
+    // So toggling all should PAUSE them.
+    $response = $this->post(route('admin.schedules.toggle-all', $this->enrollment->id));
+    $response->assertRedirect();
+
+    $this->enrollment->refresh();
+    $pattern = $this->enrollment->getSchedulePattern();
+    
+    // Now they should explicitly have 'active' => false
+    expect($pattern['Monday']['active'])->toBeFalse();
+    expect($pattern['Wednesday']['active'])->toBeFalse();
+});

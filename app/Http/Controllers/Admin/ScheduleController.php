@@ -274,7 +274,7 @@ class ScheduleController extends Controller
 
         $anyActive = false;
         foreach ($pattern as $day => $dayData) {
-            if (!empty($dayData['active'])) {
+            if (!isset($dayData['active']) || $dayData['active']) {
                 $anyActive = true;
                 break;
             }
