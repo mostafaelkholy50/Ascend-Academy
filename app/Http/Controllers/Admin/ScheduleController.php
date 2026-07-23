@@ -225,8 +225,7 @@ class ScheduleController extends Controller
         if (isset($pattern[$day])) {
             $newStatus = !($pattern[$day]['active'] ?? true);
             $pattern[$day]['active'] = $newStatus;
-            $enrollment->schedule_pattern = $pattern;
-            $enrollment->save();
+            $enrollment->update(['schedule_pattern' => $pattern]);
 
             if (!$newStatus) {
                 // If deactivated, cancel all upcoming scheduled sessions for this day
@@ -286,8 +285,7 @@ class ScheduleController extends Controller
             $pattern[$day]['active'] = $newStatus;
         }
         
-        $enrollment->schedule_pattern = $pattern;
-        $enrollment->save();
+        $enrollment->update(['schedule_pattern' => $pattern]);
 
         if (!$newStatus) {
             $upcomingSchedules = Schedule::where('enrollment_id', $enrollment->id)

@@ -389,7 +389,7 @@
                                                             ? 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100 hover:border-green-300' 
                                                             : 'bg-gray-100 text-gray-500 border-gray-200 hover:bg-gray-200 hover:border-gray-300' }}">
                                                         <i class="fa-solid {{ $dayActive ? 'fa-play' : 'fa-pause' }}"></i>
-                                                        <span>{{ $dayName }} {{ $timeStr ? "($timeStr)" : '' }}</span>
+                                                        <span>{{ $dayName }} {{ $timeStr ? "($timeStr)" : '' }} - {{ $dayActive ? 'Active' : 'Paused' }}</span>
                                                     </button>
                                                 </form>
                                             @endforeach
