@@ -39,10 +39,16 @@ class TeacherHoursService
         // Calculate total hours efficiently
         // We only need the schedule duration for calculation
         $allAttendances = clone $query;
-        $allSchedules = $allAttendances->with('schedule')->get()->pluck('schedule');
+        $attendancesList = $allAttendances->with('schedule')->get();
         
-        $totalHours = $allSchedules->sum(function($schedule) {
-            return $schedule ? $schedule->getDurationInHours() : 0;
+        $totalHours = $attendancesList->sum(function($attendance) {
+            if (!$attendance->schedule) return 0;
+            $duration = $attendance->schedule->getDurationInHours();
+            
+            if (!$attendance->student_present && $attendance->remark === 'Waited Half Time') {
+                return $duration / 2;
+            }
+            return $duration;
         });
         
         // Add evaluation bonus if earned

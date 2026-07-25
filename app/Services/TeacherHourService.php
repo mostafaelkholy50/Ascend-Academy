@@ -43,7 +43,10 @@ class TeacherHourService
         // Get aggregated hours for all teachers using PHP to support multiple DBs (SQLite/MySQL)
         $attendances = \App\Models\Attendance::with('schedule')
             ->where('teacher_present', true)
-            ->where('student_present', true)
+            ->where(function($q) {
+                $q->where('student_present', true)
+                  ->orWhere('remark', 'Waited Half Time');
+            })
             ->whereHas('schedule', function($query) use ($startDate, $endDate) {
                 $query->whereBetween('starts_at', [$startDate, $endDate]);
             })
@@ -51,7 +54,12 @@ class TeacherHourService
 
         $hoursData = $attendances->groupBy('schedule.teacher_id')->map(function ($teacherAttendances) {
             return $teacherAttendances->sum(function ($attendance) {
-                return $attendance->schedule ? $attendance->schedule->getDurationInHours() : 0;
+                if (!$attendance->schedule) return 0;
+                $duration = $attendance->schedule->getDurationInHours();
+                if (!$attendance->student_present && $attendance->remark === 'Waited Half Time') {
+                    return $duration / 2;
+                }
+                return $duration;
             });
         });
 

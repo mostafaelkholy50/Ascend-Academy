@@ -101,10 +101,14 @@
                         @foreach($attendances as $attendance)
                             @php
                                 $schedule = $attendance->schedule;
+                                $isHalfTime = (!$attendance->student_present && $attendance->remark === 'Waited Half Time');
                                 $hours = $schedule->getDurationInHours();
+                                if ($isHalfTime) {
+                                    $hours = $hours / 2;
+                                }
                                 $earnings = $hours * $hourlyRate;
                             @endphp
-                            <tr class="hover:bg-gray-50">
+                            <tr class="hover:bg-gray-50 {{ $isHalfTime ? 'bg-orange-50/30' : '' }}">
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                     {{ $schedule->starts_at->format('M d, Y') }}
                                 </td>
@@ -113,7 +117,14 @@
                                         <div class="h-8 w-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-bold text-xs mr-3">
                                             {{ strtoupper(substr($schedule->student->name, 0, 1)) }}
                                         </div>
-                                        <div class="text-sm font-medium text-gray-900">{{ $schedule->student->name }}</div>
+                                        <div>
+                                            <div class="text-sm font-medium text-gray-900">{{ $schedule->student->name }}</div>
+                                            @if($isHalfTime)
+                                                <span class="inline-flex items-center px-2 py-0.5 mt-1 rounded text-[10px] font-medium bg-orange-100 text-orange-800">
+                                                    <i class="fa-solid fa-clock mr-1"></i> Waited Half Time
+                                                </span>
+                                            @endif
+                                        </div>
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">

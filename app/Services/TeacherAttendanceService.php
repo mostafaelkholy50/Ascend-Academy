@@ -48,7 +48,7 @@ class TeacherAttendanceService
         return $attendance;
     }
 
-    public function notifyParentWaiting(User $teacher, int $scheduleId): void
+    public function notifyParentWaiting(User $teacher, int $scheduleId, bool $waitedHalfTime = false): array
     {
         $schedule = $this->repository->getScheduleForTeacher($scheduleId, $teacher->id);
 
@@ -57,15 +57,48 @@ class TeacherAttendanceService
         }
 
         $student = $schedule->student;
-        $parents = $student->parents;
 
-        if ($parents->isEmpty()) {
-            // Fallback: Notify student if no parent is linked
-            $student->notify(new \App\Notifications\TeacherWaitingNotification($schedule));
-        } else {
-            foreach ($parents as $parent) {
-                $parent->notify(new \App\Notifications\TeacherWaitingNotification($schedule));
-            }
+        // 1. Add bonus time if requested (PRIORITY)
+        if ($waitedHalfTime) {
+            $this->repository->updateOrCreateAttendance(
+                [
+                    'schedule_id' => $scheduleId,
+                    'student_id' => $student->id,
+                ],
+                [
+                    'teacher_id' => $teacher->id,
+                    'teacher_present' => true,
+                    'student_present' => false,
+                    'remark' => 'Waited Half Time',
+                ]
+            );
+            
+            // Do not update status to 'completed'. 
+            // The frontend will automatically show 'Student Absent' because attendance has student_present = false.
         }
+
+        // 2. Try to send email
+        $emailSent = false;
+        try {
+            $parents = $student->parents;
+
+            if ($parents->isEmpty()) {
+                // Fallback: Notify student if no parent is linked
+                $student->notify(new \App\Notifications\TeacherWaitingNotification($schedule));
+            } else {
+                foreach ($parents as $parent) {
+                    $parent->notify(new \App\Notifications\TeacherWaitingNotification($schedule));
+                }
+            }
+            $emailSent = true;
+        } catch (\Exception $e) {
+            // Log the error but don't fail the request
+            \Illuminate\Support\Facades\Log::error('Failed to send waiting notification: ' . $e->getMessage());
+        }
+
+        return [
+            'time_added' => $waitedHalfTime,
+            'email_sent' => $emailSent
+        ];
     }
 }

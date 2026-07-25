@@ -14,7 +14,10 @@ class TeacherHoursRepository
         return Attendance::with(['schedule.student', 'schedule.course'])
             ->where('teacher_id', $teacher->id)
             ->where('teacher_present', true)
-            ->where('student_present', true)
+            ->where(function ($query) {
+                $query->where('student_present', true)
+                      ->orWhere('remark', 'Waited Half Time');
+            })
             ->whereHas('schedule', function($q) use ($startOfMonth, $endOfMonth) {
                 // Optimized date querying
                 $q->whereBetween('starts_at', [$startOfMonth, $endOfMonth]);

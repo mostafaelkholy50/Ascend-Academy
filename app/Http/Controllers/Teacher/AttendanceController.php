@@ -92,12 +92,15 @@ class AttendanceController extends Controller
         try {
             $teacher = auth()->user();
             $scheduleId = $request->input('schedule_id');
+            $waitedHalfTime = $request->boolean('waited_half_time', false);
 
-            $this->service->notifyParentWaiting($teacher, $scheduleId);
+            $result = $this->service->notifyParentWaiting($teacher, $scheduleId, $waitedHalfTime);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Notification sent to the parent successfully!'
+                'time_added' => $result['time_added'],
+                'email_sent' => $result['email_sent'],
+                'message' => 'Processed successfully'
             ]);
         } catch (Exception $e) {
             return response()->json([

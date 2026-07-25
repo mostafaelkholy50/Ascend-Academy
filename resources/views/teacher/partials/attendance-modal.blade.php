@@ -271,9 +271,34 @@
         const btn = document.getElementById(`waitingBtn-${scheduleId}`);
         const originalContent = btn.innerHTML;
 
-        // Show loading
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i>Sending...';
+        // Disable button immediately to prevent double clicks
         btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i>Waiting...';
+
+        // Ask the teacher if they waited half time
+        const result = await Swal.fire({
+            title: 'Did you wait for half of the class time?',
+            text: "If yes, half of the class time will be added to your hours.",
+            icon: 'question',
+            showDenyButton: true,
+            showCancelButton: true,
+            confirmButtonColor: '#10B981',
+            denyButtonColor: '#3B82F6',
+            cancelButtonColor: '#6B7280',
+            confirmButtonText: 'Yes, I waited half time',
+            denyButtonText: 'No, just send email',
+            cancelButtonText: 'Cancel'
+        });
+
+        if (result.isDismissed) {
+            // User cancelled the action
+            btn.innerHTML = originalContent;
+            btn.disabled = false;
+            return;
+        }
+
+        // Show sending state
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i>Sending...';
 
         try {
             const response = await fetch('{{ route('teacher.attendance.notify-waiting') }}', {
@@ -284,27 +309,40 @@
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    schedule_id: scheduleId
+                    schedule_id: scheduleId,
+                    waited_half_time: result.isConfirmed
                 })
             });
 
             const data = await response.json();
 
             if (data.success) {
-                // Show custom professional message
-                Swal.fire({
-                    title: 'Email Sent!',
-                    text: "We're sorry for the wait. We have sent an email to the parent to join the session.",
-                    icon: 'success',
-                    confirmButtonText: 'Great',
-                    confirmButtonColor: '#10B981'
-                });
+                // Show custom professional message as a toast
+                let successText = "";
+                if (data.time_added && data.email_sent) {
+                    successText = "Half of the class time has been added to your hours and the notification was sent.";
+                } else if (data.time_added && !data.email_sent) {
+                    successText = "Half of the class time has been added to your hours, but the email notification failed to send.";
+                } else if (!data.time_added && data.email_sent) {
+                    successText = "Notification sent successfully.";
+                } else {
+                    successText = "Processed successfully, but no time was added and no email was sent.";
+                }
+
+                showSuccessMessage(successText);
 
                 btn.innerHTML = '<i class="fa-solid fa-envelope-circle-check mr-1"></i>Notified';
                 btn.classList.remove('text-yellow-600', 'border-yellow-500');
                 btn.classList.add('text-green-600', 'border-green-500', 'bg-green-50');
+                
+                // If they waited half time, reload the page to update the schedule status to Completed
+                if (data.time_added) {
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2500);
+                }
             } else {
-                showError(data.message || 'Failed to send notification.');
+                showError(data.message || 'Failed to process request.');
                 btn.innerHTML = originalContent;
                 btn.disabled = false;
             }
