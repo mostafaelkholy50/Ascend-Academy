@@ -7,10 +7,10 @@ use Illuminate\Support\Facades\Schedule;
 
 
 // Schedule class reminders to run daily at midnight
-Schedule::command('class:send-reminders')->dailyAt('00:00');
+Schedule::command('class:send-reminders')->dailyAt('00:00')->withoutOverlapping();
 
 // Schedule payment reminders to run weekly (every Monday at 9:00 AM)
-Schedule::command('payment:send-reminders')->weeklyOn(1, '09:00');
+Schedule::command('payment:send-reminders')->weeklyOn(1, '09:00')->withoutOverlapping();
 
 // Generate missing monthly schedules 3 days before the end of the month at midnight
 Schedule::command('schedules:generate-missing')

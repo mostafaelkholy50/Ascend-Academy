@@ -7,6 +7,7 @@ use App\Notifications\ClassReminderNotification;
 use App\Notifications\TeacherDailyScheduleNotification;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Cache;
 
 class SendClassReminders extends Command
 {
@@ -49,18 +50,29 @@ class SendClassReminders extends Command
         $schedulesByTeacher = $schedules->groupBy('teacher_id');
 
         foreach ($schedulesByTeacher as $teacherId => $teacherSchedules) {
+            $cacheKey = 'teacher_digest_sent_' . $teacherId . '_' . $dayStart->format('Y-m-d');
+            if (Cache::has($cacheKey)) {
+                continue;
+            }
+
             try {
                 $teacher = $teacherSchedules->first()->teacher;
                 $teacher->notify(new TeacherDailyScheduleNotification($teacherSchedules));
                 $sentCount++;
                 $teacherDigestCount++;
                 $this->info("Sent daily schedule digest to teacher: {$teacher->name}");
+                Cache::put($cacheKey, true, now()->addDays(2));
             } catch (\Exception $e) {
                 $this->error("Failed to send daily schedule digest to teacher {$teacherId}: " . $e->getMessage());
             }
         }
 
         foreach ($schedules as $schedule) {
+            $cacheKey = 'class_reminder_sent_' . $schedule->id . '_' . $dayStart->format('Y-m-d');
+            if (Cache::has($cacheKey)) {
+                continue;
+            }
+
             try {
                 $parents = $schedule->student->parents;
                 
@@ -84,6 +96,7 @@ class SendClassReminders extends Command
                 }
 
                 $this->info("Sent student/parent reminders for: {$schedule->course->title} - {$schedule->student->name}");
+                Cache::put($cacheKey, true, now()->addDays(2));
             } catch (\Exception $e) {
                 $this->error("Failed to send reminder for schedule {$schedule->id}: " . $e->getMessage());
             }

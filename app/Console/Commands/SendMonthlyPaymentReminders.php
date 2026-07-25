@@ -6,6 +6,7 @@ use App\Models\EnrollmentPayment;
 use App\Notifications\MonthlyPaymentReminderNotification;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Cache;
 
 class SendMonthlyPaymentReminders extends Command
 {
@@ -43,6 +44,11 @@ class SendMonthlyPaymentReminders extends Command
         $sentCount = 0;
 
         foreach ($unpaidPayments as $payment) {
+            $cacheKey = 'payment_reminder_sent_' . $payment->id . '_' . $currentMonth->format('Y-m');
+            if (Cache::has($cacheKey)) {
+                continue;
+            }
+
             try {
                 $student = $payment->enrollment->student;
 
@@ -57,6 +63,7 @@ class SendMonthlyPaymentReminders extends Command
                 }
 
                 $this->info("Sent payment reminder to: {$student->name} - {$payment->getFormattedAmount()}");
+                Cache::put($cacheKey, true, now()->addDays(30));
             } catch (\Exception $e) {
                 $this->error("Failed to send payment reminder for payment {$payment->id}: " . $e->getMessage());
             }

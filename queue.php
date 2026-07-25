@@ -21,7 +21,7 @@ $status = $kernel->call('queue:work', [
     '--stop-when-empty' => true, // تشغيل كافة المهام المعلقة ثم التوقف
     '--queue' => 'default',      // اسم الـ queue
     '--tries' => 3,              // عدد المحاولات
-    '--timeout' => 60,           // timeout بالثواني
+    '--max-time' => 50,          // التوقف بأمان قبل دقيقة لتجنب قتله من السيرفر
     '--memory' => 128,           // حد الذاكرة
 ]);
 
