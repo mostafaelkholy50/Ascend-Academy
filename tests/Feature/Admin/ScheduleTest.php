@@ -365,6 +365,64 @@ class ScheduleTest extends TestCase
         Carbon::setTestNow();
     }
 
+    public function test_admin_can_view_schedule_status_and_absence_reason()
+    {
+        $this->actingAs($this->admin);
+        Carbon::setTestNow(Carbon::create(2026, 7, 25, 12, 0, 0, 'Africa/Cairo'));
+
+        $schedule = Schedule::create([
+            'enrollment_id' => $this->enrollment->id,
+            'student_id' => $this->student->id,
+            'course_id' => $this->enrollment->course_id,
+            'teacher_id' => $this->teacher->id,
+            'starts_at' => Carbon::create(2026, 7, 24, 10, 0, 0, 'Africa/Cairo'),
+            'ends_at' => Carbon::create(2026, 7, 24, 11, 0, 0, 'Africa/Cairo'),
+            'status' => 'scheduled',
+        ]);
+
+        Attendance::create([
+            'schedule_id' => $schedule->id,
+            'student_id' => $this->student->id,
+            'teacher_id' => $this->teacher->id,
+            'student_present' => false,
+            'teacher_present' => true,
+            'remark' => 'Student had a family emergency.',
+        ]);
+
+        $response = $this->get(route('admin.schedules.show', $schedule->id));
+
+        $response->assertStatus(200);
+        $response->assertSee('Absent');
+        $response->assertSee('Student');
+        $response->assertSee('Student had a family emergency.');
+
+        Carbon::setTestNow();
+    }
+
+    public function test_admin_can_view_past_schedule_without_attendance()
+    {
+        $this->actingAs($this->admin);
+        Carbon::setTestNow(Carbon::create(2026, 7, 25, 12, 0, 0, 'Africa/Cairo'));
+
+        $schedule = Schedule::create([
+            'enrollment_id' => $this->enrollment->id,
+            'student_id' => $this->student->id,
+            'course_id' => $this->enrollment->course_id,
+            'teacher_id' => $this->teacher->id,
+            'starts_at' => Carbon::create(2026, 7, 20, 10, 0, 0, 'Africa/Cairo'),
+            'ends_at' => Carbon::create(2026, 7, 20, 11, 0, 0, 'Africa/Cairo'),
+            'status' => 'scheduled',
+        ]);
+
+        $response = $this->get(route('admin.schedules.show', $schedule->id));
+
+        $response->assertStatus(200);
+        $response->assertSee('Past');
+        $response->assertSee('already passed without recorded attendance');
+
+        Carbon::setTestNow();
+    }
+
     public function test_admin_can_print_monthly_schedule_with_late_night_sessions()
     {
         $this->actingAs($this->admin);

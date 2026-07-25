@@ -20,12 +20,33 @@
             <div class="bg-white p-6 rounded-2xl shadow-sm">
                 <div class="flex items-center justify-between mb-6">
                     <h2 class="text-xl font-bold text-gray-800">Schedule Details</h2>
-                    <span class="px-3 py-1 rounded-full text-sm font-medium
-                        {{ $schedule->status === 'scheduled' ? 'bg-green-100 text-green-700' : '' }}
-                        {{ $schedule->status === 'completed' ? 'bg-blue-100 text-blue-700' : '' }}
-                        {{ $schedule->status === 'cancelled' ? 'bg-red-100 text-red-700' : '' }}">
-                        {{ ucfirst($schedule->status) }}
+                    <span class="px-3 py-1 rounded-full text-sm font-medium {{ $statusData['badgeClass'] }}">
+                        {{ $statusData['label'] }}
                     </span>
+                </div>
+
+                <div class="mb-5 rounded-xl border border-gray-100 bg-gray-50 p-4">
+                    <p class="text-sm font-semibold text-gray-800 mb-1">Status Summary</p>
+                    <p class="text-sm text-gray-600">{{ $statusData['description'] }}</p>
+                    @if($statusData['absenceInfo'])
+                        <div class="mt-3 rounded-lg bg-white border border-red-100 p-3 space-y-2">
+                            <p class="text-sm font-semibold text-red-700">Absence Details</p>
+                            <p class="text-sm text-gray-700">
+                                Absent:
+                                @if(!empty($statusData['absenceInfo']['absent_people']))
+                                    {{ implode(' and ', $statusData['absenceInfo']['absent_people']) }}
+                                @else
+                                    Unknown
+                                @endif
+                            </p>
+                            <p class="text-sm text-gray-700">
+                                Reason:
+                                <span class="font-medium">
+                                    {{ $statusData['absenceInfo']['reason'] ?? 'No reason provided.' }}
+                                </span>
+                            </p>
+                        </div>
+                    @endif
                 </div>
 
                 <div class="grid grid-cols-2 gap-4">

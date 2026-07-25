@@ -82,7 +82,9 @@ class ScheduleController extends Controller
     public function show(Schedule $schedule)
     {
         $schedule->load(['student', 'teacher', 'course', 'enrollment', 'attendance']);
-        return view('admin.schedules.show', compact('schedule'));
+        $statusData = $this->getScheduleStatusData($schedule);
+
+        return view('admin.schedules.show', compact('schedule', 'statusData'));
     }
 
     public function edit(Schedule $schedule)
@@ -379,5 +381,71 @@ class ScheduleController extends Controller
 
         $dayName = $schedule->getStartsAtInTimezone($timezone)->format('l');
         return $enrollment->isDayScheduleActive($dayName);
+    }
+
+    protected function getScheduleStatusData(Schedule $schedule): array
+    {
+        $now = now();
+        $isPast = $now->greaterThan($schedule->ends_at);
+        $isInProgress = $now->between($schedule->starts_at, $schedule->ends_at);
+
+        $status = 'not_yet';
+        $label = 'Not Yet';
+        $badgeClass = 'bg-blue-100 text-blue-700';
+        $description = 'This class has not started yet.';
+        $absenceInfo = null;
+
+        if ($schedule->status === 'completed') {
+            $status = 'attended';
+            $label = 'Attended';
+            $badgeClass = 'bg-green-100 text-green-700';
+            $description = 'This class was completed successfully.';
+        } elseif ($schedule->attendance) {
+            $studentPresent = $schedule->attendance->student_present;
+            $teacherPresent = $schedule->attendance->teacher_present;
+
+            if ($studentPresent && $teacherPresent) {
+                $status = 'attended';
+                $label = 'Attended';
+                $badgeClass = 'bg-emerald-100 text-emerald-700';
+                $description = 'Both teacher and student attended this class.';
+            } else {
+                $status = 'absent';
+                $label = 'Absent';
+                $badgeClass = 'bg-red-100 text-red-700';
+
+                $absentPeople = [];
+                if (!$studentPresent) {
+                    $absentPeople[] = 'Student';
+                }
+                if (!$teacherPresent) {
+                    $absentPeople[] = 'Teacher';
+                }
+
+                $description = 'Attendance was recorded with an absence.';
+                if (!empty($absentPeople)) {
+                    $description = implode(' and ', $absentPeople) . ' were absent.';
+                }
+
+                $absenceInfo = [
+                    'absent_people' => $absentPeople,
+                    'reason' => $schedule->attendance->remark ?: null,
+                    'student_present' => $studentPresent,
+                    'teacher_present' => $teacherPresent,
+                ];
+            }
+        } elseif ($isInProgress) {
+            $status = 'in_progress';
+            $label = 'In Progress';
+            $badgeClass = 'bg-yellow-100 text-yellow-800';
+            $description = 'This class is currently in progress.';
+        } elseif ($isPast) {
+            $status = 'past';
+            $label = 'Past';
+            $badgeClass = 'bg-gray-100 text-gray-700';
+            $description = 'This class has already passed without recorded attendance.';
+        }
+
+        return compact('status', 'label', 'badgeClass', 'description', 'absenceInfo');
     }
 }
