@@ -112,6 +112,36 @@
                                             @php
                                                 $start = $s->getStartsAtInTimezone($timezone);
                                                 $end = $s->getEndsAtInTimezone($timezone);
+                                                $now = now();
+                                                $isPast = $now->greaterThan($s->ends_at);
+                                                $isInProgress = $now->between($s->starts_at, $s->ends_at);
+                                                $statusClass = 'bg-blue-50 border-blue-200 text-blue-800';
+                                                $statusText = 'Not Yet';
+                                                $statusIcon = 'fa-calendar';
+
+                                                if ($s->status === 'completed') {
+                                                    $statusClass = 'bg-green-50 border-green-200 text-green-800';
+                                                    $statusText = 'Attended';
+                                                    $statusIcon = 'fa-check-circle';
+                                                } elseif ($s->attendance) {
+                                                    if ($s->attendance->student_present && $s->attendance->teacher_present) {
+                                                        $statusClass = 'bg-emerald-50 border-emerald-200 text-emerald-800';
+                                                        $statusText = 'Attended';
+                                                        $statusIcon = 'fa-check-double';
+                                                    } else {
+                                                        $statusClass = 'bg-red-50 border-red-200 text-red-800';
+                                                        $statusText = 'Absent';
+                                                        $statusIcon = 'fa-times-circle';
+                                                    }
+                                                } elseif ($isPast) {
+                                                    $statusClass = 'bg-gray-100 border-gray-200 text-gray-600';
+                                                    $statusText = 'Past';
+                                                    $statusIcon = 'fa-history';
+                                                } elseif ($isInProgress) {
+                                                    $statusClass = 'bg-yellow-50 border-yellow-300 text-yellow-900';
+                                                    $statusText = 'In Progress';
+                                                    $statusIcon = 'fa-spinner fa-spin';
+                                                }
                                             @endphp
                                             <div class="mb-0.5 last:mb-0 p-0.5 bg-indigo-50 border border-indigo-100 rounded text-indigo-800 text-[8px] sm:text-[9px] text-left shadow-sm overflow-hidden break-words">
                                                 <div class="font-bold leading-none break-words" title="{{ $s->student->name }}">
@@ -122,6 +152,10 @@
                                                 </div>
                                                 <div class="text-gray-500 mt-[2px] leading-none text-[8px]">
                                                     {{ $start->format('g:ia') }}-{{ $end->format('g:ia') }}
+                                                </div>
+                                                <div class="mt-[3px] inline-flex items-center gap-1 px-1 py-0.5 rounded border text-[8px] font-bold {{ $statusClass }}">
+                                                    <i class="fa-solid {{ $statusIcon }}"></i>
+                                                    <span>{{ $statusText }}</span>
                                                 </div>
                                             </div>
                                         @endforeach

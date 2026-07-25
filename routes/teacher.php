@@ -55,6 +55,7 @@ Route::middleware(['auth', 'role_or_permission:Teacher|SuperAdmin|Admin'])->pref
     // Schedule Management
     Route::get('/schedule', [ScheduleController::class, 'index'])->name('schedule.index');
     Route::get('/schedule/daily', [ScheduleController::class, 'daily'])->name('schedule.daily');
+    Route::get('/schedule/print', [ScheduleController::class, 'print'])->name('schedule.print');
 
     // Attendance Management
     Route::post('/attendance', [AttendanceController::class, 'store'])->name('attendance.store');

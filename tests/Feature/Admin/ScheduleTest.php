@@ -5,6 +5,7 @@ namespace Tests\Feature\Admin;
 use App\Models\User;
 use App\Models\Enrollment;
 use App\Models\Schedule;
+use App\Models\Attendance;
 use App\Models\Course;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -280,7 +281,8 @@ class ScheduleTest extends TestCase
     {
         $this->actingAs($this->admin);
 
-        $targetMonth = now()->format('Y-m');
+        Carbon::setTestNow(Carbon::create(2026, 7, 25, 12, 0, 0, 'Africa/Cairo'));
+        $targetMonth = '2026-07';
 
         $this->enrollment->setSchedulePattern([
             'Monday' => [
@@ -304,14 +306,42 @@ class ScheduleTest extends TestCase
             'status' => 'scheduled',
         ]);
 
-        // Inactive schedule should be hidden from print
+        Attendance::create([
+            'schedule_id' => Schedule::where('starts_at', Carbon::create(2026, 7, 6, 10, 0, 0, 'Africa/Cairo'))->value('id'),
+            'student_id' => $this->student->id,
+            'teacher_id' => $this->teacher->id,
+            'student_present' => true,
+            'teacher_present' => true,
+        ]);
+
+        // This one has an attendance record but one side absent
         Schedule::create([
             'enrollment_id' => $this->enrollment->id,
             'student_id' => $this->student->id,
             'course_id' => $this->enrollment->course_id,
             'teacher_id' => $this->teacher->id,
-            'starts_at' => Carbon::create(2026, 7, 7, 12, 0, 0, 'Africa/Cairo'),
-            'ends_at' => Carbon::create(2026, 7, 7, 13, 0, 0, 'Africa/Cairo'),
+            'starts_at' => Carbon::create(2026, 7, 13, 10, 0, 0, 'Africa/Cairo'),
+            'ends_at' => Carbon::create(2026, 7, 13, 11, 0, 0, 'Africa/Cairo'),
+            'status' => 'scheduled',
+        ]);
+
+        $absentSchedule = Schedule::where('starts_at', Carbon::create(2026, 7, 13, 10, 0, 0, 'Africa/Cairo'))->first();
+        Attendance::create([
+            'schedule_id' => $absentSchedule->id,
+            'student_id' => $this->student->id,
+            'teacher_id' => $this->teacher->id,
+            'student_present' => false,
+            'teacher_present' => true,
+        ]);
+
+        // Past schedule without attendance should show the past status
+        Schedule::create([
+            'enrollment_id' => $this->enrollment->id,
+            'student_id' => $this->student->id,
+            'course_id' => $this->enrollment->course_id,
+            'teacher_id' => $this->teacher->id,
+            'starts_at' => Carbon::create(2026, 7, 20, 10, 0, 0, 'Africa/Cairo'),
+            'ends_at' => Carbon::create(2026, 7, 20, 11, 0, 0, 'Africa/Cairo'),
             'status' => 'scheduled',
         ]);
 
@@ -325,10 +355,14 @@ class ScheduleTest extends TestCase
         $response->assertViewHas('teacher');
         $response->assertViewHas('monthDays');
         
-        // Assert active schedule is present and inactive schedule is hidden
+        // Assert statuses are visible in print
         $response->assertSee($this->teacher->name);
         $response->assertSee('10:00');
-        $response->assertDontSee('12:00');
+        $response->assertSee('Attended');
+        $response->assertSee('Absent');
+        $response->assertSee('Past');
+
+        Carbon::setTestNow();
     }
 
     public function test_admin_can_print_monthly_schedule_with_late_night_sessions()

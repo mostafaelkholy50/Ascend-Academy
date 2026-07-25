@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Schedule;
 use App\Repositories\TeacherScheduleRepository;
 use App\Models\User;
 use Carbon\Carbon;
@@ -89,5 +90,42 @@ class TeacherScheduleService
             'completedSessions',
             'totalHours'
         );
+    }
+
+    public function getPrintableMonthlyData(User $teacher, string $month, ?string $timezone = null): array
+    {
+        $timezone = $timezone ?: $teacher->getUserTimezone();
+        $targetMonth = Carbon::parse($month, $timezone);
+
+        $startOfMonthApp = $targetMonth->copy()->startOfMonth()->setTimezone(config('app.timezone'));
+        $endOfMonthApp = $targetMonth->copy()->endOfMonth()->setTimezone(config('app.timezone'));
+
+        $schedules = Schedule::with(['student', 'course', 'enrollment', 'attendance'])
+            ->where('teacher_id', $teacher->id)
+            ->whereBetween('starts_at', [$startOfMonthApp, $endOfMonthApp])
+            ->orderBy('starts_at')
+            ->get();
+
+        $monthDays = [];
+        $currentDate = $targetMonth->copy()->startOfMonth();
+        $endDate = $targetMonth->copy()->endOfMonth();
+
+        while ($currentDate->lte($endDate)) {
+            $monthDays[$currentDate->format('Y-m-d')] = [
+                'date' => $currentDate->copy(),
+                'schedules' => collect(),
+            ];
+            $currentDate->addDay();
+        }
+
+        foreach ($schedules as $schedule) {
+            $dateString = $schedule->getStartsAtInTimezone($timezone)->format('Y-m-d');
+
+            if (isset($monthDays[$dateString])) {
+                $monthDays[$dateString]['schedules']->push($schedule);
+            }
+        }
+
+        return compact('teacher', 'targetMonth', 'monthDays');
     }
 }

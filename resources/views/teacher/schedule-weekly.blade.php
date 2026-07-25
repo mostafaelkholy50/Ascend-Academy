@@ -26,6 +26,10 @@
                     class="px-4 py-2 bg-deep-blue text-white rounded-lg text-sm font-semibold hover:bg-opacity-90 transition shadow-sm flex items-center">
                     <i class="fa-solid fa-calendar-day mr-2"></i> Daily View
                 </a>
+                <button type="button" onclick="openPrintMonthModal()"
+                    class="px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg text-sm font-semibold hover:shadow-lg transition shadow-sm flex items-center">
+                    <i class="fa-solid fa-print mr-2"></i> Print Month
+                </button>
             </div>
         </div>
     </div>
@@ -260,4 +264,72 @@
 
     <!-- Include Attendance Modal -->
     @include('teacher.partials.attendance-modal')
+
+    <!-- Print Month Modal -->
+    <div id="printMonthModal" class="hidden fixed inset-0 z-50 items-center justify-center bg-black/50 p-4">
+        <div class="w-full max-w-md rounded-2xl bg-white shadow-2xl border border-gray-100 overflow-hidden">
+            <div class="flex items-start justify-between p-5 border-b border-gray-100">
+                <div>
+                    <h3 class="text-xl font-bold text-gray-900">Print Month</h3>
+                    <p class="text-sm text-gray-500 mt-1">Choose a month to open the printable schedule.</p>
+                </div>
+                <button type="button" onclick="closePrintMonthModal()" class="text-gray-400 hover:text-gray-700">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <form method="GET" action="{{ route('teacher.schedule.print') }}" target="_blank" class="p-5 space-y-4" onsubmit="closePrintMonthModal()">
+                <div>
+                    <label for="printMonth" class="block text-sm font-semibold text-gray-700 mb-2">Month</label>
+                    <input
+                        id="printMonth"
+                        type="month"
+                        name="month"
+                        value="{{ request('month', now()->format('Y-m')) }}"
+                        class="w-full px-3 py-2 rounded-lg text-sm border border-gray-200 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                        required
+                    >
+                </div>
+                <div class="flex items-center justify-end gap-3 pt-2">
+                    <button type="button" onclick="closePrintMonthModal()"
+                        class="px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 text-sm font-semibold">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                        class="px-4 py-2 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-semibold hover:shadow-lg">
+                        Print
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function openPrintMonthModal() {
+            const modal = document.getElementById('printMonthModal');
+            const input = document.getElementById('printMonth');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            if (input) {
+                input.focus();
+            }
+        }
+
+        function closePrintMonthModal() {
+            const modal = document.getElementById('printMonthModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape') {
+                closePrintMonthModal();
+            }
+        });
+
+        document.getElementById('printMonthModal').addEventListener('click', function (event) {
+            if (event.target === this) {
+                closePrintMonthModal();
+            }
+        });
+    </script>
 </x-dashboard-layout>

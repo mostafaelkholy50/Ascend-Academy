@@ -185,7 +185,7 @@ class ScheduleController extends Controller
         $startOfMonthApp = $targetMonth->copy()->startOfMonth()->setTimezone(config('app.timezone'));
         $endOfMonthApp = $targetMonth->copy()->endOfMonth()->setTimezone(config('app.timezone'));
 
-        $schedules = Schedule::with(['student', 'course', 'enrollment'])
+        $schedules = Schedule::with(['student', 'course', 'enrollment', 'attendance'])
             ->where('teacher_id', $teacherId)
             ->whereBetween('starts_at', [$startOfMonthApp, $endOfMonthApp])
             ->orderBy('starts_at')

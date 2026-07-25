@@ -63,4 +63,28 @@ class ScheduleController extends Controller
             return $this->errorResponse('حدث خطأ أثناء تحميل الجدول اليومي.');
         }
     }
+
+    /**
+     * Print the logged-in teacher's monthly schedule
+     */
+    public function print(Request $request)
+    {
+        try {
+            $teacher = auth()->user();
+
+            if ($teacher->role !== 'Teacher') {
+                abort(403);
+            }
+
+            $month = $request->get('month', now($teacher->getUserTimezone())->format('Y-m'));
+            $data = $this->service->getPrintableMonthlyData($teacher, $month);
+
+            return view('admin.schedules.print', $data);
+        } catch (Exception $e) {
+            if ($e instanceof \Symfony\Component\HttpKernel\Exception\HttpException) {
+                throw $e;
+            }
+            return $this->errorResponse('Failed to load printable schedule.');
+        }
+    }
 }
