@@ -135,15 +135,15 @@
                             @php $record = $payrollRecords->get($teacher->id); @endphp
                             <tr class="hover:bg-slate-50/50 transition-all duration-300 group">
                                 <td class="px-8 py-6">
-                                    <div class="flex items-center gap-4">
-                                        <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 text-slate-500 flex items-center justify-center text-lg font-black group-hover:from-indigo-500 group-hover:to-purple-600 group-hover:text-white transition-all duration-500">
+                                    <a href="{{ route('accountant.teacher-hours.show', $teacher->id) }}?month={{ $month }}&year={{ $year }}" class="flex items-center gap-4 group/link hover:bg-slate-50 p-2 rounded-2xl transition-all">
+                                        <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 text-slate-500 flex items-center justify-center text-lg font-black group-hover/link:from-indigo-500 group-hover/link:to-purple-600 group-hover/link:text-white transition-all duration-500">
                                             {{ strtoupper(substr($teacher->name, 0, 1)) }}
                                         </div>
                                         <div>
-                                            <h4 class="font-black text-slate-900">{{ $teacher->name }}</h4>
+                                            <h4 class="font-black text-slate-900 group-hover/link:text-indigo-600 transition-colors">{{ $teacher->name }}</h4>
                                             <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">{{ $teacher->email }}</p>
                                         </div>
-                                    </div>
+                                    </a>
                                 </td>
                                 <td class="px-6 py-6 text-center">
                                     <div class="inline-flex items-center gap-2 px-3 py-1.5 bg-slate-50 rounded-xl">
@@ -205,10 +205,6 @@
                                                 </button>
                                             </form>
                                         @endif
-                                        
-                                        <a href="{{ route('accountant.teacher-hours.show', $teacher->id) }}?month={{ $month }}&year={{ $year }}" class="w-10 h-10 rounded-2xl bg-slate-50 text-slate-500 flex items-center justify-center hover:bg-indigo-600 hover:text-white transition-all shadow-sm ml-auto" title="View Details">
-                                            <i class="fa-solid fa-arrow-right"></i>
-                                        </a>
                                     </div>
                                 </td>
                             </tr>

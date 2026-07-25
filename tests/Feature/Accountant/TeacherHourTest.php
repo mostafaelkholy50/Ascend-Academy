@@ -39,6 +39,7 @@ test('accountant can view teacher hours', function () {
     
     $response->assertStatus(200);
     $response->assertSee('John Doe');
+    $response->assertSee(route('accountant.teacher-hours.show', $this->teacher->id));
 });
 
 test('accountant can search teachers', function () {
