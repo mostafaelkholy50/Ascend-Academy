@@ -17,6 +17,7 @@ Route::middleware(['auth', 'role_or_permission:Accountant|SuperAdmin|Admin|manag
 
     // Teacher Hours
     Route::get('/teacher-hours', [TeacherHourController::class, 'index'])->name('teacher-hours.index');
+    Route::get('/teacher-hours/{teacher}', [TeacherHourController::class, 'show'])->name('teacher-hours.show');
     Route::post('/teacher-hours/mark-paid', [TeacherHourController::class, 'markAsPaid'])->name('teacher-hours.mark-paid');
     Route::post('/teacher-hours/mark-unpaid', [TeacherHourController::class, 'markAsUnpaid'])->name('teacher-hours.mark-unpaid');
     Route::patch('/teacher-hours/{teacher}/update-rate', [TeacherHourController::class, 'updateRate'])->name('teacher-hours.update-rate');

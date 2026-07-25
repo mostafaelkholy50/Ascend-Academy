@@ -154,3 +154,12 @@ test('teacher hours are calculated on index load', function () {
         'total_hours' => 1.0,
     ]);
 });
+
+test('accountant can view specific teacher detailed hours', function () {
+    $this->actingAs($this->accountant);
+
+    $response = $this->get(route('accountant.teacher-hours.show', $this->teacher->id));
+    
+    $response->assertStatus(200);
+    $response->assertSee($this->teacher->name . "'s Hours");
+});

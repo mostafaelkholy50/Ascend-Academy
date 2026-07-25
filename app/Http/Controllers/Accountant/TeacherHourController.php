@@ -86,4 +86,20 @@ class TeacherHourController extends Controller
 
         return back()->with('success', 'Hourly rate updated successfully.');
     }
+
+    public function show(\App\Models\User $teacher, Request $request, \App\Services\TeacherHoursService $teacherHoursService)
+    {
+        $user = auth()->user();
+        
+        if (!$this->canAccessPayroll($user)) {
+            abort(403, 'Unauthorized access to payroll records.');
+        }
+
+        $data = $teacherHoursService->getHoursData($teacher, $request);
+        
+        // Pass the teacher to the view as well
+        $data['teacher'] = $teacher;
+
+        return view('accountant.teacher-hours.show', $data);
+    }
 }

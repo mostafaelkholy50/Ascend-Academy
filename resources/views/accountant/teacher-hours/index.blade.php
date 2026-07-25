@@ -182,28 +182,34 @@
                                     @endif
                                 </td>
                                 <td class="px-8 py-6 text-right">
-                                    @if(!$record || !$record->is_paid)
-                                        <form action="{{ route('accountant.teacher-hours.mark-paid') }}" method="POST">
-                                            @csrf
-                                            <input type="hidden" name="teacher_id" value="{{ $teacher->id }}">
-                                            <input type="hidden" name="month" value="{{ $month }}">
-                                            <input type="hidden" name="year" value="{{ $year }}">
-                                            <button type="submit" class="bg-indigo-600 text-white px-6 py-2.5 rounded-2xl text-xs font-black shadow-lg shadow-indigo-100 hover:bg-slate-900 transition-all active:scale-95 uppercase tracking-widest">
-                                                Mark Paid
-                                            </button>
-                                        </form>
-                                    @else
-                                        <form action="{{ route('accountant.teacher-hours.mark-unpaid') }}" method="POST">
-                                            @csrf
-                                            <input type="hidden" name="teacher_id" value="{{ $teacher->id }}">
-                                            <input type="hidden" name="month" value="{{ $month }}">
-                                            <input type="hidden" name="year" value="{{ $year }}">
-                                            <button type="submit" class="text-slate-300 hover:text-red-500 transition-colors text-[10px] font-black uppercase tracking-widest italic flex items-center gap-2 ml-auto">
-                                                <i class="fa-solid fa-rotate-left"></i>
-                                                <span>Revert</span>
-                                            </button>
-                                        </form>
-                                    @endif
+                                    <div class="flex items-center justify-end gap-4">
+                                        @if(!$record || !$record->is_paid)
+                                            <form action="{{ route('accountant.teacher-hours.mark-paid') }}" method="POST">
+                                                @csrf
+                                                <input type="hidden" name="teacher_id" value="{{ $teacher->id }}">
+                                                <input type="hidden" name="month" value="{{ $month }}">
+                                                <input type="hidden" name="year" value="{{ $year }}">
+                                                <button type="submit" class="bg-indigo-600 text-white px-6 py-2.5 rounded-2xl text-xs font-black shadow-lg shadow-indigo-100 hover:bg-slate-900 transition-all active:scale-95 uppercase tracking-widest">
+                                                    Mark Paid
+                                                </button>
+                                            </form>
+                                        @else
+                                            <form action="{{ route('accountant.teacher-hours.mark-unpaid') }}" method="POST">
+                                                @csrf
+                                                <input type="hidden" name="teacher_id" value="{{ $teacher->id }}">
+                                                <input type="hidden" name="month" value="{{ $month }}">
+                                                <input type="hidden" name="year" value="{{ $year }}">
+                                                <button type="submit" class="text-slate-300 hover:text-red-500 transition-colors text-[10px] font-black uppercase tracking-widest italic flex items-center gap-2">
+                                                    <i class="fa-solid fa-rotate-left"></i>
+                                                    <span>Revert</span>
+                                                </button>
+                                            </form>
+                                        @endif
+                                        
+                                        <a href="{{ route('accountant.teacher-hours.show', $teacher->id) }}?month={{ $month }}&year={{ $year }}" class="w-10 h-10 rounded-2xl bg-slate-50 text-slate-500 flex items-center justify-center hover:bg-indigo-600 hover:text-white transition-all shadow-sm ml-auto" title="View Details">
+                                            <i class="fa-solid fa-arrow-right"></i>
+                                        </a>
+                                    </div>
                                 </td>
                             </tr>
                         @empty
