@@ -122,82 +122,133 @@
 
             <!-- Class Schedules -->
             @if($teacher->teacherSchedules && $teacher->teacherSchedules->count() > 0)
-                <div class="bg-white p-6 rounded-2xl shadow-sm">
-                    <h2 class="text-xl font-bold text-gray-800 mb-6">Class Schedules ({{ $teacher->teacherSchedules->count() }})</h2>
-                    <div class="space-y-4">
-                        @foreach($teacher->teacherSchedules->take(10) as $schedule)
+                <details class="bg-white p-6 rounded-2xl shadow-sm group">
+                    <summary class="flex justify-between items-center cursor-pointer list-none mb-6">
+                        <h2 class="text-xl font-bold text-gray-800">Class Schedules ({{ $teacher->teacherSchedules->count() }})</h2>
+                        <span class="transition group-open:rotate-180">
+                            <i class="fa-solid fa-chevron-down text-gray-500"></i>
+                        </span>
+                    </summary>
+                    <div class="space-y-4 max-h-96 overflow-y-auto pr-2">
+                        @foreach($teacher->teacherSchedules as $schedule)
                             <div class="border border-gray-200 rounded-xl p-4">
+                                @php
+                                    $now = now();
+                                    $isPast = $schedule->ends_at && $now->greaterThan($schedule->ends_at);
+                                    $isInProgress = $schedule->starts_at && $schedule->ends_at && $now->between($schedule->starts_at, $schedule->ends_at);
+                                    
+                                    $statusClass = 'bg-blue-100 text-blue-700';
+                                    $statusText = 'Upcoming';
+
+                                    if ($schedule->status === 'completed') {
+                                        $statusClass = 'bg-green-100 text-green-700';
+                                        $statusText = 'Completed';
+                                        if ($schedule->attendance) {
+                                            if ($schedule->attendance->student_present && $schedule->attendance->teacher_present) {
+                                                $statusClass = 'bg-emerald-100 text-emerald-700';
+                                                $statusText = 'Attended';
+                                            } elseif (!$schedule->attendance->teacher_present && !$schedule->attendance->student_present) {
+                                                $statusClass = 'bg-red-100 text-red-700';
+                                                $statusText = 'Both Absent';
+                                            } elseif (!$schedule->attendance->teacher_present) {
+                                                $statusClass = 'bg-red-100 text-red-700';
+                                                $statusText = 'Teacher Absent';
+                                            } elseif (!$schedule->attendance->student_present) {
+                                                $statusClass = 'bg-orange-100 text-orange-700';
+                                                $statusText = 'Student Absent';
+                                            }
+                                        }
+                                    } elseif ($isPast) {
+                                        $statusClass = 'bg-gray-100 text-gray-700';
+                                        $statusText = 'Past Unrecorded';
+                                    } elseif ($isInProgress) {
+                                        $statusClass = 'bg-yellow-100 text-yellow-700';
+                                        $statusText = 'In Progress';
+                                    } elseif ($schedule->status === 'cancelled') {
+                                        $statusClass = 'bg-red-100 text-red-700';
+                                        $statusText = 'Cancelled';
+                                    }
+                                @endphp
                                 <div class="flex items-start justify-between">
                                     <div>
                                         <h3 class="font-bold text-gray-800">{{ $schedule->student->name ?? 'N/A' }}</h3>
                                         <div class="flex items-center gap-4 mt-2">
                                             <span class="text-sm text-gray-600">
                                                 <i class="fa-solid fa-calendar mr-1"></i>
-                                                {{ $schedule->day_of_week ?? 'N/A' }}
+                                                {{ $schedule->starts_at ? $schedule->starts_at->format('M d, Y') : 'N/A' }}
                                             </span>
                                             <span class="text-sm text-gray-600">
                                                 <i class="fa-solid fa-clock mr-1"></i>
-                                                {{ $schedule->start_time ?? 'N/A' }} - {{ $schedule->end_time ?? 'N/A' }}
+                                                {{ $schedule->starts_at ? $schedule->starts_at->format('h:i A') : 'N/A' }} - {{ $schedule->ends_at ? $schedule->ends_at->format('h:i A') : 'N/A' }}
                                             </span>
                                         </div>
                                     </div>
-                                    @if(isset($schedule->status))
-                                        <span class="text-xs px-2 py-1 rounded-full
-                                            {{ $schedule->status === 'scheduled' ? 'bg-blue-100 text-blue-700' : '' }}
-                                            {{ $schedule->status === 'completed' ? 'bg-green-100 text-green-700' : '' }}
-                                            {{ $schedule->status === 'cancelled' ? 'bg-red-100 text-red-700' : '' }}">
-                                            {{ ucfirst($schedule->status) }}
-                                        </span>
-                                    @endif
+                                    <span class="text-xs px-2 py-1 rounded-full {{ $statusClass }}">
+                                        {{ $statusText }}
+                                    </span>
                                 </div>
                             </div>
                         @endforeach
                     </div>
-                </div>
+                </details>
             @endif
 
-            <!-- Reports -->
-            @if($teacher->teacherReports && $teacher->teacherReports->count() > 0)
-                <div class="bg-white p-6 rounded-2xl shadow-sm">
-                    <h2 class="text-xl font-bold text-gray-800 mb-6">Student Reports ({{ $teacher->teacherReports->count() }})</h2>
-                    <div class="space-y-4">
-                        @foreach($teacher->teacherReports->take(5) as $report)
-                            <div class="border-l-4 border-vibrant-green pl-4 py-2">
+            <!-- Reports / Evaluations -->
+            @if($teacher->teacherEvaluations && $teacher->teacherEvaluations->count() > 0)
+                <details class="bg-white p-6 rounded-2xl shadow-sm group mb-6">
+                    <summary class="flex justify-between items-center cursor-pointer list-none mb-6">
+                        <h2 class="text-xl font-bold text-gray-800">Student Evaluations ({{ $teacher->teacherEvaluations->count() }})</h2>
+                        <span class="transition group-open:rotate-180">
+                            <i class="fa-solid fa-chevron-down text-gray-500"></i>
+                        </span>
+                    </summary>
+                    <div class="space-y-4 max-h-96 overflow-y-auto pr-2">
+                        @foreach($teacher->teacherEvaluations as $evaluation)
+                            <a href="{{ route('admin.student-evaluations.show', $evaluation->id) }}" class="block border-l-4 border-vibrant-green pl-4 py-2 bg-gray-50 rounded-r-lg hover:bg-gray-100 transition-colors">
                                 <div class="flex items-start justify-between">
                                     <div>
-                                        <p class="font-semibold text-gray-800">{{ $report->title ?? 'Report' }}</p>
-                                        <p class="text-sm text-gray-600 mt-1">Student: {{ $report->student->name ?? 'N/A' }}</p>
-                                        <p class="text-xs text-gray-500 mt-2">{{ $report->created_at->format('M d, Y') }}</p>
+                                        <p class="font-semibold text-gray-800">Evaluation: {{ \Carbon\Carbon::create()->month($evaluation->evaluation_month)->format('F') }} {{ $evaluation->evaluation_year }}</p>
+                                        <p class="text-sm text-gray-600 mt-1">Student: {{ $evaluation->student->name ?? 'N/A' }}</p>
+                                        <p class="text-xs text-gray-500 mt-2">Score: <span class="font-bold {{ $evaluation->total_score >= 50 ? 'text-green-600' : 'text-red-600' }}">{{ $evaluation->total_score }}/100</span> | {{ $evaluation->created_at->format('M d, Y') }}</p>
                                     </div>
                                 </div>
-                            </div>
+                            </a>
                         @endforeach
                     </div>
-                </div>
+                </details>
             @endif
 
             <!-- Teacher Hours -->
             @if($teacher->teacherHours && $teacher->teacherHours->count() > 0)
-                <div class="bg-white p-6 rounded-2xl shadow-sm">
-                    <h2 class="text-xl font-bold text-gray-800 mb-6">Teaching Hours Log</h2>
-                    <div class="space-y-3">
-                        @foreach($teacher->teacherHours->take(10) as $hour)
+                <details class="bg-white p-6 rounded-2xl shadow-sm group">
+                    <summary class="flex justify-between items-center cursor-pointer list-none mb-6">
+                        <h2 class="text-xl font-bold text-gray-800">Teaching Hours Log ({{ $teacher->teacherHours->count() }})</h2>
+                        <span class="transition group-open:rotate-180">
+                            <i class="fa-solid fa-chevron-down text-gray-500"></i>
+                        </span>
+                    </summary>
+                    <div class="space-y-3 max-h-96 overflow-y-auto pr-2">
+                        @foreach($teacher->teacherHours as $hour)
                             <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                                 <div>
-                                    <p class="font-semibold text-gray-800">{{ $hour->date ? $hour->date->format('M d, Y') : 'N/A' }}</p>
-                                    <p class="text-sm text-gray-600">{{ $hour->hours ?? 0 }} hours</p>
+                                    <p class="font-semibold text-gray-800">
+                                        {{ \Carbon\Carbon::create()->year($hour->year)->month($hour->month)->format('F Y') }}
+                                    </p>
+                                    <p class="text-sm text-gray-600">
+                                        <i class="fa-solid fa-clock mr-1"></i>
+                                        {{ number_format($hour->total_hours, 2) }} hours
+                                    </p>
                                 </div>
-                                @if(isset($hour->status))
-                                    <span class="text-xs px-2 py-1 rounded-full
-                                        {{ $hour->status === 'approved' ? 'bg-green-100 text-green-700' : '' }}
-                                        {{ $hour->status === 'pending' ? 'bg-yellow-100 text-yellow-700' : '' }}">
-                                        {{ ucfirst($hour->status) }}
-                                    </span>
-                                @endif
+                                <span class="text-xs px-2 py-1 rounded-full {{ $hour->is_paid ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700' }}">
+                                    {{ $hour->is_paid ? 'Paid' : 'Unpaid' }}
+                                    @if($hour->is_paid && $hour->paid_at)
+                                        ({{ $hour->paid_at->format('M d, Y') }})
+                                    @endif
+                                </span>
                             </div>
                         @endforeach
                     </div>
-                </div>
+                </details>
             @endif
         </div>
 

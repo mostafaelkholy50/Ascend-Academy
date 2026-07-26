@@ -15,7 +15,7 @@ class TeacherRepository
     public function getTeachersQuery()
     {
         return User::where('role', 'Teacher')
-            ->withCount(['teacherSchedules', 'teacherReports']);
+            ->withCount(['teacherSchedules', 'teacherEvaluations']);
     }
 
     /**
@@ -28,7 +28,7 @@ class TeacherRepository
     {
         return $teacher->load([
             'teacherSchedules.student',
-            'teacherReports.student',
+            'teacherEvaluations.student',
             'teacherHours',
             'teacherResources'
         ]);

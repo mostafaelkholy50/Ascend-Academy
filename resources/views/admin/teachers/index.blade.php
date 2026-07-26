@@ -105,8 +105,8 @@
                                 <p class="text-lg font-bold text-vibrant-green">{{ $teacher->teacher_schedules_count ?? 0 }}</p>
                             </div>
                             <div class="text-center">
-                                <p class="text-xs text-gray-500">Reports</p>
-                                <p class="text-lg font-bold text-deep-blue">{{ $teacher->teacher_reports_count ?? 0 }}</p>
+                                <p class="text-xs text-gray-500">Evaluations</p>
+                                <p class="text-lg font-bold text-deep-blue">{{ $teacher->teacher_evaluations_count ?? 0 }}</p>
                             </div>
                         </div>
                     </div>
