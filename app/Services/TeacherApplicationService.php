@@ -28,7 +28,7 @@ class TeacherApplicationService
 
         $application = $this->repository->createApplication($validatedData);
 
-        $this->sendAdminNotification($application);
+        // $this->sendAdminNotification($application); // Temporarily disabled to prevent bot spam suspending email
 
         return $application;
     }

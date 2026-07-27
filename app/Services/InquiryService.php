@@ -20,7 +20,7 @@ class InquiryService
     {
         $inquiry = $this->repository->createInquiry($validatedData);
 
-        $this->sendAdminNotification($inquiry);
+        // $this->sendAdminNotification($inquiry); // Temporarily disabled to prevent bot spam suspending email
 
         return $this->getSuccessMessage($validatedData['type'] ?? 'contact');
     }
