@@ -7,7 +7,7 @@ dataset('loginRoles', [
     ['SuperAdmin', 'superadmin.index'],
     ['Admin', 'admin.dashboard'],
     ['SchedulerManager', 'scheduler.dashboard'],
-    ['Teacher', 'teacher.dashboard'],
+    ['Teacher', 'teacher.schedule.index'],
     ['Student', 'student.dashboard'],
     ['Parent', 'parent.dashboard'],
     ['Accountant', 'accountant.dashboard'],

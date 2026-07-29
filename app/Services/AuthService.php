@@ -44,7 +44,7 @@ class AuthService
         }
 
         if ($this->hasRole($user, 'Teacher')) {
-            return route('teacher.dashboard');
+            return route('teacher.schedule.index');
         }
 
         if ($this->hasRole($user, 'Student')) {
