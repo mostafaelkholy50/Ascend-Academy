@@ -1,6 +1,18 @@
 <?php
 
 use App\Models\User;
+use Spatie\Permission\Models\Role;
+
+dataset('loginRoles', [
+    ['SuperAdmin', 'superadmin.index'],
+    ['Admin', 'admin.dashboard'],
+    ['SchedulerManager', 'scheduler.dashboard'],
+    ['Teacher', 'teacher.dashboard'],
+    ['Student', 'student.dashboard'],
+    ['Parent', 'parent.dashboard'],
+    ['Accountant', 'accountant.dashboard'],
+    ['QualityControl', 'qualitycontrol.dashboard'],
+]);
 
 test('login screen can be rendered', function () {
     $response = $this->get('/login');
@@ -19,8 +31,25 @@ test('users can authenticate using the login screen', function () {
     ]);
 
     $this->assertAuthenticated();
-    $response->assertRedirect(route('student.dashboard', absolute: false));
+    $response->assertRedirect(route('student.dashboard'));
 });
+
+test('users are redirected to the correct dashboard for each role', function (string $role, string $expectedRoute) {
+    Role::firstOrCreate(['name' => $role]);
+
+    $user = User::factory()->create([
+        'role' => $role,
+    ]);
+    $user->assignRole($role);
+
+    $response = $this->post('/login', [
+        'email' => $user->email,
+        'password' => 'password',
+    ]);
+
+    $this->assertAuthenticatedAs($user);
+    $response->assertRedirect(route($expectedRoute));
+})->with('loginRoles');
 
 test('users can not authenticate with invalid password', function () {
     $user = User::factory()->create();

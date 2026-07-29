@@ -31,16 +31,43 @@ class AuthService
         }
 
         // Determine redirect route based on role
-        if ($user->isAdmin()) {
+        if ($this->hasRole($user, 'SuperAdmin')) {
+            return route('superadmin.index');
+        }
+
+        if ($this->hasRole($user, 'Admin')) {
             return route('admin.dashboard');
-        } elseif ($user->isTeacher()) {
-            return route('teacher.schedule.index');
-        } elseif ($user->isStudent()) {
+        }
+
+        if ($this->hasRole($user, 'SchedulerManager')) {
+            return route('scheduler.dashboard');
+        }
+
+        if ($this->hasRole($user, 'Teacher')) {
+            return route('teacher.dashboard');
+        }
+
+        if ($this->hasRole($user, 'Student')) {
             return route('student.dashboard');
-        } elseif ($user->isParent()) {
+        }
+
+        if ($this->hasRole($user, 'Parent')) {
             return route('parent.dashboard');
         }
 
+        if ($this->hasRole($user, 'Accountant')) {
+            return route('accountant.dashboard');
+        }
+
+        if ($this->hasRole($user, 'QualityControl')) {
+            return route('qualitycontrol.dashboard');
+        }
+
         return route('home'); // Fallback
+    }
+
+    private function hasRole(User $user, string $role): bool
+    {
+        return $user->hasRole($role) || strcasecmp((string) $user->role, $role) === 0;
     }
 }
