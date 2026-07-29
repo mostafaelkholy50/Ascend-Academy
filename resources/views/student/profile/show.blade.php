@@ -20,14 +20,14 @@
         <div class="lg:col-span-2 space-y-6">
             <!-- Profile Information -->
             <div class="bg-white rounded-3xl shadow-lg p-8 border border-gray-100">
-                <div class="flex items-center justify-between mb-6">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
                     <h2 class="text-xl font-bold text-gray-800">Profile Information</h2>
-                    <a href="{{ route('student.profile.edit') }}" class="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:shadow-lg hover:scale-105 transition-all duration-200 font-semibold">
+                    <a href="{{ route('student.profile.edit') }}" class="w-full sm:w-auto text-center px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:shadow-lg hover:scale-105 transition-all duration-200 font-semibold">
                         <i class="fa-solid fa-edit mr-2"></i>Edit Profile
                     </a>
                 </div>
 
-                <div class="flex items-start gap-6 mb-8">
+                <div class="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-6 mb-8">
                     <!-- Avatar -->
                     <div class="relative">
                         <div class="w-32 h-32 rounded-2xl bg-gradient-to-br from-blue-500 via-purple-500 to-pink-600 flex items-center justify-center text-white font-bold text-5xl shadow-xl">
@@ -49,7 +49,7 @@
                                 <i class="fa-solid fa-phone mr-2 text-green-600"></i>{{ $user->phone }}
                             </p>
                         @endif
-                        <div class="flex items-center gap-3">
+                        <div class="flex flex-wrap justify-center sm:justify-start items-center gap-3">
                             <span class="px-4 py-2 bg-gradient-to-r from-blue-100 to-purple-100 text-blue-700 rounded-xl font-bold text-sm">
                                 <i class="fa-solid fa-user-graduate mr-1"></i>Student
                             </span>

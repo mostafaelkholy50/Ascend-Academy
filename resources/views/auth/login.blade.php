@@ -151,37 +151,12 @@
     </script>
 
     <script>
-        // Auto-refresh CSRF token before submitting the form to prevent 419 errors on mobile/cached pages
         document.querySelector('form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const form = this;
-            const submitBtn = form.querySelector('button[type="submit"]');
-            
-            // Disable button to prevent double clicking
+            const submitBtn = this.querySelector('button[type="submit"]');
             if (submitBtn) {
                 submitBtn.disabled = true;
                 submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Signing In...';
             }
-
-            fetch('/refresh-csrf', { credentials: 'same-origin' })
-                .then(response => response.json())
-                .then(data => {
-                    const metaToken = document.querySelector('meta[name="csrf-token"]');
-                    if (metaToken) {
-                        metaToken.setAttribute('content', data.token);
-                    }
-                    
-                    const csrfInput = form.querySelector('input[name="_token"]');
-                    if (csrfInput) {
-                        csrfInput.value = data.token;
-                    }
-                    
-                    form.submit();
-                })
-                .catch(error => {
-                    console.log('CSRF refresh failed:', error);
-                    form.submit(); // Try to submit anyway if refresh fails
-                });
         });
     </script>
 </body>

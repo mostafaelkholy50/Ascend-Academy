@@ -1,6 +1,6 @@
 <x-dashboard-layout title="Edit Profile">
     <div class="mb-8">
-        <div class="flex items-center gap-4">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
             <a href="{{ route('teacher.profile.show') }}" class="bg-white hover:bg-gray-50 p-3 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 border border-gray-200">
                 <i class="fa-solid fa-arrow-left text-gray-600"></i>
             </a>
@@ -28,7 +28,7 @@
             <h2 class="text-lg font-bold text-gray-800 mb-6">
                 <i class="fa-solid fa-image text-blue-600 mr-2"></i>Profile Picture
             </h2>
-            <div class="flex items-center gap-6">
+            <div class="flex flex-col sm:flex-row items-center sm:items-start gap-6 text-center sm:text-left">
                 <div class="flex-shrink-0">
                     @if($user->avatar)
                         <img src="{{ asset('storage/' . $user->avatar) }}" alt="{{ $user->name }}" class="w-24 h-24 rounded-full object-cover border-4 border-gray-200 shadow-lg">
@@ -109,11 +109,11 @@
             </div>
 
             <!-- Action Buttons -->
-            <div class="flex gap-4 mt-8">
-                <button type="submit" class="flex-1 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white px-6 py-4 rounded-xl hover:shadow-xl hover:scale-105 transition-all duration-200 font-bold text-lg">
+            <div class="flex flex-col sm:flex-row gap-4 mt-8">
+                <button type="submit" class="w-full sm:flex-1 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white px-6 py-4 rounded-xl hover:shadow-xl hover:scale-105 transition-all duration-200 font-bold text-lg">
                     <i class="fa-solid fa-save mr-2"></i>Save Changes
                 </button>
-                <a href="{{ route('teacher.profile.show') }}" class="px-6 py-4 border-2 border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition font-bold">
+                <a href="{{ route('teacher.profile.show') }}" class="w-full sm:w-auto text-center px-6 py-4 border-2 border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition font-bold">
                     Cancel
                 </a>
             </div>
