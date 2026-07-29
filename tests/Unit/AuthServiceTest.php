@@ -2,6 +2,7 @@
 
 use App\Models\User;
 use App\Services\AuthService;
+use App\Enums\UserRole;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
 use Spatie\Permission\Models\Role;
@@ -9,14 +10,14 @@ use Spatie\Permission\Models\Role;
 uses(Tests\TestCase::class, RefreshDatabase::class);
 
 beforeEach(function () {
-    Role::firstOrCreate(['name' => 'Teacher']);
+    Role::firstOrCreate(['name' => UserRole::Teacher->value]);
 });
 
 test('teacher login redirects to the schedule page', function () {
     $teacher = User::factory()->create([
-        'role' => 'Teacher',
+        'role' => UserRole::Teacher->value,
     ]);
-    $teacher->assignRole('Teacher');
+    $teacher->assignRole(UserRole::Teacher->value);
 
     $request = Request::create('/login', 'POST', [
         'timezone' => 'Africa/Cairo',

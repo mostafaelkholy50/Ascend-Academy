@@ -9,8 +9,16 @@ use App\Http\Controllers\ParentUser\EvaluationController;
 use App\Http\Controllers\ParentUser\AttendanceController;
 use App\Http\Controllers\ParentUser\ProfileController;
 use App\Http\Controllers\NotificationController;
+use App\Enums\UserRole;
 
-Route::middleware(['auth', 'role_or_permission:Parent|SuperAdmin|Admin'])->prefix('parent')->name('parent.')->group(function () {
+Route::middleware([
+    'auth',
+    'role_or_permission:' . implode('|', [
+        UserRole::Parent->value,
+        UserRole::SuperAdmin->value,
+        UserRole::Admin->value,
+    ]),
+])->prefix('parent')->name('parent.')->group(function () {
     Route::get('/dashboard', [ParentDashboardController::class, 'index'])->name('dashboard');
 
     // Children Management

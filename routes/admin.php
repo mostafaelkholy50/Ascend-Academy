@@ -17,8 +17,15 @@ use App\Http\Controllers\Admin\StudentEvaluationController;
 use App\Http\Controllers\Admin\ProfileController;
 use App\Http\Controllers\Admin\PricingTierController;
 use App\Http\Controllers\NotificationController;
+use App\Enums\UserRole;
 
-Route::middleware(['auth', 'role_or_permission:SuperAdmin|Admin'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware([
+    'auth',
+    'role_or_permission:' . implode('|', [
+        UserRole::SuperAdmin->value,
+        UserRole::Admin->value,
+    ]),
+])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
 
     // Inquiries Management

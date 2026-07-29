@@ -8,8 +8,16 @@ use App\Http\Controllers\Student\ResourceController;
 use App\Http\Controllers\Student\ReportController;
 use App\Http\Controllers\Student\ProfileController;
 use App\Http\Controllers\NotificationController;
+use App\Enums\UserRole;
 
-Route::middleware(['auth', 'role_or_permission:Student|SuperAdmin|Admin'])->prefix('student')->name('student.')->group(function () {
+Route::middleware([
+    'auth',
+    'role_or_permission:' . implode('|', [
+        UserRole::Student->value,
+        UserRole::SuperAdmin->value,
+        UserRole::Admin->value,
+    ]),
+])->prefix('student')->name('student.')->group(function () {
     Route::get('/dashboard', [StudentDashboardController::class, 'index'])->name('dashboard');
 
     // Schedule Management

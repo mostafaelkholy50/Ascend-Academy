@@ -11,6 +11,7 @@ use App\Models\Attendance;
 use App\Models\Report;
 use App\Models\Resource;
 use App\Models\TeacherHour;
+use App\Enums\UserRole;
 
 use Spatie\Permission\Traits\HasRoles;
 
@@ -189,22 +190,22 @@ class User extends Authenticatable
     // ============================================
     public function isParent(): bool
     {
-        return $this->role === 'Parent';
+        return $this->role === UserRole::Parent->value;
     }
 
     public function isStudent(): bool
     {
-        return $this->role === 'Student';
+        return $this->role === UserRole::Student->value;
     }
 
     public function isTeacher(): bool
     {
-        return $this->role === 'Teacher';
+        return $this->role === UserRole::Teacher->value;
     }
 
     public function isAdmin(): bool
     {
-        return in_array($this->role, ['Admin', 'SuperAdmin']);
+        return in_array($this->role, [UserRole::Admin->value, UserRole::SuperAdmin->value]);
     }
 
     public function isActive(): bool

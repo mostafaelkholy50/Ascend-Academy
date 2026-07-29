@@ -2,8 +2,12 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\SuperAdmin\RolePermissionController;
+use App\Enums\UserRole;
 
-Route::middleware(['auth', 'role:SuperAdmin'])->prefix('admin/superadmin')->name('superadmin.')->group(function () {
+Route::middleware([
+    'auth',
+    'role:' . UserRole::SuperAdmin->value,
+])->prefix('admin/superadmin')->name('superadmin.')->group(function () {
     Route::get('/', [RolePermissionController::class, 'index'])->name('index');
     Route::get('/roles', [RolePermissionController::class, 'manageRoles'])->name('roles.index');
     Route::post('/roles', [RolePermissionController::class, 'storeRole'])->name('roles.store');

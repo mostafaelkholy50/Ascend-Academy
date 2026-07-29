@@ -1,17 +1,18 @@
 <?php
 
 use App\Models\User;
+use App\Enums\UserRole;
 use Spatie\Permission\Models\Role;
 
 dataset('loginRoles', [
-    ['SuperAdmin', 'superadmin.index'],
-    ['Admin', 'admin.dashboard'],
-    ['SchedulerManager', 'scheduler.dashboard'],
-    ['Teacher', 'teacher.schedule.index'],
-    ['Student', 'student.dashboard'],
-    ['Parent', 'parent.dashboard'],
-    ['Accountant', 'accountant.dashboard'],
-    ['QualityControl', 'qualitycontrol.dashboard'],
+    [UserRole::SuperAdmin->value, 'superadmin.index'],
+    [UserRole::Admin->value, 'admin.dashboard'],
+    [UserRole::SchedulerManager->value, 'scheduler.dashboard'],
+    [UserRole::Teacher->value, 'teacher.schedule.index'],
+    [UserRole::Student->value, 'student.dashboard'],
+    [UserRole::Parent->value, 'parent.dashboard'],
+    [UserRole::Accountant->value, 'accountant.dashboard'],
+    [UserRole::QualityControl->value, 'qualitycontrol.dashboard'],
 ]);
 
 test('login screen can be rendered', function () {
@@ -22,7 +23,7 @@ test('login screen can be rendered', function () {
 
 test('users can authenticate using the login screen', function () {
     $user = User::factory()->create([
-        'role' => 'Student',
+        'role' => UserRole::Student->value,
     ]);
 
     $response = $this->post('/login', [

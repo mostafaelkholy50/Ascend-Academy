@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\Schedule;
+use App\Enums\UserRole;
 use App\Models\Attendance;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Hash;
@@ -21,11 +22,11 @@ class TestTeacherScheduleSeeder extends Seeder
             [
                 'name' => 'Test Teacher',
                 'password' => Hash::make('password'),
-                'role' => 'Teacher',
+                'role' => UserRole::Teacher->value,
                 'active' => true,
             ]
         );
-        $teacher->assignRole('Teacher');
+        $teacher->assignRole(UserRole::Teacher->value);
 
         // 2. Ensure a course exists
         $course = Course::first();
@@ -41,11 +42,11 @@ class TestTeacherScheduleSeeder extends Seeder
                 [
                     'name' => "Student {$i}",
                     'password' => Hash::make('password'),
-                    'role' => 'Student',
+                    'role' => UserRole::Student->value,
                     'active' => true,
                 ]
             );
-            $student->assignRole('Student');
+            $student->assignRole(UserRole::Student->value);
             $students[] = $student;
 
             // Ensure enrollment

@@ -1,4 +1,7 @@
 @include('components.head')
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="Expires" content="0" />
 <style>
     body {
         font-family: 'Inter', sans-serif;
@@ -148,19 +151,38 @@
     </script>
 
     <script>
-        // Auto-refresh CSRF token every 5 minutes
-        setInterval(function() {
-            fetch('/refresh-csrf')
+        // Auto-refresh CSRF token before submitting the form to prevent 419 errors on mobile/cached pages
+        document.querySelector('form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const form = this;
+            const submitBtn = form.querySelector('button[type="submit"]');
+            
+            // Disable button to prevent double clicking
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Signing In...';
+            }
+
+            fetch('/refresh-csrf', { credentials: 'same-origin' })
                 .then(response => response.json())
                 .then(data => {
-                    document.querySelector('meta[name="csrf-token"]').setAttribute('content', data.token);
-                    const csrfInput = document.querySelector('input[name="_token"]');
+                    const metaToken = document.querySelector('meta[name="csrf-token"]');
+                    if (metaToken) {
+                        metaToken.setAttribute('content', data.token);
+                    }
+                    
+                    const csrfInput = form.querySelector('input[name="_token"]');
                     if (csrfInput) {
                         csrfInput.value = data.token;
                     }
+                    
+                    form.submit();
                 })
-                .catch(error => console.log('CSRF refresh failed:', error));
-        }, 300000); // كل 5 دقايق
+                .catch(error => {
+                    console.log('CSRF refresh failed:', error);
+                    form.submit(); // Try to submit anyway if refresh fails
+                });
+        });
     </script>
 </body>
 

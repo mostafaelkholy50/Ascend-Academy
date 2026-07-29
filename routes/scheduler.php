@@ -5,8 +5,19 @@ use App\Http\Controllers\Scheduler\DashboardController;
 use App\Http\Controllers\Admin\AttendanceController;
 use App\Http\Controllers\Admin\ScheduleController;
 use App\Http\Controllers\Admin\ReportController;
+use App\Enums\UserRole;
 
-Route::middleware(['auth', 'role_or_permission:SchedulerManager|SuperAdmin|Admin|QualityControl|manage quality|view evaluations'])->prefix('scheduler')->name('scheduler.')->group(function () {
+Route::middleware([
+    'auth',
+    'role_or_permission:' . implode('|', [
+        UserRole::SchedulerManager->value,
+        UserRole::SuperAdmin->value,
+        UserRole::Admin->value,
+        UserRole::QualityControl->value,
+        'manage quality',
+        'view evaluations',
+    ]),
+])->prefix('scheduler')->name('scheduler.')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/dashboard/search', [DashboardController::class, 'ajaxSearch'])->name('dashboard.search');
     

@@ -230,7 +230,7 @@
             </p>
 
             <div class="btn-container">
-                <a href="javascript:location.reload()" class="btn btn-primary">
+                <a href="{{ url()->previous() }}" class="btn btn-primary">
                     <i class="fa-solid fa-arrows-rotate"></i>
                     <span>تحديث الصفحة</span>
                 </a>

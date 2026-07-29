@@ -4,8 +4,17 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Accountant\DashboardController;
 use App\Http\Controllers\Accountant\PaymentController;
 use App\Http\Controllers\Accountant\TeacherHourController;
+use App\Enums\UserRole;
 
-Route::middleware(['auth', 'role_or_permission:Accountant|SuperAdmin|Admin|manage accounting'])->prefix('accountant')->name('accountant.')->group(function () {
+Route::middleware([
+    'auth',
+    'role_or_permission:' . implode('|', [
+        UserRole::Accountant->value,
+        UserRole::SuperAdmin->value,
+        UserRole::Admin->value,
+        'manage accounting',
+    ]),
+])->prefix('accountant')->name('accountant.')->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
     
     // Payments

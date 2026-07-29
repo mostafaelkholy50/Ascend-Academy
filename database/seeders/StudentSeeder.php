@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use App\Models\User;
+use App\Enums\UserRole;
 use Illuminate\Support\Facades\DB;
 
 class StudentSeeder extends Seeder
@@ -19,7 +20,7 @@ class StudentSeeder extends Seeder
         $students = User::factory(20)->student()->create();
         
         foreach ($students as $student) {
-            $student->assignRole('Student');
+            $student->assignRole(UserRole::Student->value);
             $parent = $parents->random();
             DB::table('children')->insert([
                 'parent_id' => $parent->id,

@@ -10,8 +10,16 @@ use App\Http\Controllers\Teacher\AttendanceController;
 use App\Http\Controllers\Teacher\ProfileController;
 use App\Http\Controllers\Teacher\ReportController;
 use App\Http\Controllers\NotificationController;
+use App\Enums\UserRole;
 
-Route::middleware(['auth', 'role_or_permission:Teacher|SuperAdmin|Admin'])->prefix('teacher')->name('teacher.')->group(function () {
+Route::middleware([
+    'auth',
+    'role_or_permission:' . implode('|', [
+        UserRole::Teacher->value,
+        UserRole::SuperAdmin->value,
+        UserRole::Admin->value,
+    ]),
+])->prefix('teacher')->name('teacher.')->group(function () {
     Route::get('/dashboard', [TeacherDashboardController::class, 'index'])->name('dashboard');
 
     // Reports Management

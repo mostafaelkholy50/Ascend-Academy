@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\User;
+use App\Enums\UserRole;
 use Illuminate\Http\Request;
 
 class AuthService
@@ -31,43 +32,43 @@ class AuthService
         }
 
         // Determine redirect route based on role
-        if ($this->hasRole($user, 'SuperAdmin')) {
+        if ($this->hasRole($user, UserRole::SuperAdmin)) {
             return route('superadmin.index');
         }
 
-        if ($this->hasRole($user, 'Admin')) {
+        if ($this->hasRole($user, UserRole::Admin)) {
             return route('admin.dashboard');
         }
 
-        if ($this->hasRole($user, 'SchedulerManager')) {
+        if ($this->hasRole($user, UserRole::SchedulerManager)) {
             return route('scheduler.dashboard');
         }
 
-        if ($this->hasRole($user, 'Teacher')) {
+        if ($this->hasRole($user, UserRole::Teacher)) {
             return route('teacher.schedule.index');
         }
 
-        if ($this->hasRole($user, 'Student')) {
+        if ($this->hasRole($user, UserRole::Student)) {
             return route('student.dashboard');
         }
 
-        if ($this->hasRole($user, 'Parent')) {
+        if ($this->hasRole($user, UserRole::Parent)) {
             return route('parent.dashboard');
         }
 
-        if ($this->hasRole($user, 'Accountant')) {
+        if ($this->hasRole($user, UserRole::Accountant)) {
             return route('accountant.dashboard');
         }
 
-        if ($this->hasRole($user, 'QualityControl')) {
+        if ($this->hasRole($user, UserRole::QualityControl)) {
             return route('qualitycontrol.dashboard');
         }
 
         return route('home'); // Fallback
     }
 
-    private function hasRole(User $user, string $role): bool
+    private function hasRole(User $user, UserRole $role): bool
     {
-        return $user->hasRole($role) || strcasecmp((string) $user->role, $role) === 0;
+        return $user->hasRole($role->value) || strcasecmp((string) $user->role, $role->value) === 0;
     }
 }

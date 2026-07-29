@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use App\Models\User;
+use App\Enums\UserRole;
 
 class TeacherSeeder extends Seeder
 {
@@ -14,7 +15,7 @@ class TeacherSeeder extends Seeder
         $teachers = $teachers->merge(User::factory(3)->teacher()->state(['gender' => 'Female'])->create());
 
         foreach ($teachers as $teacher) {
-            $teacher->assignRole('Teacher');
+            $teacher->assignRole(UserRole::Teacher->value);
         }
     }
 }
