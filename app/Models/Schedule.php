@@ -156,49 +156,72 @@ class Schedule extends Model
     // ============================================
     public static function hasTeacherConflict($teacherId, $startsAt, $endsAt, $excludeId = null)
     {
-        return self::where('teacher_id', $teacherId)
+        $conflict = self::with('enrollment')
+            ->where('teacher_id', $teacherId)
             ->where('status', '!=', 'cancelled')
             ->where(function ($q) use ($startsAt, $endsAt) {
                 $q->where('starts_at', '<', $endsAt)
                   ->where('ends_at', '>', $startsAt);
             })
             ->when($excludeId, fn($q) => $q->where('id', '!=', $excludeId))
-            ->exists();
+            ->get()
+            ->first(fn (self $schedule) => $schedule->isConflictRelevantFor($startsAt));
+
+        return (bool) $conflict;
     }
 
     public static function hasStudentConflict($studentId, $startsAt, $endsAt, $excludeId = null)
     {
-        return self::where('student_id', $studentId)
+        $conflict = self::with('enrollment')
+            ->where('student_id', $studentId)
             ->where('status', '!=', 'cancelled')
             ->where(function ($q) use ($startsAt, $endsAt) {
                 $q->where('starts_at', '<', $endsAt)
                   ->where('ends_at', '>', $startsAt);
             })
             ->when($excludeId, fn($q) => $q->where('id', '!=', $excludeId))
-            ->exists();
+            ->get()
+            ->first(fn (self $schedule) => $schedule->isConflictRelevantFor($startsAt));
+
+        return (bool) $conflict;
     }
 
     public static function getTeacherConflict($teacherId, $startsAt, $endsAt, $excludeId = null)
     {
-        return self::with(['student', 'course'])->where('teacher_id', $teacherId)
+        return self::with(['student', 'course', 'enrollment'])->where('teacher_id', $teacherId)
             ->where('status', '!=', 'cancelled')
             ->where(function ($q) use ($startsAt, $endsAt) {
                 $q->where('starts_at', '<', $endsAt)
                   ->where('ends_at', '>', $startsAt);
             })
             ->when($excludeId, fn($q) => $q->where('id', '!=', $excludeId))
-            ->first();
+            ->get()
+            ->first(fn (self $schedule) => $schedule->isConflictRelevantFor($startsAt));
     }
 
     public static function getStudentConflict($studentId, $startsAt, $endsAt, $excludeId = null)
     {
-        return self::with(['teacher', 'course'])->where('student_id', $studentId)
+        return self::with(['teacher', 'course', 'enrollment'])->where('student_id', $studentId)
             ->where('status', '!=', 'cancelled')
             ->where(function ($q) use ($startsAt, $endsAt) {
                 $q->where('starts_at', '<', $endsAt)
                   ->where('ends_at', '>', $startsAt);
             })
             ->when($excludeId, fn($q) => $q->where('id', '!=', $excludeId))
-            ->first();
+            ->get()
+            ->first(fn (self $schedule) => $schedule->isConflictRelevantFor($startsAt));
+    }
+
+    public function isConflictRelevantFor(\Carbon\Carbon $startsAt): bool
+    {
+        $enrollment = $this->enrollment;
+
+        if (!$enrollment || !$enrollment->hasSchedulePattern()) {
+            return true;
+        }
+
+        $dayName = $startsAt->format('l');
+
+        return $enrollment->isDayScheduleActive($dayName);
     }
 }

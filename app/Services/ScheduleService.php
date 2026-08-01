@@ -263,7 +263,9 @@ class ScheduleService
 
                     // Check Teacher Conflict in-memory
                     $teacherConflict = $existingTeacherSchedules->first(function ($schedule) use ($startsAt, $endsAt) {
-                        return $schedule->starts_at < $endsAt && $schedule->ends_at > $startsAt;
+                        return $schedule->starts_at < $endsAt
+                            && $schedule->ends_at > $startsAt
+                            && $schedule->isConflictRelevantFor($startsAt);
                     });
                     
                     if ($teacherConflict) {
@@ -275,7 +277,9 @@ class ScheduleService
 
                     // Check Student Conflict in-memory
                     $studentConflict = $existingStudentSchedules->first(function ($schedule) use ($startsAt, $endsAt) {
-                        return $schedule->starts_at < $endsAt && $schedule->ends_at > $startsAt;
+                        return $schedule->starts_at < $endsAt
+                            && $schedule->ends_at > $startsAt
+                            && $schedule->isConflictRelevantFor($startsAt);
                     });
 
                     if ($studentConflict) {
@@ -591,7 +595,9 @@ class ScheduleService
 
                         // Check Teacher Conflict in-memory
                         $teacherConflict = $existingTeacherSchedules->first(function ($schedule) use ($startsAt, $endsAt) {
-                            return $schedule->starts_at < $endsAt && $schedule->ends_at > $startsAt;
+                            return $schedule->starts_at < $endsAt
+                                && $schedule->ends_at > $startsAt
+                                && $schedule->isConflictRelevantFor($startsAt);
                         });
 
                         if ($teacherConflict) {
@@ -603,7 +609,9 @@ class ScheduleService
 
                         // Check Student Conflict in-memory
                         $studentConflict = $existingStudentSchedules->first(function ($schedule) use ($startsAt, $endsAt) {
-                            return $schedule->starts_at < $endsAt && $schedule->ends_at > $startsAt;
+                            return $schedule->starts_at < $endsAt
+                                && $schedule->ends_at > $startsAt
+                                && $schedule->isConflictRelevantFor($startsAt);
                         });
 
                         if ($studentConflict) {
