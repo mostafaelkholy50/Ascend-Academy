@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Session\TokenMismatchException;
 use Tests\TestCase;
 use App\Models\User;
 use Spatie\Permission\Models\Role;
@@ -42,5 +44,40 @@ class LoginCsrfTest extends TestCase
         $this->assertAuthenticatedAs($user);
         $this->assertNotEquals(419, $response->getStatusCode());
         $response->assertStatus(302);
+    }
+
+    public function test_login_page_regenerates_csrf_token_and_disables_cache()
+    {
+        $this->withSession(['_token' => 'stale-token']);
+
+        $response = $this->get('/login');
+
+        $response->assertOk();
+        $this->assertStringContainsString('no-store', $response->headers->get('Cache-Control'));
+        $this->assertStringContainsString('no-cache', $response->headers->get('Cache-Control'));
+        $this->assertStringContainsString('must-revalidate', $response->headers->get('Cache-Control'));
+        $this->assertStringContainsString('max-age=0', $response->headers->get('Cache-Control'));
+        $response->assertHeader('Pragma', 'no-cache');
+        $response->assertHeader('Expires', '0');
+        $this->assertNotSame('stale-token', session()->token());
+    }
+
+    public function test_token_mismatch_redirects_to_login_with_fresh_token()
+    {
+        Route::middleware('web')->get('/_test-token-mismatch', function () {
+            throw new TokenMismatchException();
+        });
+
+        $this->withSession(['_token' => 'stale-token']);
+
+        $response = $this->get('/_test-token-mismatch');
+
+        $response->assertRedirect(route('login'));
+        $response->assertSessionHasErrors('email');
+        $this->assertStringContainsString('no-store', $response->headers->get('Cache-Control'));
+        $this->assertStringContainsString('no-cache', $response->headers->get('Cache-Control'));
+        $this->assertStringContainsString('must-revalidate', $response->headers->get('Cache-Control'));
+        $this->assertStringContainsString('max-age=0', $response->headers->get('Cache-Control'));
+        $this->assertNotSame('stale-token', session()->token());
     }
 }
