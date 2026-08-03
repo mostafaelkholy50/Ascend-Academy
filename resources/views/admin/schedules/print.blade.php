@@ -71,7 +71,16 @@
 
             $hasSchedules = $dayEntries->contains(fn ($day) => $day['schedules']->isNotEmpty());
             $hours = $dayEntries
-                ->flatMap(fn ($day) => $day['schedules']->map(fn ($schedule) => $schedule->getStartsAtInTimezone($timezone)->format('H')))
+                ->flatMap(function ($day) use ($timezone) {
+                    return $day['schedules']->flatMap(function ($schedule) use ($timezone) {
+                        $start = $schedule->getStartsAtInTimezone($timezone);
+                        $end = $schedule->getEndsAtInTimezone($timezone);
+                        $startHour = (int) $start->format('H');
+                        $endHour = (int) $end->copy()->subMinute()->format('H');
+
+                        return collect(range($startHour, max($startHour, $endHour)))->map(fn ($hour) => str_pad((string) $hour, 2, '0', STR_PAD_LEFT));
+                    });
+                })
                 ->unique()
                 ->sort()
                 ->values();
@@ -99,68 +108,91 @@
                         @foreach($dayEntries as $day)
                             @php
                                 $schedulesByHour = $day['schedules']->groupBy(fn ($schedule) => $schedule->getStartsAtInTimezone($timezone)->format('H'));
+                                $hourList = $hours->values();
+                                $hourIndex = 0;
                             @endphp
                             <tr class="{{ $day['isToday'] ? 'bg-indigo-50/50' : ($day['isWeekend'] ? 'bg-gray-50/50' : 'bg-white') }}">
                                 <td class="border border-gray-200 p-1 font-semibold {{ $day['isToday'] ? 'text-indigo-600' : 'text-gray-700' }} align-middle text-center w-[50px]">
                                     <span class="block text-[9px] uppercase text-gray-500 leading-tight">{{ $day['date']->format('D') }}</span>
                                     <span class="text-xs leading-tight">{{ $day['date']->format('d/m') }}</span>
                                 </td>
-                                @foreach($hours as $time)
-                                    @php $hourSchedules = $schedulesByHour->get($time, collect()); @endphp
-                                    <td class="border border-gray-200 p-0.5 align-top min-h-[40px]">
-                                        @foreach($hourSchedules as $s)
-                                            @php
-                                                $start = $s->getStartsAtInTimezone($timezone);
-                                                $end = $s->getEndsAtInTimezone($timezone);
-                                                $now = now();
-                                                $isPast = $now->greaterThan($s->ends_at);
-                                                $isInProgress = $now->between($s->starts_at, $s->ends_at);
-                                                $statusClass = 'bg-blue-50 border-blue-200 text-blue-800';
-                                                $statusText = 'Not Yet';
-                                                $statusIcon = 'fa-calendar';
+                                @while($hourIndex < $hourList->count())
+                                    @php
+                                        $time = $hourList[$hourIndex];
+                                        $visibleSchedules = $day['schedules']->filter(function ($schedule) use ($timezone, $time) {
+                                            $start = $schedule->getStartsAtInTimezone($timezone);
+                                            $end = $schedule->getEndsAtInTimezone($timezone);
+                                            $hourStart = $start->format('H');
+                                            $hourEnd = $end->copy()->subMinute()->format('H');
 
-                                                if ($s->status === 'completed') {
-                                                    $statusClass = 'bg-green-50 border-green-200 text-green-800';
-                                                    $statusText = 'Attended';
-                                                    $statusIcon = 'fa-check-circle';
-                                                } elseif ($s->attendance) {
-                                                    if ($s->attendance->student_present && $s->attendance->teacher_present) {
-                                                        $statusClass = 'bg-emerald-50 border-emerald-200 text-emerald-800';
-                                                        $statusText = 'Attended';
-                                                        $statusIcon = 'fa-check-double';
-                                                    } else {
-                                                        $statusClass = 'bg-red-50 border-red-200 text-red-800';
-                                                        $statusText = 'Absent';
-                                                        $statusIcon = 'fa-times-circle';
-                                                    }
-                                                } elseif ($isPast) {
-                                                    $statusClass = 'bg-gray-100 border-gray-200 text-gray-600';
-                                                    $statusText = 'Past';
-                                                    $statusIcon = 'fa-history';
-                                                } elseif ($isInProgress) {
-                                                    $statusClass = 'bg-yellow-50 border-yellow-300 text-yellow-900';
-                                                    $statusText = 'In Progress';
-                                                    $statusIcon = 'fa-spinner fa-spin';
-                                                }
-                                            @endphp
-                                            <div class="mb-0.5 last:mb-0 p-0.5 bg-indigo-50 border border-indigo-100 rounded text-indigo-800 text-[8px] sm:text-[9px] text-left shadow-sm overflow-hidden break-words">
-                                                <div class="font-bold leading-none break-words" title="{{ $s->student->name }}">
-                                                    {{ $s->student->name }}
-                                                </div>
-                                                <div class="text-gray-500 leading-none mt-[2px] break-words text-[8px]">
-                                                    {{ $s->course->title }}
-                                                </div>
-                                                <div class="text-gray-500 mt-[2px] leading-none text-[8px]">
-                                                    {{ $start->format('g:ia') }}-{{ $end->format('g:ia') }}
-                                                </div>
-                                                <div class="mt-[3px] inline-flex items-center gap-1 px-1 py-0.5 rounded border text-[8px] font-bold {{ $statusClass }}">
-                                                    <i class="fa-solid {{ $statusIcon }}"></i>
-                                                    <span>{{ $statusText }}</span>
-                                                </div>
+                                            return $hourStart === $time && $hourEnd >= $time;
+                                        });
+                                        $spanHours = $visibleSchedules->map(function ($schedule) use ($timezone) {
+                                            $start = $schedule->getStartsAtInTimezone($timezone);
+                                            $end = $schedule->getEndsAtInTimezone($timezone);
+                                            return max(1, (int) ceil($start->diffInMinutes($end) / 60));
+                                        })->max() ?: 1;
+                                        $spanHours = max(1, min($spanHours, $hourList->count() - $hourIndex));
+                                    @endphp
+                                    <td colspan="{{ $spanHours }}" class="border border-gray-200 p-0.5 align-top min-h-[40px]">
+                                        @if($visibleSchedules->isNotEmpty())
+                                            <div class="flex gap-0.5">
+                                                @foreach($visibleSchedules as $s)
+                                                    @php
+                                                        $start = $s->getStartsAtInTimezone($timezone);
+                                                        $end = $s->getEndsAtInTimezone($timezone);
+                                                        $now = now();
+                                                        $isPast = $now->greaterThan($s->ends_at);
+                                                        $isInProgress = $now->between($s->starts_at, $s->ends_at);
+                                                        $statusClass = 'bg-blue-50 border-blue-200 text-blue-800';
+                                                        $statusText = 'Not Yet';
+                                                        $statusIcon = 'fa-calendar';
+
+                                                        if ($s->status === 'completed') {
+                                                            $statusClass = 'bg-green-50 border-green-200 text-green-800';
+                                                            $statusText = 'Attended';
+                                                            $statusIcon = 'fa-check-circle';
+                                                        } elseif ($s->attendance) {
+                                                            if ($s->attendance->student_present && $s->attendance->teacher_present) {
+                                                                $statusClass = 'bg-emerald-50 border-emerald-200 text-emerald-800';
+                                                                $statusText = 'Attended';
+                                                                $statusIcon = 'fa-check-double';
+                                                            } else {
+                                                                $statusClass = 'bg-red-50 border-red-200 text-red-800';
+                                                                $statusText = 'Absent';
+                                                                $statusIcon = 'fa-times-circle';
+                                                            }
+                                                        } elseif ($isPast) {
+                                                            $statusClass = 'bg-gray-100 border-gray-200 text-gray-600';
+                                                            $statusText = 'Past';
+                                                            $statusIcon = 'fa-history';
+                                                        } elseif ($isInProgress) {
+                                                            $statusClass = 'bg-yellow-50 border-yellow-300 text-yellow-900';
+                                                            $statusText = 'In Progress';
+                                                            $statusIcon = 'fa-spinner fa-spin';
+                                                        }
+                                                    @endphp
+                                                    <div class="flex-1 min-w-0 p-0.5 bg-indigo-50 border border-indigo-100 rounded text-indigo-800 text-[8px] sm:text-[9px] text-left shadow-sm overflow-hidden break-words">
+                                                        <div class="font-bold leading-none break-words" title="{{ $s->student->name }}">
+                                                            {{ $s->student->name }}
+                                                        </div>
+                                                        <div class="text-gray-500 leading-none mt-[2px] break-words text-[8px]">
+                                                            {{ $s->course->title }}
+                                                        </div>
+                                                        <div class="text-gray-500 mt-[2px] leading-none text-[8px]">
+                                                            {{ $start->format('g:ia') }}-{{ $end->format('g:ia') }}
+                                                        </div>
+                                                        <div class="mt-[3px] inline-flex items-center gap-1 px-1 py-0.5 rounded border text-[8px] font-bold {{ $statusClass }}">
+                                                            <i class="fa-solid {{ $statusIcon }}"></i>
+                                                            <span>{{ $statusText }}</span>
+                                                        </div>
+                                                    </div>
+                                                @endforeach
                                             </div>
-                                        @endforeach
+                                        @endif
                                     </td>
-                                @endforeach
+                                    @php $hourIndex += $spanHours; @endphp
+                                @endwhile
                             </tr>
                         @endforeach
                     </tbody>
