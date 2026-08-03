@@ -99,6 +99,52 @@ test('printable schedule spans multi-hour sessions across the timetable', functi
     Carbon::setTestNow();
 });
 
+test('past half-hour sessions show attendance and waiting actions on mobile schedule pages', function () {
+    Carbon::setTestNow(Carbon::create(2026, 8, 3, 12, 0, 0, 'Africa/Cairo'));
+
+    $teacher = User::factory()->teacher()->create([
+        'role' => 'Teacher',
+        'timezone' => 'Africa/Cairo',
+    ]);
+    $teacher->assignRole('Teacher');
+    $student = User::factory()->student()->create();
+    $course = Course::factory()->create();
+    $enrollment = Enrollment::create([
+        'student_id' => $student->id,
+        'course_id' => $course->id,
+        'status' => 'active',
+        'session_duration' => 30,
+    ]);
+
+    Schedule::create([
+        'enrollment_id' => $enrollment->id,
+        'student_id' => $student->id,
+        'course_id' => $course->id,
+        'teacher_id' => $teacher->id,
+        'starts_at' => Carbon::create(2026, 8, 2, 10, 0, 0, 'Africa/Cairo'),
+        'ends_at' => Carbon::create(2026, 8, 2, 10, 30, 0, 'Africa/Cairo'),
+        'status' => 'scheduled',
+    ]);
+
+    $weekly = $this->actingAs($teacher)->get(route('teacher.schedule.index', [
+        'week' => '2026-08-01',
+    ]));
+
+    $weekly->assertStatus(200);
+    $weekly->assertSee('Waiting');
+    $weekly->assertSee('Attend');
+
+    $daily = $this->actingAs($teacher)->get(route('teacher.schedule.daily', [
+        'date' => '2026-08-02',
+    ]));
+
+    $daily->assertStatus(200);
+    $daily->assertSee('Waiting');
+    $daily->assertSee('Attend');
+
+    Carbon::setTestNow();
+});
+
 test('teacher redirects to schedule after login', function () {
     // Arrange
     $user = User::factory()->teacher()->create(['role' => 'Teacher', 'password' => bcrypt('password')]);

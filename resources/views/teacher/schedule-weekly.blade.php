@@ -104,6 +104,9 @@
                                                     $now = now();
                                                     $isPast = $now->greaterThan($schedule->ends_at);
                                                     $isInProgress = $now->between($schedule->starts_at, $schedule->ends_at);
+                                                    if ($isPast) {
+                                                        $mobileBlockHeight = max($mobileBlockHeight, 120);
+                                                    }
                                                 
                                                 // Determine Status & Styling
                                                 $statusClass = 'bg-blue-50 border-blue-200 text-blue-800 shadow-blue-100/50';
@@ -178,7 +181,7 @@
                                                     <!-- Footer: Buttons -->
                                                     <div class="flex flex-col gap-1 mt-1">
                                                     @if($schedule->status !== 'completed')
-                                                        <div class="grid grid-cols-2 gap-1 mt-0.5">
+                                                        <div class="grid grid-cols-2 gap-1 mt-0.5 mt-auto">
                                                             <!-- Attend Button -->
                                                             <button onclick="event.stopPropagation(); openAttendanceModal({
                                                                         id: {{ $schedule->id }},
@@ -187,13 +190,13 @@
                                                                         starts_at_formatted: '{{ $schedule->starts_at->format('g:i A') }}',
                                                                         attendance: null
                                                                     })" 
-                                                                    class="py-1 px-1 bg-vibrant-green hover:bg-green-600 text-white rounded text-[9px] font-bold transition flex items-center justify-center gap-1 shadow-sm leading-tight whitespace-nowrap">
+                                                                    class="py-1 px-1 bg-vibrant-green hover:bg-green-600 text-white rounded text-[8px] font-bold transition flex items-center justify-center gap-1 shadow-sm leading-tight whitespace-nowrap">
                                                                     <i class="fa-solid fa-check"></i> Attend
                                                                 </button>
                                                                 
                                                                 <!-- Waiting Button -->
                                                             <button onclick="event.stopPropagation(); notifyWaiting({{ $schedule->id }})" id="waitingBtn-{{ $schedule->id }}" 
-                                                                class="py-1 px-1 bg-white border border-yellow-400 hover:bg-yellow-50 text-yellow-700 rounded text-[9px] font-bold transition flex items-center justify-center gap-1 leading-tight whitespace-nowrap">
+                                                                class="py-1 px-1 bg-white border border-yellow-400 hover:bg-yellow-50 text-yellow-700 rounded text-[8px] font-bold transition flex items-center justify-center gap-1 leading-tight whitespace-nowrap">
                                                                 <i class="fa-solid fa-clock"></i> Waiting
                                                             </button>
                                                         </div>
