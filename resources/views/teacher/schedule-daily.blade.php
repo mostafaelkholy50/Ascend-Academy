@@ -200,7 +200,7 @@
                                                 
                                                 <!-- Actions Column -->
                                                 <div class="flex items-center gap-2 flex-shrink-0 mt-2 md:mt-0">
-                                                    @if(!$schedule->attendance && $schedule->status !== 'completed')
+                                                    @if($schedule->status !== 'completed')
                                                         <button onclick="openAttendanceModal({
                                                                 id: {{ $schedule->id }},
                                                                 student: { id: {{ $schedule->student->id }}, name: '{{ addslashes($schedule->student->name) }}' },

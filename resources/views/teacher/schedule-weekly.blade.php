@@ -177,10 +177,10 @@
 
                                                     <!-- Footer: Buttons -->
                                                     <div class="flex flex-col gap-1 mt-1">
-                                                        @if(!$schedule->attendance && $schedule->status !== 'completed')
-                                                            <div class="grid grid-cols-2 gap-1 mt-0.5">
-                                                                <!-- Attend Button -->
-                                                                <button onclick="event.stopPropagation(); openAttendanceModal({
+                                                    @if($schedule->status !== 'completed')
+                                                        <div class="grid grid-cols-2 gap-1 mt-0.5">
+                                                            <!-- Attend Button -->
+                                                            <button onclick="event.stopPropagation(); openAttendanceModal({
                                                                         id: {{ $schedule->id }},
                                                                         student: { id: {{ $schedule->student->id }}, name: '{{ addslashes($schedule->student->name) }}' },
                                                                         course: { name: '{{ addslashes($schedule->course->name) }}' },
@@ -192,11 +192,11 @@
                                                                 </button>
                                                                 
                                                                 <!-- Waiting Button -->
-                                                                <button onclick="event.stopPropagation(); notifyWaiting({{ $schedule->id }})" id="waitingBtn-{{ $schedule->id }}" 
-                                                                    class="py-1 px-1 bg-white border border-yellow-400 hover:bg-yellow-50 text-yellow-700 rounded text-[9px] font-bold transition flex items-center justify-center gap-1 leading-tight whitespace-nowrap">
-                                                                    <i class="fa-solid fa-clock"></i> Waiting
-                                                                </button>
-                                                            </div>
+                                                            <button onclick="event.stopPropagation(); notifyWaiting({{ $schedule->id }})" id="waitingBtn-{{ $schedule->id }}" 
+                                                                class="py-1 px-1 bg-white border border-yellow-400 hover:bg-yellow-50 text-yellow-700 rounded text-[9px] font-bold transition flex items-center justify-center gap-1 leading-tight whitespace-nowrap">
+                                                                <i class="fa-solid fa-clock"></i> Waiting
+                                                            </button>
+                                                        </div>
                                                         @endif
                                                     </div>
                                                 </div>
