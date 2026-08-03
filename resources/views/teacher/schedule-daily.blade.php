@@ -1,5 +1,18 @@
 <x-dashboard-layout title="Daily Schedule">
     @php $user = auth()->user(); @endphp
+    <style>
+        .schedule-block {
+            height: var(--schedule-block-height-mobile);
+            min-height: var(--schedule-block-height-mobile);
+        }
+
+        @media (min-width: 768px) {
+            .schedule-block {
+                height: var(--schedule-block-height-desktop);
+                min-height: var(--schedule-block-height-desktop);
+            }
+        }
+    </style>
 
     <!-- Page Header -->
     <div class="mb-6">
@@ -101,12 +114,15 @@
                             </div>
 
                             <!-- Single Day Cell for this Hour -->
-                            <div class="flex-1 border-r border-gray-100 p-1 md:p-2 lg:px-24 flex flex-col gap-2 relative bg-white transition-colors hover:bg-gray-50/50">
+                            <div class="flex-1 border-r border-gray-100 p-1 md:p-2 lg:px-24 flex flex-col gap-2 relative bg-white transition-colors hover:bg-gray-50/50 overflow-visible">
                                 
                                 <!-- Render Appointments for this specific hour -->
                                 @foreach ($schedules as $schedule)
                                     @if ((int) $schedule->starts_at->format('G') === $hour)
                                         @php
+                                            $durationHours = max(1, (int) ceil($schedule->getDurationInMinutes() / 60));
+                                            $mobileBlockHeight = ($durationHours * 70) - 8;
+                                            $desktopBlockHeight = ($durationHours * 90) - 8;
                                             $now = now();
                                             $isPast = $now->greaterThan($schedule->ends_at);
                                             $isInProgress = $now->between($schedule->starts_at, $schedule->ends_at);
@@ -152,7 +168,8 @@
                                         @endphp
                                         
                                         <!-- Appointment Card -->
-                                        <div class="rounded-xl border shadow-md transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 {{ $statusClass }} flex items-stretch overflow-hidden w-full">
+                                        <div class="schedule-block absolute left-1 right-1 top-1 z-20 rounded-xl border shadow-md transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 {{ $statusClass }} flex items-stretch overflow-hidden w-[calc(100%-0.5rem)]"
+                                             style="--schedule-block-height-mobile: {{ $mobileBlockHeight }}px; --schedule-block-height-desktop: {{ $desktopBlockHeight }}px;">
                                              
                                             <!-- Color Indicator Left Bar -->
                                             <div class="w-1.5 bg-{{$statusColor}}-500 flex-shrink-0"></div>

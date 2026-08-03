@@ -1,5 +1,18 @@
 <x-dashboard-layout title="Weekly Schedule">
     @php $user = auth()->user(); @endphp
+    <style>
+        .schedule-block {
+            height: var(--schedule-block-height-mobile);
+            min-height: var(--schedule-block-height-mobile);
+        }
+
+        @media (min-width: 768px) {
+            .schedule-block {
+                height: var(--schedule-block-height-desktop);
+                min-height: var(--schedule-block-height-desktop);
+            }
+        }
+    </style>
 
     <!-- Page Header -->
     <div class="mb-6">
@@ -79,15 +92,18 @@
 
                             <!-- Day Cells for this Hour -->
                             @foreach ($schedulesByDay as $dayData)
-                                <div class="flex-1 border-r border-gray-100 p-0.5 md:p-1 flex flex-col gap-1 min-w-[110px] md:min-w-[150px] relative bg-white transition-colors hover:bg-gray-50/50">
+                            <div class="flex-1 border-r border-gray-100 p-0.5 md:p-1 flex flex-col gap-1 min-w-[110px] md:min-w-[150px] relative bg-white transition-colors hover:bg-gray-50/50 overflow-visible">
                                     
                                     <!-- Render Appointments for this specific hour -->
                                     @foreach ($dayData['schedules'] as $schedule)
-                                        @if ((int) $schedule->starts_at->format('G') === $hour)
-                                            @php
-                                                $now = now();
-                                                $isPast = $now->greaterThan($schedule->ends_at);
-                                                $isInProgress = $now->between($schedule->starts_at, $schedule->ends_at);
+                                            @if ((int) $schedule->starts_at->format('G') === $hour)
+                                                @php
+                                                    $durationHours = max(1, (int) ceil($schedule->getDurationInMinutes() / 60));
+                                                    $mobileBlockHeight = ($durationHours * 70) - 8;
+                                                    $desktopBlockHeight = ($durationHours * 90) - 8;
+                                                    $now = now();
+                                                    $isPast = $now->greaterThan($schedule->ends_at);
+                                                    $isInProgress = $now->between($schedule->starts_at, $schedule->ends_at);
                                                 
                                                 // Determine Status & Styling
                                                 $statusClass = 'bg-blue-50 border-blue-200 text-blue-800 shadow-blue-100/50';
@@ -131,8 +147,9 @@
                                             @endphp
                                             
                                             <!-- Base Appointment Card -->
-                                            <div class="rounded-lg border shadow-sm transition-all duration-200 hover:shadow-md cursor-pointer flex flex-col {{ $statusClass }} {{ 'border-'.$statusColor.'-300' }} w-full"
-                                                 onclick="window.location='{{ route('teacher.schedule.daily', ['date' => $dayData['date']->format('Y-m-d')]) }}'">
+                                                <div class="schedule-block absolute left-1 right-1 top-1 z-20 rounded-lg border shadow-sm transition-all duration-200 hover:shadow-md cursor-pointer flex flex-col {{ $statusClass }} {{ 'border-'.$statusColor.'-300' }} w-[calc(100%-0.5rem)] overflow-hidden"
+                                                     style="--schedule-block-height-mobile: {{ $mobileBlockHeight }}px; --schedule-block-height-desktop: {{ $desktopBlockHeight }}px;"
+                                                     onclick="window.location='{{ route('teacher.schedule.daily', ['date' => $dayData['date']->format('Y-m-d')]) }}'">
                                                  
                                                 <div class="p-1.5 flex flex-col gap-1 h-full bg-{{$statusColor}}-50/90 relative">
                                                     <!-- Header: Time and Status -->
