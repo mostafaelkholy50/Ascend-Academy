@@ -2,13 +2,11 @@
     @php $user = auth()->user(); @endphp
     <style>
         .schedule-block {
-            height: var(--schedule-block-height-mobile);
             min-height: var(--schedule-block-height-mobile);
         }
 
         @media (min-width: 768px) {
             .schedule-block {
-                height: var(--schedule-block-height-desktop);
                 min-height: var(--schedule-block-height-desktop);
             }
         }
@@ -169,7 +167,7 @@
                                             @endphp
                                             
                                             <!-- Base Appointment Card -->
-                                                <div class="schedule-block absolute left-1 right-1 top-1 z-20 rounded-lg border shadow-sm transition-all duration-200 hover:shadow-md cursor-pointer flex flex-col {{ $statusClass }} {{ 'border-'.$statusColor.'-300' }} w-[calc(100%-0.5rem)] overflow-hidden"
+                                                <div class="schedule-block relative z-20 rounded-lg border shadow-sm transition-all duration-200 hover:shadow-md cursor-pointer flex flex-col {{ $statusClass }} {{ 'border-'.$statusColor.'-300' }} w-full overflow-hidden"
                                                      style="--schedule-block-height-mobile: {{ $mobileBlockHeight }}px; --schedule-block-height-desktop: {{ $desktopBlockHeight }}px;"
                                                      onclick="window.location='{{ route('teacher.schedule.daily', ['date' => $dayData['date']->format('Y-m-d')]) }}'">
                                                  

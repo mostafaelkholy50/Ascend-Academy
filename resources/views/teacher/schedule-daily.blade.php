@@ -2,13 +2,11 @@
     @php $user = auth()->user(); @endphp
     <style>
         .schedule-block {
-            height: var(--schedule-block-height-mobile);
             min-height: var(--schedule-block-height-mobile);
         }
 
         @media (min-width: 768px) {
             .schedule-block {
-                height: var(--schedule-block-height-desktop);
                 min-height: var(--schedule-block-height-desktop);
             }
         }
@@ -190,7 +188,7 @@
                                         @endphp
                                         
                                         <!-- Appointment Card -->
-                                        <div class="schedule-block absolute left-1 right-1 top-1 z-20 rounded-xl border shadow-md transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 {{ $statusClass }} flex items-stretch overflow-hidden w-[calc(100%-0.5rem)]"
+                                        <div class="schedule-block relative z-20 rounded-xl border shadow-md transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 {{ $statusClass }} flex items-stretch overflow-hidden w-full"
                                              style="--schedule-block-height-mobile: {{ $mobileBlockHeight }}px; --schedule-block-height-desktop: {{ $desktopBlockHeight }}px;">
                                              
                                             <!-- Color Indicator Left Bar -->
