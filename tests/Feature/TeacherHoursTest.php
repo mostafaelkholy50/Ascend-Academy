@@ -63,4 +63,13 @@ test('teacher can view hours and earnings', function () {
     $response->assertViewIs('teacher.hours.index');
     $response->assertViewHas('totalHours');
     $response->assertViewHas('totalEarnings');
+    $response->assertSeeText('My Hours');
+    $response->assertSeeText('Earnings');
+    $response->assertSee('grid grid-cols-3 gap-2 sm:gap-4 md:gap-6');
+    $response->assertSeeText('Total Hours Worked');
+    $response->assertSeeText('Hourly Rate');
+    $response->assertSeeText('Total Earnings');
+    $response->assertSeeText('Attended Sessions');
+    $response->assertSee('md:hidden divide-y divide-gray-200');
+    $response->assertSee('text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2');
 });
