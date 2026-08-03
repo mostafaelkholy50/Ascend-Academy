@@ -55,7 +55,6 @@ class TeacherDashboardService
         // Calculate statistics efficiently
         $completedThisWeek = $weekSchedules->where('status', 'completed');
         $scheduledThisWeek = $weekSchedules->where('status', 'scheduled');
-        $thisMonthHours = $this->repository->getThisMonthHours($teacher);
         $thisMonthEarnings = 0;
         $hoursMonthTotal = 0;
         
@@ -67,7 +66,6 @@ class TeacherDashboardService
             
         $bonusHours = 0;
         if ($teacherHour && str_contains($teacherHour->notes ?? '', 'Evaluation Bonus')) {
-            $thisMonthHours += 0.5;
             $bonusHours = 0.5;
         }
 
@@ -91,11 +89,8 @@ class TeacherDashboardService
             return $duration;
         });
 
-        if ($bonusHours > 0) {
-            $hoursMonthTotal += $bonusHours;
-        }
-
-        $thisMonthEarnings = $hoursMonthTotal * ($teacher->hourly_rate ?? 0);
+        $thisMonthHours = $hoursMonthTotal + $bonusHours;
+        $thisMonthEarnings = $thisMonthHours * ($teacher->hourly_rate ?? 0);
 
         $todayHours = $todaySchedules->sum(fn ($schedule) => $schedule->getDurationInHours());
         $upcomingHoursToday = $upcomingTodaySchedules->sum(fn ($schedule) => $schedule->getDurationInHours());
