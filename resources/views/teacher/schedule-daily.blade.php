@@ -19,24 +19,31 @@
                 <h1 class="text-3xl font-bold text-gray-800 tracking-tight">Daily Schedule</h1>
                 <p class="text-sm text-gray-500 mt-1 font-medium">{{ $date->format('l, F d, Y') }}</p>
             </div>
-            <div class="flex items-center space-x-2 rtl:space-x-reverse bg-white p-1.5 rounded-xl shadow-sm border border-gray-100 overflow-x-auto w-full md:w-auto">
-                <a href="{{ route('teacher.schedule.daily', ['date' => $prevDay->format('Y-m-d')]) }}"
-                    class="px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition flex items-center">
-                    <i class="fa-solid fa-chevron-left mr-1 rtl:ml-1 rtl:mr-0 rtl:rotate-180"></i> Previous
-                </a>
-                <a href="{{ route('teacher.schedule.daily') }}"
-                    class="px-4 py-2 bg-vibrant-green/10 text-vibrant-green rounded-lg text-sm font-bold hover:bg-vibrant-green hover:text-white transition shadow-sm">
-                    Today
-                </a>
-                <a href="{{ route('teacher.schedule.daily', ['date' => $nextDay->format('Y-m-d')]) }}"
-                    class="px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition flex items-center">
-                    Next <i class="fa-solid fa-chevron-right ml-1 rtl:mr-1 rtl:ml-0 rtl:rotate-180"></i>
-                </a>
-                <div class="w-px h-6 bg-gray-200 mx-2"></div>
-                <a href="{{ route('teacher.schedule.index') }}"
-                    class="px-4 py-2 bg-deep-blue text-white rounded-lg text-sm font-semibold hover:bg-opacity-90 transition shadow-sm flex items-center">
-                    <i class="fa-solid fa-calendar-week mr-2"></i> Weekly View
-                </a>
+            <div class="flex flex-col md:flex-row items-center gap-2 md:space-x-2 rtl:md:space-x-reverse bg-white p-1.5 rounded-xl shadow-sm border border-gray-100 w-full md:w-auto">
+                <div class="flex items-center justify-center space-x-1 sm:space-x-2 rtl:space-x-reverse w-full md:w-auto">
+                    <a href="{{ route('teacher.schedule.daily', ['date' => $prevDay->format('Y-m-d')]) }}"
+                        class="px-2 sm:px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition flex items-center flex-1 justify-center whitespace-nowrap">
+                        <i class="fa-solid fa-chevron-left mr-1 rtl:ml-1 rtl:mr-0 rtl:rotate-180"></i> Previous
+                    </a>
+                    <a href="{{ route('teacher.schedule.daily') }}"
+                        class="px-2 sm:px-4 py-2 bg-vibrant-green/10 text-vibrant-green rounded-lg text-sm font-bold hover:bg-vibrant-green hover:text-white transition shadow-sm flex-1 text-center whitespace-nowrap">
+                        Today
+                    </a>
+                    <a href="{{ route('teacher.schedule.daily', ['date' => $nextDay->format('Y-m-d')]) }}"
+                        class="px-2 sm:px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition flex items-center flex-1 justify-center whitespace-nowrap">
+                        Next <i class="fa-solid fa-chevron-right ml-1 rtl:mr-1 rtl:ml-0 rtl:rotate-180"></i>
+                    </a>
+                </div>
+                
+                <div class="hidden md:block w-px h-6 bg-gray-200 mx-2"></div>
+                <div class="md:hidden w-full h-px bg-gray-100"></div>
+                
+                <div class="flex items-center justify-center space-x-1 sm:space-x-2 rtl:space-x-reverse w-full md:w-auto mt-1 md:mt-0">
+                    <a href="{{ route('teacher.schedule.index') }}"
+                        class="px-3 sm:px-4 py-2 bg-deep-blue text-white rounded-lg text-sm font-semibold hover:bg-opacity-90 transition shadow-sm flex items-center flex-1 justify-center whitespace-nowrap">
+                        <i class="fa-solid fa-calendar-week mr-2"></i> Weekly View
+                    </a>
+                </div>
             </div>
         </div>
     </div>
