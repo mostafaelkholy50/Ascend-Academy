@@ -28,6 +28,13 @@ test('teacher can view dashboard', function () {
     $response->assertViewHas('weekSchedules');
     $response->assertViewHas('myStudents');
     $response->assertViewHas('stats');
+    $response->assertSeeText('Today at a glance');
+    $response->assertSeeText('Useful numbers, not decoration');
+    $response->assertSeeText('This Month');
+    $response->assertSeeText('This Week Summary');
+    $response->assertSeeText('Pending Evaluations');
+    $response->assertSee('grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4');
+    $response->assertSee('grid grid-cols-2 gap-2 sm:gap-3');
 });
 
 test('non-teacher cannot view dashboard', function () {

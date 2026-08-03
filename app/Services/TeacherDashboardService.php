@@ -20,14 +20,18 @@ class TeacherDashboardService
 
     public function getDashboardData(User $teacher): array
     {
-        $weekStart = Carbon::now()->startOfWeek();
-        $weekEnd = Carbon::now()->endOfWeek();
+        $now = Carbon::now();
+        $weekStart = $now->copy()->startOfWeek();
+        $weekEnd = $now->copy()->endOfWeek();
         
         $weekSchedules = $this->repository->getWeekSchedules($teacher, $weekStart, $weekEnd);
 
         // Filter today's schedules from already loaded week schedules
         $todaySchedules = $weekSchedules->filter(function($schedule) {
             return $schedule->starts_at->isToday();
+        })->values();
+        $upcomingTodaySchedules = $todaySchedules->filter(function ($schedule) use ($now) {
+            return $schedule->starts_at->isFuture();
         })->values();
 
         $myStudents = $this->repository->getMyStudents($teacher);
@@ -46,12 +50,13 @@ class TeacherDashboardService
 
         // Calculate statistics efficiently
         $completedThisWeek = $weekSchedules->where('status', 'completed');
+        $scheduledThisWeek = $weekSchedules->where('status', 'scheduled');
         $thisMonthHours = $this->repository->getThisMonthHours($teacher);
         
         // Add evaluation bonus if earned
         $teacherHour = \App\Models\TeacherHour::where('teacher_id', $teacher->id)
-            ->where('year', now()->year)
-            ->where('month', now()->month)
+            ->where('year', $now->year)
+            ->where('month', $now->month)
             ->first();
             
         $bonusHours = 0;
@@ -60,13 +65,28 @@ class TeacherDashboardService
             $bonusHours = 0.5;
         }
 
+        $todayHours = $todaySchedules->sum(fn ($schedule) => $schedule->getDurationInHours());
+        $upcomingHoursToday = $upcomingTodaySchedules->sum(fn ($schedule) => $schedule->getDurationInHours());
+        $completionRate = $weekSchedules->count() > 0
+            ? round(($completedThisWeek->count() / $weekSchedules->count()) * 100)
+            : 0;
+        $averageSessionLength = $completedThisWeek->count() > 0
+            ? round($completedThisWeek->sum(fn ($schedule) => $schedule->getDurationInHours()) / $completedThisWeek->count(), 1)
+            : 0;
+
         $stats = [
             'total_students' => $myStudents->count(),
             'today_classes' => $todaySchedules->count(),
+            'upcoming_today' => $upcomingTodaySchedules->count(),
+            'today_hours' => $todayHours,
+            'upcoming_hours_today' => $upcomingHoursToday,
             'this_month_hours' => $thisMonthHours,
             'bonus_hours' => $bonusHours,
             'pending_reports' => $studentsNeedingReports->count(),
             'completed_this_week' => $completedThisWeek->count(),
+            'scheduled_this_week' => $scheduledThisWeek->count(),
+            'completion_rate' => $completionRate,
+            'average_session_length' => $averageSessionLength,
         ];
 
         return compact(

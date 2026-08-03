@@ -18,19 +18,19 @@
     $style = $colorMap[$color] ?? $colorMap['blue'];
 @endphp
 
-<div class="bg-white p-5 rounded-3xl shadow-sm border border-gray-100 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-    <div class="flex items-start justify-between mb-4">
-        <div class="w-12 h-12 {{ $style['bg'] }} rounded-2xl flex items-center justify-center border {{ $style['border'] }}">
-            <i class="fa-solid {{ $icon }} text-xl {{ $style['icon'] }}"></i>
+<div class="bg-white p-3 sm:p-5 rounded-2xl sm:rounded-3xl shadow-sm border border-gray-100 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+    <div class="flex items-start justify-between mb-3 sm:mb-4 gap-2">
+        <div class="w-9 h-9 sm:w-12 sm:h-12 {{ $style['bg'] }} rounded-xl sm:rounded-2xl flex items-center justify-center border {{ $style['border'] }} shrink-0">
+            <i class="fa-solid {{ $icon }} text-sm sm:text-xl {{ $style['icon'] }}"></i>
         </div>
         @if($subtitle)
-            <span class="text-[10px] font-bold px-2 py-1 bg-gray-50 text-gray-400 rounded-lg uppercase tracking-wider">
+            <span class="hidden sm:inline-flex text-[10px] font-bold px-2 py-1 bg-gray-50 text-gray-400 rounded-lg uppercase tracking-wider">
                 {{ $subtitle }}
             </span>
         @endif
     </div>
     <div>
-        <h3 class="text-2xl font-black text-gray-800 mb-0.5">{{ $value }}</h3>
-        <p class="text-xs font-medium text-gray-400 uppercase tracking-wide">{{ $title }}</p>
+        <h3 class="text-lg sm:text-2xl font-black text-gray-800 mb-0.5 leading-none">{{ $value }}</h3>
+        <p class="text-[10px] sm:text-xs font-medium text-gray-400 uppercase tracking-wide leading-tight">{{ $title }}</p>
     </div>
 </div>
