@@ -56,6 +56,33 @@
                     @if($todaySchedules->count() > 0)
                         <div class="divide-y divide-gray-100">
                             @foreach($todaySchedules as $schedule)
+                                @php
+                                    $startsAt = $schedule->getStartsAtInTimezone($user->getUserTimezone());
+                                    $endsAt = $schedule->getEndsAtInTimezone($user->getUserTimezone());
+                                    $minutesUntil = now($user->getUserTimezone())->diffInMinutes($startsAt, false);
+
+                                    if ($schedule->isCompleted()) {
+                                        $statusLabel = 'Completed';
+                                        $statusClass = 'bg-gray-100 text-gray-600';
+                                        $statusIcon = 'fa-check';
+                                    } elseif ($schedule->starts_at->isPast() && $schedule->ends_at->isFuture()) {
+                                        $statusLabel = 'In progress';
+                                        $statusClass = 'bg-blue-100 text-blue-700';
+                                        $statusIcon = 'fa-circle-play';
+                                    } elseif ($minutesUntil <= 15) {
+                                        $statusLabel = 'Starting now';
+                                        $statusClass = 'bg-green-100 text-green-700';
+                                        $statusIcon = 'fa-bolt';
+                                    } elseif ($minutesUntil < 60) {
+                                        $statusLabel = 'Starts in ' . max(1, (int) ceil($minutesUntil)) . ' min';
+                                        $statusClass = 'bg-emerald-100 text-emerald-700';
+                                        $statusIcon = 'fa-clock';
+                                    } else {
+                                        $statusLabel = $startsAt->format('g:i A');
+                                        $statusClass = 'bg-gray-100 text-gray-600';
+                                        $statusIcon = 'fa-clock';
+                                    }
+                                @endphp
                                 <div class="p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 hover:bg-gray-50">
                                     <div class="flex items-center gap-3 sm:gap-4 min-w-0">
                                         <div class="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 rounded-xl flex items-center justify-center shrink-0">
@@ -64,32 +91,26 @@
                                         <div class="min-w-0">
                                             <h4 class="font-semibold text-gray-800 text-sm sm:text-base truncate">{{ $schedule->course->title ?? 'Session' }}</h4>
                                             <p class="text-[11px] sm:text-xs text-gray-500 truncate">
-                                                {{ $schedule->student->name }} · {{ $schedule->getStartsAtInTimezone($user->getUserTimezone())->format('g:i A') }} - {{ $schedule->getEndsAtInTimezone($user->getUserTimezone())->format('g:i A') }}
+                                                {{ $schedule->student->name }} · {{ $startsAt->format('g:i A') }} - {{ $endsAt->format('g:i A') }}
                                             </p>
                                         </div>
                                     </div>
                                     <div class="flex items-center gap-2 sm:justify-end">
-                                        @if($schedule->starts_at->isFuture())
-                                            @php $minutesUntil = $schedule->starts_at->diffInMinutes(now()); @endphp
-                                            @if($minutesUntil < 60)
-                                                <span class="px-2.5 py-1 bg-green-100 text-green-700 rounded-full text-[10px] sm:text-xs font-medium">In {{ $minutesUntil }} min</span>
-                                                @if($schedule->zoom_link)
-                                                    <a href="{{ $schedule->zoom_link }}" target="_blank" class="px-3 py-2 bg-vibrant-green text-white rounded-lg text-[10px] sm:text-xs font-semibold hover:bg-deep-blue transition">Start</a>
-                                                @endif
-                                            @else
-                                                <span class="px-2.5 py-1 bg-gray-100 text-gray-600 rounded-full text-[10px] sm:text-xs font-medium">{{ $schedule->getStartsAtInTimezone($user->getUserTimezone())->format('g:i A') }}</span>
-                                            @endif
-                                        @else
-                                            <span class="px-2.5 py-1 bg-blue-100 text-blue-700 rounded-full text-[10px] sm:text-xs font-medium">In Progress</span>
+                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] sm:text-xs font-medium {{ $statusClass }}">
+                                            <i class="fa-solid {{ $statusIcon }}"></i>
+                                            {{ $statusLabel }}
+                                        </span>
+                                        @if($schedule->zoom_link && !$schedule->isCompleted() && $minutesUntil <= 15)
+                                            <a href="{{ $schedule->zoom_link }}" target="_blank" class="px-3 py-2 bg-vibrant-green text-white rounded-lg text-[10px] sm:text-xs font-semibold hover:bg-deep-blue transition">Start</a>
                                         @endif
                                     </div>
                                 </div>
                             @endforeach
                         </div>
                     @else
-                        <div class="p-8 text-center">
+                        <div class="p-6 sm:p-8 text-center">
                             <i class="fa-solid fa-calendar-times text-gray-300 text-4xl mb-3"></i>
-                            <p class="text-gray-500">No classes scheduled for today</p>
+                            <p class="text-gray-500 text-sm sm:text-base">No classes scheduled for today</p>
                         </div>
                     @endif
                 </div>
