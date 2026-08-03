@@ -6,6 +6,7 @@ use Tests\TestCase;
 use App\Models\Enrollment;
 use App\Models\User;
 use App\Models\Course;
+use App\Models\Schedule;
 use App\Services\ScheduleService;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -190,5 +191,74 @@ class ScheduleServiceTest extends TestCase
             'student_id' => $student->id,
             'course_id' => $course->id
         ]);
+    }
+
+    public function test_updateSchedulePattern_only_updates_current_month()
+    {
+        Carbon::setTestNow(Carbon::create(2026, 8, 3, 12, 0, 0));
+
+        $student = User::factory()->create(['role' => 'Student']);
+        $teacher = User::factory()->create(['role' => 'Teacher']);
+        $course = Course::factory()->create();
+
+        $enrollment = Enrollment::create([
+            'student_id' => $student->id,
+            'course_id' => $course->id,
+            'start_date' => Carbon::create(2026, 7, 1),
+            'status' => 'active',
+            'days_per_week' => 1,
+            'session_duration' => 60,
+            'schedule_pattern' => [
+                'Monday' => [
+                    'active' => true,
+                    'slots' => [['time' => '10:00', 'duration' => 60]],
+                ],
+            ],
+        ]);
+
+        $julySchedule = Schedule::create([
+            'enrollment_id' => $enrollment->id,
+            'student_id' => $student->id,
+            'teacher_id' => $teacher->id,
+            'course_id' => $course->id,
+            'starts_at' => Carbon::create(2026, 7, 6, 10, 0, 0),
+            'ends_at' => Carbon::create(2026, 7, 6, 11, 0, 0),
+            'status' => 'scheduled',
+        ]);
+
+        $augustSchedule = Schedule::create([
+            'enrollment_id' => $enrollment->id,
+            'student_id' => $student->id,
+            'teacher_id' => $teacher->id,
+            'course_id' => $course->id,
+            'starts_at' => Carbon::create(2026, 8, 3, 10, 0, 0),
+            'ends_at' => Carbon::create(2026, 8, 3, 11, 0, 0),
+            'status' => 'scheduled',
+        ]);
+
+        $service = app(ScheduleService::class);
+        $service->updateSchedulePattern($enrollment, [
+            'teacher_id' => $teacher->id,
+            'day_active' => ['Monday' => 1],
+            'days' => ['Monday'],
+            'schedule_times' => [
+                'Monday' => ['12:00'],
+            ],
+            'durations' => [
+                'Monday' => [60],
+            ],
+        ], Carbon::create(2026, 8, 1));
+
+        $this->assertDatabaseHas('schedules', [
+            'id' => $julySchedule->id,
+            'starts_at' => $julySchedule->starts_at->format('Y-m-d H:i:s'),
+        ]);
+
+        $this->assertDatabaseMissing('schedules', [
+            'id' => $augustSchedule->id,
+        ]);
+
+        $this->assertEquals(1, Schedule::where('enrollment_id', $enrollment->id)->whereMonth('starts_at', 7)->count());
+        $this->assertGreaterThan(0, Schedule::where('enrollment_id', $enrollment->id)->whereMonth('starts_at', 8)->whereTime('starts_at', '12:00:00')->count());
     }
 }

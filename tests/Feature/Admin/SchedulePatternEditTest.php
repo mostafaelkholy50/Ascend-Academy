@@ -84,20 +84,21 @@ test('updateSchedulePattern successfully replaces upcoming schedules', function 
         ],
     ];
 
-    $result = $service->updateSchedulePattern($this->enrollment, $data);
+    $result = $service->updateSchedulePattern($this->enrollment, $data, Carbon::create(2026, 8, 1));
 
     expect($result['success'])->toBeTrue();
     expect($result['message'])->toContain('Pattern updated successfully');
 
     $this->enrollment->refresh();
     expect($this->enrollment->days_per_week)->toBe(2);
-    expect($this->enrollment->schedule_pattern)->toHaveKey('Saturday');
-    expect($this->enrollment->schedule_pattern['Saturday']['active'])->toBeTrue();
-    expect($this->enrollment->schedule_pattern['Saturday']['slots'])->toContain(['time' => '12:00', 'duration' => 60]);
-    expect($this->enrollment->schedule_pattern['Saturday']['slots'])->toContain(['time' => '18:00', 'duration' => 60]);
-    expect($this->enrollment->schedule_pattern)->toHaveKey('Thursday');
-    expect($this->enrollment->schedule_pattern['Thursday']['active'])->toBeTrue();
-    expect($this->enrollment->schedule_pattern['Thursday']['slots'])->toContain(['time' => '12:00', 'duration' => 60]);
+    $pattern = $this->enrollment->getSchedulePattern();
+    expect($pattern)->toHaveKey('Saturday');
+    expect($pattern['Saturday']['active'])->toBeTrue();
+    expect($pattern['Saturday']['slots'])->toContain(['time' => '12:00', 'duration' => 60]);
+    expect($pattern['Saturday']['slots'])->toContain(['time' => '18:00', 'duration' => 60]);
+    expect($pattern)->toHaveKey('Thursday');
+    expect($pattern['Thursday']['active'])->toBeTrue();
+    expect($pattern['Thursday']['slots'])->toContain(['time' => '12:00', 'duration' => 60]);
 
     // Past schedules matching old pattern should be gone
     $oldPastSchedules = Schedule::where('enrollment_id', $this->enrollment->id)
@@ -127,7 +128,8 @@ test('updateSchedulePattern rolls back on conflict', function () {
         'session_duration' => 60,
     ]);
 
-    $conflictDate = Carbon::today()->startOfDay();
+    Carbon::setTestNow(Carbon::create(2026, 8, 3, 12, 0, 0));
+    $conflictDate = Carbon::create(2026, 8, 6, 0, 0, 0);
     
     Schedule::create([
         'enrollment_id' => $otherEnrollment->id,
@@ -156,7 +158,7 @@ test('updateSchedulePattern rolls back on conflict', function () {
     $scheduleCountBefore = Schedule::count();
 
     try {
-        $service->updateSchedulePattern($this->enrollment, $data);
+    $service->updateSchedulePattern($this->enrollment, $data, Carbon::create(2026, 8, 1));
         $this->fail('Expected exception was not thrown');
     } catch (\Exception $e) {
         expect($e->getMessage())->toContain('Teacher conflict');
@@ -165,8 +167,8 @@ test('updateSchedulePattern rolls back on conflict', function () {
     // Assert transaction rolled back (no new schedules, old ones remain)
     expect(Schedule::count())->toBe($scheduleCountBefore);
     $this->enrollment->refresh();
-    expect($this->enrollment->schedule_pattern)->toHaveKey('Saturday');
-    expect($this->enrollment->schedule_pattern)->toHaveKey('Tuesday');
+    expect($this->enrollment->getSchedulePattern())->toHaveKey('Saturday');
+    expect($this->enrollment->getSchedulePattern())->toHaveKey('Tuesday');
 });
 
 test('updateSchedulePattern keeps edited days active by default', function () {
@@ -198,7 +200,7 @@ test('updateSchedulePattern keeps edited days active by default', function () {
         ],
     ];
 
-    $result = $service->updateSchedulePattern($this->enrollment, $data);
+    $result = $service->updateSchedulePattern($this->enrollment, $data, Carbon::create(2026, 8, 1));
 
     expect($result['success'])->toBeTrue();
 
@@ -280,7 +282,7 @@ test('updateSchedulePattern ignores days that are not checked in the form', func
         ],
     ];
 
-    $result = $service->updateSchedulePattern($this->enrollment, $data);
+    $result = $service->updateSchedulePattern($this->enrollment, $data, Carbon::create(2026, 8, 1));
 
     expect($result['success'])->toBeTrue();
 

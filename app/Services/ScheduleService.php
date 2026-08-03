@@ -699,8 +699,13 @@ class ScheduleService
         }
     }
 
-    public function updateSchedulePattern(Enrollment $enrollment, array $data)
+    public function updateSchedulePattern(Enrollment $enrollment, array $data, ?Carbon $targetMonth = null)
     {
+        $useScopedMonth = $targetMonth !== null;
+        $targetMonth = $targetMonth ? $targetMonth->copy()->startOfMonth() : now()->startOfMonth();
+        $monthStart = $targetMonth->copy()->startOfMonth();
+        $monthEnd = $targetMonth->copy()->endOfMonth();
+
         $days = array_keys($data['day_active'] ?? $data['schedule_times'] ?? []);
         if (empty($days)) {
             $days = $data['days'] ?? [];
@@ -711,11 +716,11 @@ class ScheduleService
         $dayActive = $data['day_active'] ?? array_fill_keys($days, 1);
 
         $schedulePattern = $this->normalizeSchedulePattern($days, $scheduleTimes, $durations);
-        
+
         $finalPattern = [];
         foreach ($schedulePattern as $day => $slots) {
             if (empty($dayActive[$day])) {
-                continue; // Do not include unchecked days in the pattern
+                continue;
             }
             $finalPattern[$day] = [
                 'active' => true,
@@ -724,12 +729,11 @@ class ScheduleService
         }
         $schedulePattern = $finalPattern;
 
-        // Calculate a primary session duration to store in enrollment model
         $sessionDuration = 60;
         if (!empty($durations)) {
             foreach ($durations as $dayDurs) {
                 if (!empty($dayDurs)) {
-                    $sessionDuration = (int)$dayDurs[0];
+                    $sessionDuration = (int) $dayDurs[0];
                     break;
                 }
             }
@@ -741,36 +745,51 @@ class ScheduleService
 
         \Illuminate\Support\Facades\DB::beginTransaction();
         try {
-            // Update enrollment pattern
-            $enrollment->setSchedulePattern($schedulePattern);
             $enrollment->update([
                 'days_per_week' => count($days),
                 'session_duration' => $sessionDuration,
             ]);
 
-            // Find all schedules
-            $allSchedules = Schedule::where('enrollment_id', $enrollment->id)->get();
+            $scheduleQuery = Schedule::where('enrollment_id', $enrollment->id);
+            if ($useScopedMonth) {
+                $scheduleQuery->whereBetween('starts_at', [$monthStart, $monthEnd->copy()->endOfDay()]);
+            }
 
-            if ($allSchedules->isEmpty()) {
+            $schedulesToRefresh = $scheduleQuery->get();
+
+            if ($schedulesToRefresh->isEmpty()) {
+                if ($useScopedMonth) {
+                    \Illuminate\Support\Facades\DB::commit();
+                    return ['success' => true, 'message' => 'Pattern updated for ' . $targetMonth->format('F Y') . '. No schedules found to modify.'];
+                }
+
+                $enrollment->setSchedulePattern($schedulePattern);
                 \Illuminate\Support\Facades\DB::commit();
                 return ['success' => true, 'message' => 'Pattern updated. No schedules found to modify.'];
             }
 
-            // Find the maximum and minimum date across all schedules
-            $maxDate = $allSchedules->max('starts_at');
-            $minDate = $allSchedules->min('starts_at')->copy()->startOfDay();
+            if ($useScopedMonth) {
+                foreach ($schedulesToRefresh as $schedule) {
+                    $schedule->delete();
+                    $deletedCount++;
+                }
+            } else {
+                $maxDate = $schedulesToRefresh->max('starts_at');
+                $minDate = $schedulesToRefresh->min('starts_at')->copy()->startOfDay();
 
-            // We will delete all schedules (past and future)
-            foreach ($allSchedules as $schedule) {
-                $schedule->delete();
-                $deletedCount++;
+                foreach ($schedulesToRefresh as $schedule) {
+                    $schedule->delete();
+                    $deletedCount++;
+                }
+
+                $monthStart = $minDate;
+                $monthEnd = $maxDate;
             }
 
-            // Generate new schedules from minDate to maxDate matching the new pattern
             $sessionDates = [];
-            $currentDate = $minDate->copy();
+            $currentDate = $monthStart->copy();
 
-            while ($currentDate->lte($maxDate)) {
+            while ($currentDate->lte($monthEnd)) {
                 $dayName = $currentDate->format('l');
                 if (!empty($schedulePattern[$dayName]['active']) && in_array($dayName, $days)) {
                     $sessionDates[] = [
@@ -825,6 +844,7 @@ class ScheduleService
                 }
             }
 
+            $enrollment->setSchedulePattern($schedulePattern);
             \Illuminate\Support\Facades\DB::commit();
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\DB::rollBack();
@@ -835,15 +855,13 @@ class ScheduleService
             try {
                 $teacher = User::find($teacherId);
                 $firstSchedule->load(['student.parents', 'teacher', 'course']);
-                
-                // Notify Teacher
+
                 $teacher->notify(new \App\Notifications\ScheduleAssignedNotification(
                     $firstSchedule,
                     $createdCount > 1,
                     $createdCount
                 ));
 
-                // Notify Student
                 $student = $firstSchedule->student;
                 if ($student) {
                     $student->notify(new \App\Notifications\StudentScheduleAssignedNotification(
@@ -859,7 +877,9 @@ class ScheduleService
 
         return [
             'success' => true,
-            'message' => "Pattern updated successfully. Deleted {$deletedCount} old sessions and created {$createdCount} new sessions."
+            'message' => $useScopedMonth
+                ? "Pattern updated successfully for {$targetMonth->format('F Y')}. Deleted {$deletedCount} old sessions and created {$createdCount} new sessions."
+                : "Pattern updated successfully. Deleted {$deletedCount} old sessions and created {$createdCount} new sessions."
         ];
     }
 

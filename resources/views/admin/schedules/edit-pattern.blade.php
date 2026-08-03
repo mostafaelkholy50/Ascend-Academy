@@ -32,7 +32,7 @@
             <div>
                 <p class="font-semibold">Important Information</p>
                 <p class="text-sm mt-1">
-                    Changing the schedule pattern here will <strong>delete ALL sessions</strong> (both past and future) for this enrollment and generate new ones according to your new selections. Please make sure this is intended, as data attached to past sessions may be affected.
+                    Changing the schedule pattern here will update <strong>only the current month</strong> for this enrollment and generate new sessions for <strong>{{ now()->format('F Y') }}</strong>. Other months will stay unchanged.
                 </p>
             </div>
         </div>
