@@ -19,7 +19,7 @@
                 <h1 class="text-3xl font-bold text-gray-800 tracking-tight">Daily Schedule</h1>
                 <p class="text-sm text-gray-500 mt-1 font-medium">{{ $date->format('l, F d, Y') }}</p>
             </div>
-            <div class="flex items-center space-x-2 rtl:space-x-reverse bg-white p-1.5 rounded-xl shadow-sm border border-gray-100">
+            <div class="flex items-center space-x-2 rtl:space-x-reverse bg-white p-1.5 rounded-xl shadow-sm border border-gray-100 overflow-x-auto w-full md:w-auto">
                 <a href="{{ route('teacher.schedule.daily', ['date' => $prevDay->format('Y-m-d')]) }}"
                     class="px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition flex items-center">
                     <i class="fa-solid fa-chevron-left mr-1 rtl:ml-1 rtl:mr-0 rtl:rotate-180"></i> Previous
