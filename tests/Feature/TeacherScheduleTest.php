@@ -133,6 +133,7 @@ test('past half-hour sessions show attendance and waiting actions on mobile sche
     $weekly->assertStatus(200);
     $weekly->assertSee('Waiting');
     $weekly->assertSee('Attend');
+    $weekly->assertSee('min-height: 120px', false);
 
     $daily = $this->actingAs($teacher)->get(route('teacher.schedule.daily', [
         'date' => '2026-08-02',
@@ -141,6 +142,7 @@ test('past half-hour sessions show attendance and waiting actions on mobile sche
     $daily->assertStatus(200);
     $daily->assertSee('Waiting');
     $daily->assertSee('Attend');
+    $daily->assertSee('min-height: 120px', false);
 
     Carbon::setTestNow();
 });

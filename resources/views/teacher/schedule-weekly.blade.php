@@ -81,10 +81,33 @@
                 <div class="flex flex-col relative bg-gray-50/30">
                     
                     @for ($hour = 0; $hour < 24; $hour++)
+                        @php
+                            $hourSchedules = collect($schedulesByDay)->flatMap(fn ($dayData) => $dayData['schedules'])->filter(function ($schedule) use ($hour) {
+                                return (int) $schedule->starts_at->format('G') === $hour;
+                            });
+                            $hasPastShortSession = $hourSchedules->contains(function ($schedule) {
+                                return now()->greaterThan($schedule->ends_at) && $schedule->getDurationInMinutes() <= 60;
+                            });
+                            $rowMobileHeight = max(
+                                70,
+                                $hourSchedules->map(function ($schedule) {
+                                    return max(1, (int) ceil($schedule->getDurationInMinutes() / 60));
+                                })->map(fn ($durationHours) => ($durationHours * 70) - 8)->max() ?: 70
+                            );
+                            if ($hasPastShortSession) {
+                                $rowMobileHeight = max($rowMobileHeight, 120);
+                            }
+                            $rowDesktopHeight = max(
+                                90,
+                                $hourSchedules->map(function ($schedule) {
+                                    return max(1, (int) ceil($schedule->getDurationInMinutes() / 60));
+                                })->map(fn ($durationHours) => ($durationHours * 90) - 8)->max() ?: 90
+                            );
+                        @endphp
                         <div class="flex border-b border-gray-100 min-h-[70px] md:min-h-[90px] w-full">
                             
                             <!-- Time Label -->
-                            <div class="w-12 md:w-20 flex-shrink-0 border-r border-gray-100 bg-white sticky left-0 z-30 flex items-start justify-end pr-1 md:pr-2 pt-1 md:pt-2">
+                            <div class="w-12 md:w-20 flex-shrink-0 border-r border-gray-100 bg-white sticky left-0 z-30 flex items-start justify-end pr-1 md:pr-2 pt-1 md:pt-2" style="min-height: {{ $rowMobileHeight }}px;">
                                 <span class="text-[9px] md:text-[11px] font-medium text-gray-400">
                                     {{ $hour == 0 ? '12 AM' : ($hour < 12 ? $hour . ' AM' : ($hour == 12 ? '12 PM' : ($hour - 12) . ' PM')) }}
                                 </span>
@@ -92,7 +115,7 @@
 
                             <!-- Day Cells for this Hour -->
                             @foreach ($schedulesByDay as $dayData)
-                            <div class="flex-1 border-r border-gray-100 p-0.5 md:p-1 flex flex-col gap-1 min-w-[110px] md:min-w-[150px] relative bg-white transition-colors hover:bg-gray-50/50 overflow-visible">
+                            <div class="flex-1 border-r border-gray-100 p-0.5 md:p-1 flex flex-col gap-1 min-w-[110px] md:min-w-[150px] relative bg-white transition-colors hover:bg-gray-50/50 overflow-visible" style="min-height: {{ $rowMobileHeight }}px;">
                                     
                                     <!-- Render Appointments for this specific hour -->
                                     @foreach ($dayData['schedules'] as $schedule)
@@ -104,10 +127,6 @@
                                                     $now = now();
                                                     $isPast = $now->greaterThan($schedule->ends_at);
                                                     $isInProgress = $now->between($schedule->starts_at, $schedule->ends_at);
-                                                    if ($isPast) {
-                                                        $mobileBlockHeight = max($mobileBlockHeight, 120);
-                                                    }
-                                                
                                                 // Determine Status & Styling
                                                 $statusClass = 'bg-blue-50 border-blue-200 text-blue-800 shadow-blue-100/50';
                                                 $statusText = 'Not Yet';
