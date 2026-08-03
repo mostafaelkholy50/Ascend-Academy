@@ -3,19 +3,23 @@
 namespace App\Services;
 
 use App\Repositories\TeacherDashboardRepository;
+use App\Repositories\TeacherHoursRepository;
 use App\Services\StudentEvaluationService;
 use App\Models\User;
+use App\Models\TeacherHour;
 use Carbon\Carbon;
 
 class TeacherDashboardService
 {
     protected $repository;
     protected $evaluationService;
+    protected $hoursRepository;
 
-    public function __construct(TeacherDashboardRepository $repository, StudentEvaluationService $evaluationService)
+    public function __construct(TeacherDashboardRepository $repository, StudentEvaluationService $evaluationService, TeacherHoursRepository $hoursRepository)
     {
         $this->repository = $repository;
         $this->evaluationService = $evaluationService;
+        $this->hoursRepository = $hoursRepository;
     }
 
     public function getDashboardData(User $teacher): array
@@ -52,9 +56,11 @@ class TeacherDashboardService
         $completedThisWeek = $weekSchedules->where('status', 'completed');
         $scheduledThisWeek = $weekSchedules->where('status', 'scheduled');
         $thisMonthHours = $this->repository->getThisMonthHours($teacher);
+        $thisMonthEarnings = 0;
+        $hoursMonthTotal = 0;
         
         // Add evaluation bonus if earned
-        $teacherHour = \App\Models\TeacherHour::where('teacher_id', $teacher->id)
+        $teacherHour = TeacherHour::where('teacher_id', $teacher->id)
             ->where('year', $now->year)
             ->where('month', $now->month)
             ->first();
@@ -64,6 +70,32 @@ class TeacherDashboardService
             $thisMonthHours += 0.5;
             $bonusHours = 0.5;
         }
+
+        $monthWindowStart = $now->copy()->startOfMonth();
+        $monthWindowEnd = $now->copy()->endOfMonth();
+        $monthAttendances = $this->hoursRepository->getAttendancesQueryForMonth($teacher, $monthWindowStart, $monthWindowEnd)
+            ->with('schedule')
+            ->get();
+
+        $hoursMonthTotal = $monthAttendances->sum(function ($attendance) {
+            if (!$attendance->schedule) {
+                return 0;
+            }
+
+            $duration = $attendance->schedule->getDurationInHours();
+
+            if (!$attendance->student_present && $attendance->remark === 'Waited Half Time') {
+                return $duration / 2;
+            }
+
+            return $duration;
+        });
+
+        if ($bonusHours > 0) {
+            $hoursMonthTotal += $bonusHours;
+        }
+
+        $thisMonthEarnings = $hoursMonthTotal * ($teacher->hourly_rate ?? 0);
 
         $todayHours = $todaySchedules->sum(fn ($schedule) => $schedule->getDurationInHours());
         $upcomingHoursToday = $upcomingTodaySchedules->sum(fn ($schedule) => $schedule->getDurationInHours());
@@ -81,6 +113,7 @@ class TeacherDashboardService
             'today_hours' => $todayHours,
             'upcoming_hours_today' => $upcomingHoursToday,
             'this_month_hours' => $thisMonthHours,
+            'this_month_earnings' => $thisMonthEarnings,
             'bonus_hours' => $bonusHours,
             'pending_reports' => $studentsNeedingReports->count(),
             'completed_this_week' => $completedThisWeek->count(),

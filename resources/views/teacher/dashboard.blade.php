@@ -16,7 +16,7 @@
             <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
                 <x-dashboard.stat-card icon="fa-users" title="My Students" value="{{ $stats['total_students'] }}" color="blue" />
                 <x-dashboard.stat-card icon="fa-calendar-check" title="Today" value="{{ $stats['today_classes'] }}" subtitle="{{ $stats['upcoming_today'] }} upcoming" color="green" />
-                <x-dashboard.stat-card icon="fa-clock" title="This Month" value="{{ number_format($stats['this_month_hours'], 1) }} hrs" subtitle="{{ $stats['bonus_hours'] > 0 ? 'bonus included' : 'clean total' }}" color="purple" />
+                <x-dashboard.stat-card icon="fa-clock" title="This Month" value="${{ number_format($stats['this_month_earnings'] ?? 0, 2) }}" subtitle="{{ $stats['bonus_hours'] > 0 ? 'bonus included' : 'clean total' }}" color="purple" />
                 <x-dashboard.stat-card icon="fa-file-alt" title="Pending Reports" value="{{ $stats['pending_reports'] }}" subtitle="{{ $completionRate }}% weekly done" color="red" />
             </div>
 
@@ -147,7 +147,7 @@
                     @endif
                     <div class="col-span-2 flex items-center justify-between rounded-xl bg-vibrant-green/10 p-3">
                         <span class="text-gray-700 text-sm font-medium">Total Earnings</span>
-                        <span class="font-black text-vibrant-green text-lg">${{ number_format($stats['this_month_hours'] * ($user->hourly_rate ?? 0), 2) }}</span>
+                        <span class="font-black text-vibrant-green text-lg">${{ number_format($stats['this_month_earnings'] ?? 0, 2) }}</span>
                     </div>
                 </div>
             </section>

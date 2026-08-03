@@ -3,6 +3,9 @@
 use App\Models\User;
 use App\Models\Schedule;
 use App\Models\Course;
+use App\Models\Enrollment;
+use App\Models\Attendance;
+use App\Models\TeacherHour;
 use Carbon\Carbon;
 use Spatie\Permission\Models\Role;
 
@@ -73,4 +76,57 @@ test('teacher dashboard shows schedule in teacher timezone', function () {
     $response->assertStatus(200);
     $response->assertSee('3:00 AM');
     $response->assertDontSee('10:00 AM');
+});
+
+test('teacher dashboard this month earnings include half time attendance and evaluation bonus', function () {
+    $teacher = User::factory()->teacher()->create([
+        'role' => 'Teacher',
+        'hourly_rate' => 50,
+    ]);
+    $teacher->assignRole('Teacher');
+
+    $student = User::factory()->student()->create(['role' => 'Student']);
+    $course = Course::create(['title' => 'Earnings Course']);
+    $enrollment = Enrollment::create([
+        'student_id' => $student->id,
+        'course_id' => $course->id,
+        'status' => 'active',
+    ]);
+
+    $schedule = Schedule::create([
+        'course_id' => $course->id,
+        'teacher_id' => $teacher->id,
+        'student_id' => $student->id,
+        'enrollment_id' => $enrollment->id,
+        'starts_at' => now()->startOfMonth()->addDays(1)->setTime(10, 0),
+        'ends_at' => now()->startOfMonth()->addDays(1)->setTime(12, 0),
+        'status' => 'completed',
+    ]);
+
+    Attendance::create([
+        'schedule_id' => $schedule->id,
+        'student_id' => $student->id,
+        'teacher_id' => $teacher->id,
+        'teacher_present' => true,
+        'student_present' => false,
+        'remark' => 'Waited Half Time',
+    ]);
+
+    TeacherHour::create([
+        'teacher_id' => $teacher->id,
+        'year' => now()->year,
+        'month' => now()->month,
+        'total_hours' => 1.5,
+        'total_salary' => 75,
+        'notes' => 'Evaluation Bonus: +0.5 hours',
+        'is_paid' => false,
+    ]);
+
+    $response = $this->actingAs($teacher)->get(route('teacher.dashboard'));
+
+    $response->assertStatus(200);
+    $response->assertSee('$75.00');
+    $response->assertViewHas('stats', function (array $stats) {
+        return ($stats['this_month_earnings'] ?? null) === 75.0;
+    });
 });
