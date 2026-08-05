@@ -25,52 +25,91 @@ class SendMonthlyPaymentReminders extends Command
     protected $description = 'Send monthly payment reminder emails to students and parents with unpaid enrollments';
 
     /**
+     * Keep the command gentle on shared hosting mail limits.
+     */
+    private const MAX_PAYMENTS_PER_RUN = 15;
+    private const MAX_EMAILS_PER_RUN = 30;
+    private const LOCK_TTL_MINUTES = 55;
+
+    /**
      * Execute the console command.
      */
     public function handle()
     {
         $this->info('Sending monthly payment reminders...');
 
-        // Get current month
-        $currentMonth = Carbon::now()->startOfMonth();
-
-        // Get all unpaid enrollment payments for the current month
-        $unpaidPayments = EnrollmentPayment::with(['enrollment.student', 'enrollment.student.parents'])
-            ->where('payment_status', 'unpaid')
-            ->whereYear('month', $currentMonth->year)
-            ->whereMonth('month', $currentMonth->month)
-            ->get();
-
-        $sentCount = 0;
-
-        foreach ($unpaidPayments as $payment) {
-            $cacheKey = 'payment_reminder_sent_' . $payment->id . '_' . $currentMonth->format('Y-m');
-            if (Cache::has($cacheKey)) {
-                continue;
-            }
-
-            try {
-                $student = $payment->enrollment->student;
-
-                // Send to student
-                $student->notify(new MonthlyPaymentReminderNotification($payment));
-                $sentCount++;
-
-                // Send to parent(s)
-                foreach ($student->parents as $parent) {
-                    $parent->notify(new MonthlyPaymentReminderNotification($payment));
-                    $sentCount++;
-                }
-
-                $this->info("Sent payment reminder to: {$student->name} - {$payment->getFormattedAmount()}");
-                Cache::put($cacheKey, true, now()->addDays(30));
-            } catch (\Exception $e) {
-                $this->error("Failed to send payment reminder for payment {$payment->id}: " . $e->getMessage());
-            }
+        $lockKey = 'cron_lock:payment_send_reminders';
+        if (!Cache::add($lockKey, true, now()->addMinutes(self::LOCK_TTL_MINUTES))) {
+            $this->warn('Skipping: another payment reminder run is still active.');
+            return Command::SUCCESS;
         }
 
-        $this->info("Successfully sent {$sentCount} payment reminder emails for " . $unpaidPayments->count() . " unpaid enrollments.");
+        try {
+            // Get current month
+            $currentMonth = Carbon::now()->startOfMonth();
 
-        return Command::SUCCESS;
+            // Get all unpaid enrollment payments for the current month
+            $unpaidPayments = EnrollmentPayment::with(['enrollment.student', 'enrollment.student.parents'])
+                ->where('payment_status', 'unpaid')
+                ->whereYear('month', $currentMonth->year)
+                ->whereMonth('month', $currentMonth->month)
+                ->orderBy('id')
+                ->limit(self::MAX_PAYMENTS_PER_RUN)
+                ->get();
+
+            $sentCount = 0;
+            $skippedCount = 0;
+
+            foreach ($unpaidPayments as $payment) {
+                if ($sentCount >= self::MAX_EMAILS_PER_RUN) {
+                    $skippedCount++;
+                    continue;
+                }
+
+                $cacheKey = 'payment_reminder_sent_' . $payment->id . '_' . $currentMonth->format('Y-m');
+                if (!Cache::add($cacheKey, true, now()->addDays(30))) {
+                    continue;
+                }
+
+                try {
+                    $student = $payment->enrollment->student;
+                    $remainingEmails = self::MAX_EMAILS_PER_RUN - $sentCount;
+
+                    // Send to student
+                    if ($remainingEmails > 0) {
+                        $student->notify(new MonthlyPaymentReminderNotification($payment));
+                        $sentCount++;
+                        $remainingEmails--;
+                    }
+
+                    // Send to parent(s)
+                    foreach ($student->parents as $parent) {
+                        if ($remainingEmails <= 0) {
+                            $skippedCount++;
+                            break;
+                        }
+
+                        $parent->notify(new MonthlyPaymentReminderNotification($payment));
+                        $sentCount++;
+                        $remainingEmails--;
+                    }
+
+                    $this->info("Sent payment reminder to: {$student->name} - {$payment->getFormattedAmount()}");
+                } catch (\Exception $e) {
+                    Cache::forget($cacheKey);
+                    $this->error("Failed to send payment reminder for payment {$payment->id}: " . $e->getMessage());
+                }
+            }
+
+            $this->info("Successfully sent {$sentCount} payment reminder emails for " . $unpaidPayments->count() . " unpaid enrollments.");
+
+            if ($skippedCount > 0) {
+                $this->warn("Skipped {$skippedCount} reminders to stay within the run limit.");
+            }
+
+            return Command::SUCCESS;
+        } finally {
+            Cache::forget($lockKey);
+        }
     }
 }
