@@ -228,6 +228,16 @@
                                                 <!-- Actions Column -->
                                                 <div class="flex items-center gap-2 flex-shrink-0 mt-auto md:mt-0 pt-1 md:pt-0">
                                                     @if($schedule->status !== 'completed')
+                                                        @if(!\App\Models\RescheduleRequest::where('schedule_id', $schedule->id)->where('status', 'pending')->exists())
+                                                            <button onclick="openRescheduleModal({{ $schedule->id }})" 
+                                                                class="px-2.5 py-1 bg-white border border-blue-400 hover:bg-blue-50 text-blue-700 rounded-lg text-[10px] font-bold transition flex items-center gap-1 whitespace-nowrap">
+                                                                <i class="fa-solid fa-calendar-alt"></i> Reschedule
+                                                            </button>
+                                                        @else
+                                                            <span class="px-2.5 py-1 bg-gray-100 text-gray-500 rounded-lg text-[10px] font-bold border border-gray-200">
+                                                                Pending Reschedule
+                                                            </span>
+                                                        @endif
                                                         <button onclick="openAttendanceModal({
                                                                 id: {{ $schedule->id }},
                                                                 student: { id: {{ $schedule->student->id }}, name: '{{ addslashes($schedule->student->name) }}' },
@@ -272,6 +282,9 @@
             @endif
         });
     </script>
+
+    <!-- Include Reschedule Modal -->
+    @include('teacher.partials.reschedule-modal')
 
     <!-- Include Attendance Modal -->
     @include('teacher.partials.attendance-modal')

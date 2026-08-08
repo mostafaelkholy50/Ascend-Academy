@@ -119,4 +119,24 @@
         menuBtn.style.display = '';
         closeBtn.style.display = 'none';
     }
+
+    // Session Alerts
+    @if(session('success'))
+        Swal.fire({
+            icon: 'success',
+            title: 'Success',
+            text: "{{ session('success') }}",
+            confirmButtonColor: '#009FBC',
+            timer: 3000
+        });
+    @endif
+
+    @if(session('error'))
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: "{{ session('error') }}",
+            confirmButtonColor: '#1D3A5F',
+        });
+    @endif
 </script>

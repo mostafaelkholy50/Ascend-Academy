@@ -85,17 +85,33 @@
         </div>
     </div>
 
-    <!-- View Toggle -->
-    <div class="bg-white rounded-2xl shadow-lg p-2 mb-4 md:mb-6 inline-flex flex-col sm:flex-row gap-2 border border-gray-100 w-full sm:w-auto">
-        <a href="{{ route('admin.schedules.index', ['view' => 'calendar']) }}" 
-            class="px-4 md:px-6 py-2.5 md:py-3 rounded-xl font-semibold transition flex items-center justify-center gap-2 text-sm md:text-base {{ $viewType === 'calendar' ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-50' }}">
-            <i class="fa-solid fa-calendar-week"></i>
-            <span>Weekly Calendar</span>
-        </a>
-        <a href="{{ route('admin.schedules.index', ['view' => 'list']) }}" 
-            class="px-4 md:px-6 py-2.5 md:py-3 rounded-xl font-semibold transition flex items-center justify-center gap-2 text-sm md:text-base {{ $viewType === 'list' ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-50' }}">
-            <i class="fa-solid fa-list"></i>
-            <span>Enrollment List</span>
+    <!-- View Toggle and Actions -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4 md:mb-6 w-full">
+        <div class="bg-white rounded-2xl shadow-lg p-2 inline-flex flex-col sm:flex-row gap-2 border border-gray-100 w-full sm:w-auto">
+            <a href="{{ route('admin.schedules.index', ['view' => 'calendar']) }}" 
+                class="px-4 md:px-6 py-2.5 md:py-3 rounded-xl font-semibold transition flex items-center justify-center gap-2 text-sm md:text-base {{ $viewType === 'calendar' ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-50' }}">
+                <i class="fa-solid fa-calendar-week"></i>
+                <span>Weekly Calendar</span>
+            </a>
+            <a href="{{ route('admin.schedules.index', ['view' => 'list']) }}" 
+                class="px-4 md:px-6 py-2.5 md:py-3 rounded-xl font-semibold transition flex items-center justify-center gap-2 text-sm md:text-base {{ $viewType === 'list' ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-50' }}">
+                <i class="fa-solid fa-list"></i>
+                <span>Enrollment List</span>
+            </a>
+        </div>
+
+        @php
+            $pendingRequestsCount = \App\Models\RescheduleRequest::where('status', \App\Enums\RescheduleRequestStatus::Pending)->count();
+        @endphp
+        <a href="{{ route(auth()->user()->role === 'SchedulerManager' ? 'scheduler.schedules.requests' : 'admin.schedules.requests') }}" 
+            class="relative px-6 py-3 bg-white border border-blue-200 text-blue-600 rounded-xl font-bold hover:bg-blue-50 hover:shadow-md transition flex items-center justify-center w-full sm:w-auto gap-2">
+            <i class="fa-solid fa-envelope-open-text"></i>
+            <span>Requests</span>
+            @if($pendingRequestsCount > 0)
+                <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-black px-2.5 py-0.5 rounded-full border-2 border-white shadow-sm">
+                    {{ $pendingRequestsCount }}
+                </span>
+            @endif
         </a>
     </div>
 

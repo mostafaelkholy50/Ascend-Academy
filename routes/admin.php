@@ -86,6 +86,9 @@ Route::middleware([
 
 
     // Schedules Management
+    Route::get('/schedules/requests', [ScheduleController::class, 'rescheduleRequests'])->name('schedules.requests');
+    Route::post('/schedules/requests/{rescheduleRequest}/approve', [ScheduleController::class, 'approveRescheduleRequest'])->name('schedules.requests.approve');
+    Route::post('/schedules/requests/{rescheduleRequest}/reject', [ScheduleController::class, 'rejectRescheduleRequest'])->name('schedules.requests.reject');
     Route::resource('schedules', ScheduleController::class);
     Route::post('schedules/bulk-cancel/{enrollment}', [ScheduleController::class, 'bulkCancel'])->name('schedules.bulk-cancel');
     Route::delete('schedules/bulk-delete/{enrollment}', [ScheduleController::class, 'bulkDelete'])->name('schedules.bulk-delete');

@@ -449,4 +449,50 @@ class ScheduleController extends Controller
 
         return compact('status', 'label', 'badgeClass', 'description', 'absenceInfo');
     }
+
+    public function rescheduleRequests()
+    {
+        $requests = \App\Models\RescheduleRequest::with(['schedule', 'teacher', 'student'])
+            ->where('status', \App\Enums\RescheduleRequestStatus::Pending)
+            ->orderBy('created_at', 'desc')
+            ->paginate(20);
+            
+        return view('admin.schedules.requests', compact('requests'));
+    }
+
+    public function approveRescheduleRequest(\App\Models\RescheduleRequest $rescheduleRequest)
+    {
+        if ($rescheduleRequest->status !== \App\Enums\RescheduleRequestStatus::Pending) {
+            return back()->with('error', 'Request is already processed.');
+        }
+
+        // Validate conflicts again just in case
+        if (\App\Models\Schedule::hasTeacherConflict($rescheduleRequest->teacher_id, $rescheduleRequest->new_starts_at, $rescheduleRequest->new_ends_at, $rescheduleRequest->schedule_id) ||
+            \App\Models\Schedule::hasStudentConflict($rescheduleRequest->student_id, $rescheduleRequest->new_starts_at, $rescheduleRequest->new_ends_at, $rescheduleRequest->schedule_id)) {
+            return back()->with('error', 'There is now a conflict for this requested time. Cannot approve.');
+        }
+
+        // Update schedule
+        $schedule = $rescheduleRequest->schedule;
+        $schedule->update([
+            'starts_at' => $rescheduleRequest->new_starts_at,
+            'ends_at' => $rescheduleRequest->new_ends_at,
+        ]);
+
+        // Update request status
+        $rescheduleRequest->update(['status' => \App\Enums\RescheduleRequestStatus::Approved]);
+
+        return back()->with('success', 'Reschedule request approved. The schedule has been updated.');
+    }
+
+    public function rejectRescheduleRequest(\App\Models\RescheduleRequest $rescheduleRequest)
+    {
+        if ($rescheduleRequest->status !== \App\Enums\RescheduleRequestStatus::Pending) {
+            return back()->with('error', 'Request is already processed.');
+        }
+
+        $rescheduleRequest->update(['status' => \App\Enums\RescheduleRequestStatus::Rejected]);
+
+        return back()->with('success', 'Reschedule request rejected.');
+    }
 }

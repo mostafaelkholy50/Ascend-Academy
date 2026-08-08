@@ -64,6 +64,7 @@ Route::middleware([
     Route::get('/schedule', [ScheduleController::class, 'index'])->name('schedule.index');
     Route::get('/schedule/daily', [ScheduleController::class, 'daily'])->name('schedule.daily');
     Route::get('/schedule/print', [ScheduleController::class, 'print'])->name('schedule.print');
+    Route::post('/schedule/{schedule}/reschedule-request', [ScheduleController::class, 'requestReschedule'])->name('schedule.request-reschedule');
 
     // Attendance Management
     Route::post('/attendance', [AttendanceController::class, 'store'])->name('attendance.store');

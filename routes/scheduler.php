@@ -35,6 +35,9 @@ Route::middleware([
 
     // Schedule Management
     Route::get('/schedules/print', [ScheduleController::class, 'print'])->name('schedules.print');
+    Route::get('/schedules/requests', [ScheduleController::class, 'rescheduleRequests'])->name('schedules.requests');
+    Route::post('/schedules/requests/{rescheduleRequest}/approve', [ScheduleController::class, 'approveRescheduleRequest'])->name('schedules.requests.approve');
+    Route::post('/schedules/requests/{rescheduleRequest}/reject', [ScheduleController::class, 'rejectRescheduleRequest'])->name('schedules.requests.reject');
     Route::resource('schedules', ScheduleController::class);
     
     // Attendance Management

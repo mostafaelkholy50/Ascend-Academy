@@ -205,6 +205,16 @@
                                                     <!-- Footer: Buttons -->
                                                     <div class="flex flex-col gap-1 mt-1">
                                                     @if($schedule->status !== 'completed')
+                                                        @if(!\App\Models\RescheduleRequest::where('schedule_id', $schedule->id)->where('status', 'pending')->exists())
+                                                            <button onclick="event.stopPropagation(); openRescheduleModal({{ $schedule->id }})" 
+                                                                class="w-full py-1 px-1 bg-white border border-blue-400 hover:bg-blue-50 text-blue-700 rounded text-[8px] font-bold transition flex items-center justify-center gap-1 leading-tight whitespace-nowrap">
+                                                                <i class="fa-solid fa-calendar-alt"></i> Reschedule
+                                                            </button>
+                                                        @else
+                                                            <div class="w-full py-1 px-1 bg-gray-100 text-gray-500 rounded text-[8px] font-bold border border-gray-200 text-center leading-tight whitespace-nowrap">
+                                                                Pending Reschedule
+                                                            </div>
+                                                        @endif
                                                         <div class="grid grid-cols-2 gap-1 mt-0.5 mt-auto">
                                                             <!-- Attend Button -->
                                                             <button onclick="event.stopPropagation(); openAttendanceModal({
@@ -305,6 +315,9 @@
             @endif
         });
     </script>
+
+    <!-- Include Reschedule Modal -->
+    @include('teacher.partials.reschedule-modal')
 
     <!-- Include Attendance Modal -->
     @include('teacher.partials.attendance-modal')
