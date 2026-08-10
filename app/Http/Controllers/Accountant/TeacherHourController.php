@@ -102,4 +102,24 @@ class TeacherHourController extends Controller
 
         return view('accountant.teacher-hours.show', $data);
     }
+    public function destroyAttendance(\App\Models\Attendance $attendance)
+    {
+        $user = auth()->user();
+
+        if (!in_array($user->role, ['SuperAdmin', 'Admin'])) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        // Keep a reference to the schedule to revert its status
+        $schedule = $attendance->schedule;
+        
+        $attendance->delete();
+
+        // Revert schedule status if it was completed
+        if ($schedule && $schedule->status === 'completed') {
+            $schedule->update(['status' => 'scheduled']);
+        }
+
+        return back()->with('success', 'Attendance record deleted successfully.');
+    }
 }

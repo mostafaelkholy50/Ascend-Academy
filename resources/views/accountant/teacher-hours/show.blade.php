@@ -98,6 +98,9 @@
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">End Time</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duration</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Earnings</th>
+                            @if(in_array(auth()->user()->role, ['SuperAdmin', 'Admin']))
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            @endif
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
@@ -147,6 +150,17 @@
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-vibrant-green">
                                     ${{ number_format($earnings, 2) }}
                                 </td>
+                                @if(in_array(auth()->user()->role, ['SuperAdmin', 'Admin']))
+                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <form method="POST" action="{{ route('accountant.attendances.destroy', $attendance->id) }}" onsubmit="return confirm('Are you sure you want to delete this attendance record? This will revert the schedule status.');" class="inline-block">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 p-1.5 rounded-lg transition-colors" title="Delete Attendance">
+                                                <i class="fa-solid fa-trash-can"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                @endif
                             </tr>
                         @endforeach
 
@@ -180,6 +194,11 @@
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-vibrant-green">
                                     ${{ number_format($bonusHours * $hourlyRate, 2) }}
                                 </td>
+                                @if(in_array(auth()->user()->role, ['SuperAdmin', 'Admin']))
+                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <!-- No actions for bonus hours -->
+                                    </td>
+                                @endif
                             </tr>
                         @endif
                     </tbody>

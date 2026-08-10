@@ -30,4 +30,5 @@ Route::middleware([
     Route::post('/teacher-hours/mark-paid', [TeacherHourController::class, 'markAsPaid'])->name('teacher-hours.mark-paid');
     Route::post('/teacher-hours/mark-unpaid', [TeacherHourController::class, 'markAsUnpaid'])->name('teacher-hours.mark-unpaid');
     Route::patch('/teacher-hours/{teacher}/update-rate', [TeacherHourController::class, 'updateRate'])->name('teacher-hours.update-rate');
+    Route::delete('/attendances/{attendance}', [TeacherHourController::class, 'destroyAttendance'])->name('attendances.destroy');
 });

@@ -154,7 +154,7 @@ class Schedule extends Model
     // ============================================
     // Conflict Detection
     // ============================================
-    public static function hasTeacherConflict($teacherId, $startsAt, $endsAt, $excludeId = null)
+    public static function hasTeacherConflict($teacherId, $startsAt, $endsAt, $excludeId = null, $excludeStudentId = null, $excludeCourseId = null)
     {
         $conflict = self::with('enrollment')
             ->where('teacher_id', $teacherId)
@@ -164,13 +164,19 @@ class Schedule extends Model
                   ->where('ends_at', '>', $startsAt);
             })
             ->when($excludeId, fn($q) => $q->where('id', '!=', $excludeId))
+            ->when($excludeStudentId && $excludeCourseId, function($q) use ($excludeStudentId, $excludeCourseId) {
+                $q->where(function($q) use ($excludeStudentId, $excludeCourseId) {
+                    $q->where('student_id', '!=', $excludeStudentId)
+                      ->orWhere('course_id', '!=', $excludeCourseId);
+                });
+            })
             ->get()
             ->first(fn (self $schedule) => $schedule->isConflictRelevantFor($startsAt));
 
         return (bool) $conflict;
     }
 
-    public static function hasStudentConflict($studentId, $startsAt, $endsAt, $excludeId = null)
+    public static function hasStudentConflict($studentId, $startsAt, $endsAt, $excludeId = null, $excludeStudentId = null, $excludeCourseId = null)
     {
         $conflict = self::with('enrollment')
             ->where('student_id', $studentId)
@@ -180,13 +186,19 @@ class Schedule extends Model
                   ->where('ends_at', '>', $startsAt);
             })
             ->when($excludeId, fn($q) => $q->where('id', '!=', $excludeId))
+            ->when($excludeStudentId && $excludeCourseId, function($q) use ($excludeStudentId, $excludeCourseId) {
+                $q->where(function($q) use ($excludeStudentId, $excludeCourseId) {
+                    $q->where('student_id', '!=', $excludeStudentId)
+                      ->orWhere('course_id', '!=', $excludeCourseId);
+                });
+            })
             ->get()
             ->first(fn (self $schedule) => $schedule->isConflictRelevantFor($startsAt));
 
         return (bool) $conflict;
     }
 
-    public static function getTeacherConflict($teacherId, $startsAt, $endsAt, $excludeId = null)
+    public static function getTeacherConflict($teacherId, $startsAt, $endsAt, $excludeId = null, $excludeStudentId = null, $excludeCourseId = null)
     {
         return self::with(['student', 'course', 'enrollment'])->where('teacher_id', $teacherId)
             ->where('status', '!=', 'cancelled')
@@ -195,11 +207,17 @@ class Schedule extends Model
                   ->where('ends_at', '>', $startsAt);
             })
             ->when($excludeId, fn($q) => $q->where('id', '!=', $excludeId))
+            ->when($excludeStudentId && $excludeCourseId, function($q) use ($excludeStudentId, $excludeCourseId) {
+                $q->where(function($q) use ($excludeStudentId, $excludeCourseId) {
+                    $q->where('student_id', '!=', $excludeStudentId)
+                      ->orWhere('course_id', '!=', $excludeCourseId);
+                });
+            })
             ->get()
             ->first(fn (self $schedule) => $schedule->isConflictRelevantFor($startsAt));
     }
 
-    public static function getStudentConflict($studentId, $startsAt, $endsAt, $excludeId = null)
+    public static function getStudentConflict($studentId, $startsAt, $endsAt, $excludeId = null, $excludeStudentId = null, $excludeCourseId = null)
     {
         return self::with(['teacher', 'course', 'enrollment'])->where('student_id', $studentId)
             ->where('status', '!=', 'cancelled')
@@ -208,6 +226,12 @@ class Schedule extends Model
                   ->where('ends_at', '>', $startsAt);
             })
             ->when($excludeId, fn($q) => $q->where('id', '!=', $excludeId))
+            ->when($excludeStudentId && $excludeCourseId, function($q) use ($excludeStudentId, $excludeCourseId) {
+                $q->where(function($q) use ($excludeStudentId, $excludeCourseId) {
+                    $q->where('student_id', '!=', $excludeStudentId)
+                      ->orWhere('course_id', '!=', $excludeCourseId);
+                });
+            })
             ->get()
             ->first(fn (self $schedule) => $schedule->isConflictRelevantFor($startsAt));
     }

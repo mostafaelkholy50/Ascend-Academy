@@ -8,7 +8,17 @@
         @media (min-width: 768px) {
             .schedule-block {
                 min-height: var(--schedule-block-height-desktop);
+                top: var(--top-desktop) !important;
             }
+            .time-row-container {
+                min-height: var(--row-height-desktop);
+            }
+        }
+        .time-row-container {
+            min-height: var(--row-height-mobile);
+        }
+        .schedule-block {
+            top: var(--top-mobile) !important;
         }
     </style>
 
@@ -113,44 +123,31 @@
                             $hourSchedules = $schedules->filter(function ($schedule) use ($hour) {
                                 return (int) $schedule->starts_at->format('G') === $hour;
                             });
-                            $hasPastShortSession = $hourSchedules->contains(function ($schedule) {
-                                return now()->greaterThan($schedule->ends_at) && $schedule->getDurationInMinutes() <= 60;
-                            });
-                            $rowMobileHeight = max(
-                                70,
-                                $hourSchedules->map(function ($schedule) {
-                                    return max(1, (int) ceil($schedule->getDurationInMinutes() / 60));
-                                })->map(fn ($durationHours) => ($durationHours * 70) - 8)->max() ?: 70
-                            );
-                            if ($hasPastShortSession) {
-                                $rowMobileHeight = max($rowMobileHeight, 120);
-                            }
-                            $rowDesktopHeight = max(
-                                90,
-                                $hourSchedules->map(function ($schedule) {
-                                    return max(1, (int) ceil($schedule->getDurationInMinutes() / 60));
-                                })->map(fn ($durationHours) => ($durationHours * 90) - 8)->max() ?: 90
-                            );
+                            $rowMobileHeight = 140;
+                            $rowDesktopHeight = 120;
                         @endphp
-                        <div class="flex border-b border-gray-100 min-h-[70px] md:min-h-[90px] w-full">
+                        <div class="flex border-b border-gray-100 min-h-[140px] md:min-h-[120px] w-full">
                             
                             <!-- Time Label -->
-                            <div class="w-12 md:w-20 flex-shrink-0 border-r border-gray-100 bg-white sticky left-0 z-20 flex items-start justify-end pr-1 md:pr-2 pt-1 md:pt-2" style="min-height: {{ $rowMobileHeight }}px;">
+                            <div class="w-12 md:w-20 flex-shrink-0 border-r border-gray-100 bg-white sticky left-0 z-20 flex items-start justify-end pr-1 md:pr-2 pt-1 md:pt-2 time-row-container" style="--row-height-mobile: {{ $rowMobileHeight }}px; --row-height-desktop: {{ $rowDesktopHeight }}px;">
                                 <span class="text-[9px] md:text-[11px] font-medium text-gray-400">
                                     {{ $hour == 0 ? '12 AM' : ($hour < 12 ? $hour . ' AM' : ($hour == 12 ? '12 PM' : ($hour - 12) . ' PM')) }}
                                 </span>
                             </div>
 
                             <!-- Single Day Cell for this Hour -->
-                            <div class="flex-1 border-r border-gray-100 p-1 md:p-2 lg:px-24 flex flex-col gap-2 relative bg-white transition-colors hover:bg-gray-50/50 overflow-visible" style="min-height: {{ $rowMobileHeight }}px;">
+                            <div class="flex-1 border-r border-gray-100 relative bg-white transition-colors hover:bg-gray-50/50 overflow-visible time-row-container" style="--row-height-mobile: {{ $rowMobileHeight }}px; --row-height-desktop: {{ $rowDesktopHeight }}px;">
                                 
                                 <!-- Render Appointments for this specific hour -->
                                 @foreach ($schedules as $schedule)
                                     @if ((int) $schedule->starts_at->format('G') === $hour)
                                         @php
-                                            $durationHours = max(1, (int) ceil($schedule->getDurationInMinutes() / 60));
-                                            $mobileBlockHeight = ($durationHours * 70) - 8;
-                                            $desktopBlockHeight = ($durationHours * 90) - 8;
+                                            $durationHours = $schedule->getDurationInMinutes() / 60;
+                                            $mobileBlockHeight = ($durationHours * 140) - 8;
+                                            $desktopBlockHeight = ($durationHours * 120) - 8;
+                                            $startMinute = (int) $schedule->starts_at->format('i');
+                                            $mobileTopOffset = ($startMinute / 60) * 140 + 4;
+                                            $desktopTopOffset = ($startMinute / 60) * 120 + 4;
                                             $now = now();
                                             $isPast = $now->greaterThan($schedule->ends_at);
                                             $isInProgress = $now->between($schedule->starts_at, $schedule->ends_at);
@@ -195,47 +192,44 @@
                                         @endphp
                                         
                                         <!-- Appointment Card -->
-                                        <div class="schedule-block relative z-20 rounded-xl border shadow-md transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 {{ $statusClass }} flex items-stretch overflow-hidden w-full"
-                                             style="--schedule-block-height-mobile: {{ $mobileBlockHeight }}px; --schedule-block-height-desktop: {{ $desktopBlockHeight }}px;">
+                                        <div class="schedule-block absolute left-0 right-0 mx-1 md:mx-2 lg:mx-24 z-30 rounded-xl border shadow-md transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 {{ $statusClass }} flex items-stretch overflow-hidden"
+                                             style="--schedule-block-height-mobile: {{ $mobileBlockHeight }}px; --schedule-block-height-desktop: {{ $desktopBlockHeight }}px; --top-mobile: {{ $mobileTopOffset }}px; --top-desktop: {{ $desktopTopOffset }}px;">
                                              
                                             <!-- Color Indicator Left Bar -->
                                             <div class="w-1.5 bg-{{$statusColor}}-500 flex-shrink-0"></div>
                                             
-                                            <div class="p-2 sm:p-3 flex-1 flex flex-col md:flex-row md:items-center justify-between gap-4 overflow-hidden bg-{{$statusColor}}-50/90 relative">
+                                            <div class="p-1.5 sm:p-2 flex-1 flex flex-row items-center justify-between gap-2 overflow-hidden bg-{{$statusColor}}-50/90 relative">
                                                 
                                                 <!-- Info Column -->
-                                                <div class="flex-1 min-w-0">
-                                                    <div class="flex items-center gap-2 mb-1">
-                                                        <div class="text-sm font-black text-{{$statusColor}}-800">
+                                                <div class="flex-1 min-w-0 flex flex-col md:flex-row md:items-center gap-1 md:gap-3">
+                                                    <div class="flex items-center gap-2">
+                                                        <div class="text-[11px] sm:text-xs font-black text-{{$statusColor}}-800 whitespace-nowrap">
                                                             {{ $schedule->starts_at->format('g:i A') }} - {{ $schedule->ends_at->format('g:i A') }}
                                                         </div>
                                                         @if($isInProgress)
-                                                            <span class="w-2 h-2 rounded-full bg-yellow-500 animate-pulse"></span>
+                                                            <span class="w-2 h-2 rounded-full bg-yellow-500 animate-pulse hidden sm:block"></span>
                                                         @endif
-                                                        <span class="px-2 py-0.5 rounded-full bg-white border border-{{$statusColor}}-200 text-{{$statusColor}}-700 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 shadow-sm whitespace-nowrap">
-                                                            <i class="fa-solid {{ $iconClass }}"></i> {{ $statusText }}
-                                                        </span>
                                                     </div>
                                                     
-                                                    <div class="flex flex-col md:flex-row md:items-baseline gap-1 md:gap-3 break-words whitespace-normal">
-                                                        <div class="text-base font-bold text-gray-900">{{ $schedule->student->name }}</div>
-                                                        <div class="text-xs font-medium text-gray-600 flex items-center gap-1">
-                                                            <i class="fa-solid fa-book-open text-gray-400"></i> {{ $schedule->course->name }}
+                                                    <div class="flex flex-row items-center gap-2 truncate">
+                                                        <div class="text-xs sm:text-sm font-bold text-gray-900 truncate">{{ $schedule->student->name }}</div>
+                                                        <div class="text-[10px] sm:text-xs font-medium text-gray-600 truncate flex items-center gap-1">
+                                                            <i class="fa-solid fa-book-open text-gray-400"></i> <span class="truncate hidden sm:inline">{{ $schedule->course->name }}</span>
                                                         </div>
                                                     </div>
                                                 </div>
                                                 
                                                 <!-- Actions Column -->
-                                                <div class="flex items-center gap-2 flex-shrink-0 mt-auto md:mt-0 pt-1 md:pt-0">
-                                                    @if($schedule->status !== 'completed')
+                                                <div class="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+                                                    @if($schedule->status !== 'completed' && !$schedule->attendance)
                                                         @if(!\App\Models\RescheduleRequest::where('schedule_id', $schedule->id)->where('status', 'pending')->exists())
                                                             <button onclick="openRescheduleModal({{ $schedule->id }})" 
-                                                                class="px-2.5 py-1 bg-white border border-blue-400 hover:bg-blue-50 text-blue-700 rounded-lg text-[10px] font-bold transition flex items-center gap-1 whitespace-nowrap">
-                                                                <i class="fa-solid fa-calendar-alt"></i> Reschedule
+                                                                class="p-1.5 sm:px-2.5 sm:py-1 bg-white border border-blue-400 hover:bg-blue-50 text-blue-700 rounded-lg text-[10px] font-bold transition flex items-center justify-center gap-1 whitespace-nowrap" title="Reschedule">
+                                                                <i class="fa-solid fa-calendar-alt"></i> <span class="hidden sm:inline">Reschedule</span>
                                                             </button>
                                                         @else
-                                                            <span class="px-2.5 py-1 bg-gray-100 text-gray-500 rounded-lg text-[10px] font-bold border border-gray-200">
-                                                                Pending Reschedule
+                                                            <span class="p-1.5 sm:px-2.5 sm:py-1 bg-gray-100 text-gray-500 rounded-lg text-[10px] font-bold border border-gray-200 flex items-center justify-center gap-1" title="Pending Reschedule">
+                                                                <i class="fa-solid fa-hourglass-half"></i> <span class="hidden sm:inline">Pending Reschedule</span>
                                                             </span>
                                                         @endif
                                                         <button onclick="openAttendanceModal({
@@ -245,13 +239,13 @@
                                                                 starts_at_formatted: '{{ $schedule->starts_at->format('g:i A') }}',
                                                                 attendance: null
                                                             })" 
-                                                            class="px-2.5 py-1 bg-vibrant-green hover:bg-green-600 text-white rounded-lg text-[10px] font-bold transition flex items-center gap-1 shadow-sm whitespace-nowrap">
-                                                            <i class="fa-solid fa-clipboard-check"></i> Attend
+                                                            class="p-1.5 sm:px-2.5 sm:py-1 bg-vibrant-green hover:bg-green-600 text-white rounded-lg text-[10px] font-bold transition flex items-center justify-center gap-1 shadow-sm whitespace-nowrap" title="Attend">
+                                                            <i class="fa-solid fa-clipboard-check"></i> <span class="hidden sm:inline">Attend</span>
                                                         </button>
                                                         
                                                         <button onclick="notifyWaiting({{ $schedule->id }})" id="waitingBtn-{{ $schedule->id }}" 
-                                                            class="px-2.5 py-1 bg-white border border-yellow-400 hover:bg-yellow-50 text-yellow-700 rounded-lg text-[10px] font-bold transition flex items-center gap-1 whitespace-nowrap">
-                                                            <i class="fa-solid fa-clock"></i> Waiting
+                                                            class="p-1.5 sm:px-2.5 sm:py-1 bg-white border border-yellow-400 hover:bg-yellow-50 text-yellow-700 rounded-lg text-[10px] font-bold transition flex items-center justify-center gap-1 whitespace-nowrap" title="Waiting">
+                                                            <i class="fa-solid fa-clock"></i> <span class="hidden sm:inline">Waiting</span>
                                                         </button>
                                                     @endif
                                                 </div>

@@ -147,6 +147,49 @@ test('past half-hour sessions show attendance and waiting actions on mobile sche
     Carbon::setTestNow();
 });
 
+test('daily schedule blocks are absolutely positioned and take multiple squares for long sessions', function () {
+    Carbon::setTestNow(Carbon::create(2026, 8, 11, 12, 0, 0, 'Africa/Cairo'));
+
+    $teacher = User::factory()->teacher()->create([
+        'role' => 'Teacher',
+        'timezone' => 'Africa/Cairo',
+    ]);
+    $teacher->assignRole('Teacher');
+    $student = User::factory()->student()->create();
+    $course = Course::factory()->create();
+    $enrollment = Enrollment::create([
+        'student_id' => $student->id,
+        'course_id' => $course->id,
+        'status' => 'active',
+        'session_duration' => 120,
+    ]);
+
+    Schedule::create([
+        'enrollment_id' => $enrollment->id,
+        'student_id' => $student->id,
+        'course_id' => $course->id,
+        'teacher_id' => $teacher->id,
+        'starts_at' => Carbon::create(2026, 8, 11, 12, 0, 0, 'Africa/Cairo'),
+        'ends_at' => Carbon::create(2026, 8, 11, 14, 0, 0, 'Africa/Cairo'),
+        'status' => 'scheduled',
+    ]);
+
+    $daily = $this->actingAs($teacher)->get(route('teacher.schedule.daily', [
+        'date' => '2026-08-11',
+    ]));
+
+    $daily->assertStatus(200);
+    $daily->assertSee('absolute left-0 right-0');
+    $daily->assertSee('--schedule-block-height-mobile: 272', false);
+    $daily->assertSee('--schedule-block-height-desktop: 232', false);
+    $daily->assertSee('--top-mobile: 4', false);
+    $daily->assertSee('--top-desktop: 4', false);
+    $daily->assertSee('--row-height-mobile: 140px', false);
+    $daily->assertSee('--row-height-desktop: 120px', false);
+
+    Carbon::setTestNow();
+});
+
 test('teacher redirects to schedule after login', function () {
     // Arrange
     $user = User::factory()->teacher()->create(['role' => 'Teacher', 'password' => bcrypt('password')]);

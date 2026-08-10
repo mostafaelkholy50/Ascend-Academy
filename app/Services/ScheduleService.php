@@ -262,7 +262,8 @@ class ScheduleService
                     }
 
                     // Check Teacher Conflict in-memory
-                    $teacherConflict = $existingTeacherSchedules->first(function ($schedule) use ($startsAt, $endsAt) {
+                    $teacherConflict = $existingTeacherSchedules->first(function ($schedule) use ($startsAt, $endsAt, $data) {
+                        if ($schedule->student_id == $data['student_id'] && $schedule->course_id == $data['course_id']) return false;
                         return $schedule->starts_at < $endsAt
                             && $schedule->ends_at > $startsAt
                             && $schedule->isConflictRelevantFor($startsAt);
@@ -276,7 +277,8 @@ class ScheduleService
                     }
 
                     // Check Student Conflict in-memory
-                    $studentConflict = $existingStudentSchedules->first(function ($schedule) use ($startsAt, $endsAt) {
+                    $studentConflict = $existingStudentSchedules->first(function ($schedule) use ($startsAt, $endsAt, $data) {
+                        if ($schedule->student_id == $data['student_id'] && $schedule->course_id == $data['course_id']) return false;
                         return $schedule->starts_at < $endsAt
                             && $schedule->ends_at > $startsAt
                             && $schedule->isConflictRelevantFor($startsAt);
@@ -594,7 +596,8 @@ class ScheduleService
                         }
 
                         // Check Teacher Conflict in-memory
-                        $teacherConflict = $existingTeacherSchedules->first(function ($schedule) use ($startsAt, $endsAt) {
+                        $teacherConflict = $existingTeacherSchedules->first(function ($schedule) use ($startsAt, $endsAt, $enrollment) {
+                            if ($schedule->student_id == $enrollment->student_id && $schedule->course_id == $enrollment->course_id) return false;
                             return $schedule->starts_at < $endsAt
                                 && $schedule->ends_at > $startsAt
                                 && $schedule->isConflictRelevantFor($startsAt);
@@ -608,7 +611,8 @@ class ScheduleService
                         }
 
                         // Check Student Conflict in-memory
-                        $studentConflict = $existingStudentSchedules->first(function ($schedule) use ($startsAt, $endsAt) {
+                        $studentConflict = $existingStudentSchedules->first(function ($schedule) use ($startsAt, $endsAt, $enrollment) {
+                            if ($schedule->student_id == $enrollment->student_id && $schedule->course_id == $enrollment->course_id) return false;
                             return $schedule->starts_at < $endsAt
                                 && $schedule->ends_at > $startsAt
                                 && $schedule->isConflictRelevantFor($startsAt);
@@ -812,14 +816,14 @@ class ScheduleService
                     $startsAt = Carbon::parse($session['date']->format('Y-m-d') . ' ' . $time);
                     $endsAt = $startsAt->copy()->addMinutes($durationMinutes);
 
-                    if ($conflict = Schedule::getTeacherConflict($teacherId, $startsAt, $endsAt)) {
+                    if ($conflict = Schedule::getTeacherConflict($teacherId, $startsAt, $endsAt, null, $enrollment->student_id, $enrollment->course_id)) {
                         $studentName = $conflict->student ? $conflict->student->name : 'Unknown Student';
                         $teacherName = $conflict->teacher ? $conflict->teacher->name : 'Unknown Teacher';
                         $courseName = $conflict->course ? $conflict->course->title : 'Unknown Course';
                         throw new \Exception("Teacher conflict on {$startsAt->format('l, M d, Y')} at {$startsAt->format('g:i A')} (Teacher {$teacherName} is booked with Student {$studentName} for {$courseName})");
                     }
 
-                    if ($conflict = Schedule::getStudentConflict($enrollment->student_id, $startsAt, $endsAt)) {
+                    if ($conflict = Schedule::getStudentConflict($enrollment->student_id, $startsAt, $endsAt, null, $enrollment->student_id, $enrollment->course_id)) {
                         $teacherName = $conflict->teacher ? $conflict->teacher->name : 'Unknown Teacher';
                         $studentName = $conflict->student ? $conflict->student->name : 'Unknown Student';
                         $courseName = $conflict->course ? $conflict->course->title : 'Unknown Course';
