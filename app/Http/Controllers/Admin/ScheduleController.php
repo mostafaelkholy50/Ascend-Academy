@@ -190,6 +190,7 @@ class ScheduleController extends Controller
 
         $schedules = Schedule::with(['student', 'course', 'enrollment', 'attendance'])
             ->where('teacher_id', $teacherId)
+            ->where('status', '!=', 'cancelled')
             ->whereBetween('starts_at', [$startOfMonthApp, $endOfMonthApp])
             ->orderBy('starts_at')
             ->get();

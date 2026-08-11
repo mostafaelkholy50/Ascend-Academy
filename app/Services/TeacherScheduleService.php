@@ -102,6 +102,7 @@ class TeacherScheduleService
 
         $schedules = Schedule::with(['student', 'course', 'enrollment', 'attendance'])
             ->where('teacher_id', $teacher->id)
+            ->where('status', '!=', 'cancelled')
             ->whereBetween('starts_at', [$startOfMonthApp, $endOfMonthApp])
             ->orderBy('starts_at')
             ->get();

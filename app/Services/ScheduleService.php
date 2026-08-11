@@ -32,6 +32,7 @@ class ScheduleService
 
         $schedules = $this->repository->getSchedulesQuery()
             ->whereBetween('starts_at', [$weekStart, $weekEnd])
+            ->where('status', '!=', 'cancelled')
             ->orderBy('starts_at')
             ->get();
 

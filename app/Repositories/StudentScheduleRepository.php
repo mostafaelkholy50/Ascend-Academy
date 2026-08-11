@@ -13,6 +13,7 @@ class StudentScheduleRepository
     {
         return Schedule::with(['teacher', 'course'])
             ->where('student_id', $student->id)
+            ->where('status', '!=', 'cancelled')
             ->whereBetween('starts_at', [$start, $end])
             ->orderBy('starts_at')
             ->get();
@@ -22,6 +23,7 @@ class StudentScheduleRepository
     {
         return Schedule::with(['teacher', 'course'])
             ->where('student_id', $student->id)
+            ->where('status', '!=', 'cancelled')
             ->whereDate('starts_at', $date)
             ->orderBy('starts_at')
             ->get();
