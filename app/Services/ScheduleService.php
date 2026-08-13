@@ -39,20 +39,10 @@ class ScheduleService
         $weekDays = [];
         for ($i = 0; $i < 7; $i++) {
             $day = $weekStart->copy()->addDays($i);
-            $dayName = $day->format('l');
             $weekDays[] = [
                 'date' => $day,
                 'schedules' => $schedules->filter(function($schedule) use ($day) {
-                    if (!$schedule->starts_at->isSameDay($day)) {
-                        return false;
-                    }
-
-                    $enrollment = $schedule->enrollment;
-                    if (!$enrollment || !$enrollment->hasSchedulePattern()) {
-                        return true;
-                    }
-
-                    return $enrollment->isDayScheduleActive($day->format('l'));
+                    return $schedule->starts_at->isSameDay($day);
                 })->sortBy('starts_at')->values()
             ];
         }

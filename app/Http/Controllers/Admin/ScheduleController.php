@@ -180,13 +180,14 @@ class ScheduleController extends Controller
             return back()->with('error', 'Please select a teacher and a month to print.');
         }
 
-        $timezone = auth()->user()->getUserTimezone();
         $teacher = User::findOrFail($teacherId);
+        $timezone = $teacher->getUserTimezone();
         $targetMonth = Carbon::parse($month, $timezone);
-        
-        // Convert local month boundaries to App Timezone for database querying
-        $startOfMonthApp = $targetMonth->copy()->startOfMonth()->setTimezone(config('app.timezone'));
-        $endOfMonthApp = $targetMonth->copy()->endOfMonth()->setTimezone(config('app.timezone'));
+
+        // Build the month boundaries in the teacher's timezone, then convert to app timezone
+        // for the database query so we keep the exact local month the teacher expects.
+        $startOfMonthApp = $targetMonth->copy()->startOfMonth()->startOfDay()->setTimezone(config('app.timezone'));
+        $endOfMonthApp = $targetMonth->copy()->endOfMonth()->endOfDay()->setTimezone(config('app.timezone'));
 
         $schedules = Schedule::with(['student', 'course', 'enrollment', 'attendance'])
             ->where('teacher_id', $teacherId)
@@ -209,17 +210,13 @@ class ScheduleController extends Controller
         }
 
         foreach ($schedules as $schedule) {
-            if (!$this->isPrintableSchedule($schedule, $timezone)) {
-                continue;
-            }
-
             $dateString = $schedule->getStartsAtInTimezone($timezone)->format('Y-m-d');
             if (isset($monthDays[$dateString])) {
                 $monthDays[$dateString]['schedules']->push($schedule);
             }
         }
 
-        return view('admin.schedules.print', compact('teacher', 'targetMonth', 'monthDays'));
+        return view('admin.schedules.print', compact('teacher', 'targetMonth', 'monthDays', 'timezone'));
     }
 
     /**
@@ -371,18 +368,6 @@ class ScheduleController extends Controller
         }
 
         return $pattern;
-    }
-
-    protected function isPrintableSchedule(Schedule $schedule, string $timezone): bool
-    {
-        $enrollment = $schedule->enrollment;
-
-        if (!$enrollment || !$enrollment->hasSchedulePattern()) {
-            return true;
-        }
-
-        $dayName = $schedule->getStartsAtInTimezone($timezone)->format('l');
-        return $enrollment->isDayScheduleActive($dayName);
     }
 
     protected function getScheduleStatusData(Schedule $schedule): array

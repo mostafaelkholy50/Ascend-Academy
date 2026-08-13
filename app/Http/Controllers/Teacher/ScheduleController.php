@@ -78,6 +78,7 @@ class ScheduleController extends Controller
 
             $month = $request->get('month', now($teacher->getUserTimezone())->format('Y-m'));
             $data = $this->service->getPrintableMonthlyData($teacher, $month);
+            $data['timezone'] = $teacher->getUserTimezone();
 
             return view('admin.schedules.print', $data);
         } catch (Exception $e) {

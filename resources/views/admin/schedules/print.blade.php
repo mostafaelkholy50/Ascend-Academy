@@ -54,7 +54,7 @@
     <!-- Timetable Grid -->
     <div class="calendar-container w-full bg-white rounded-2xl overflow-hidden border border-gray-200 shadow-sm p-4 print:p-0 print:rounded-none">
         @php
-            $timezone = auth()->user()->getUserTimezone();
+            $timezone = $timezone ?? auth()->user()->getUserTimezone();
             $dayEntries = collect($monthDays)->map(function ($dayData, $dateString) use ($timezone) {
                 return [
                     'dateString' => $dateString,

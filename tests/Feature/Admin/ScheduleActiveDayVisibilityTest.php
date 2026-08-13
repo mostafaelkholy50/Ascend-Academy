@@ -5,6 +5,7 @@ use App\Models\Enrollment;
 use App\Models\Schedule;
 use App\Models\User;
 use App\Services\ScheduleService;
+use App\Services\TeacherScheduleService;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
@@ -12,6 +13,8 @@ use Illuminate\Http\Request;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
+    \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'Admin']);
+
     $this->teacher = User::factory()->create(['role' => 'Teacher', 'active' => true]);
     $this->student = User::factory()->create(['role' => 'Student']);
     $this->course = Course::create([
@@ -63,8 +66,8 @@ test('active days generate monthly schedules while inactive days do not', functi
     expect($saturdayCount)->toBe(0);
 });
 
-test('inactive day schedules are hidden from admin calendar', function () {
-    Schedule::create([
+test('scheduled sessions visible to teachers are also visible in the admin calendar', function () {
+    $saturdaySchedule = Schedule::create([
         'enrollment_id' => $this->enrollment->id,
         'student_id' => $this->student->id,
         'teacher_id' => $this->teacher->id,
@@ -74,7 +77,7 @@ test('inactive day schedules are hidden from admin calendar', function () {
         'status' => 'scheduled',
     ]);
 
-    Schedule::create([
+    $sundaySchedule = Schedule::create([
         'enrollment_id' => $this->enrollment->id,
         'student_id' => $this->student->id,
         'teacher_id' => $this->teacher->id,
@@ -84,16 +87,55 @@ test('inactive day schedules are hidden from admin calendar', function () {
         'status' => 'scheduled',
     ]);
 
-    $service = app(ScheduleService::class);
-    $data = $service->getCalendarData(Request::create('/admin/schedules', 'GET', [
+    $teacherData = app(TeacherScheduleService::class)->getWeeklyData($this->teacher, Request::create('/teacher/schedule', 'GET', [
         'week' => '2026-06-29',
     ]));
 
-    $weekDays = collect($data['weekDays']);
+    $adminData = app(ScheduleService::class)->getCalendarData(Request::create('/admin/schedules', 'GET', [
+        'week' => '2026-06-29',
+    ]));
 
-    $saturday = $weekDays->firstWhere('date', Carbon::create(2026, 7, 4, 0, 0, 0, 'Africa/Cairo'));
-    $sunday = $weekDays->firstWhere('date', Carbon::create(2026, 7, 5, 0, 0, 0, 'Africa/Cairo'));
+    $teacherScheduleIds = collect($teacherData['schedulesByDay'])
+        ->flatMap(fn ($day) => $day['schedules'])
+        ->pluck('id')
+        ->sort()
+        ->values()
+        ->all();
 
-    expect($saturday['schedules'])->toHaveCount(0);
-    expect($sunday['schedules'])->toHaveCount(1);
+    $adminScheduleIds = collect($adminData['weekDays'])
+        ->flatMap(fn ($day) => $day['schedules'])
+        ->pluck('id')
+        ->sort()
+        ->values()
+        ->all();
+
+    expect($teacherScheduleIds)->toBe([$saturdaySchedule->id, $sundaySchedule->id]);
+    expect($adminScheduleIds)->toBe($teacherScheduleIds);
+});
+
+test('scheduled sessions visible to teachers are also visible in the printable admin schedule', function () {
+    $saturdaySchedule = Schedule::create([
+        'enrollment_id' => $this->enrollment->id,
+        'student_id' => $this->student->id,
+        'teacher_id' => $this->teacher->id,
+        'course_id' => $this->course->id,
+        'starts_at' => Carbon::create(2026, 7, 4, 8, 0, 0, 'Africa/Cairo'),
+        'ends_at' => Carbon::create(2026, 7, 4, 9, 0, 0, 'Africa/Cairo'),
+        'status' => 'scheduled',
+    ]);
+
+    $admin = User::factory()->create(['role' => 'Admin']);
+    $admin->assignRole('Admin');
+    $this->actingAs($admin);
+
+    $response = $this->get(route('scheduler.schedules.print', [
+        'teacher_id' => $this->teacher->id,
+        'month' => '2026-07',
+    ]));
+
+    $response->assertOk();
+    $response->assertSee($this->student->name);
+    $response->assertViewHas('monthDays', function (array $monthDays) use ($saturdaySchedule) {
+        return $monthDays['2026-07-04']['schedules']->pluck('id')->contains($saturdaySchedule->id);
+    });
 });

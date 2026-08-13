@@ -460,6 +460,32 @@ class ScheduleTest extends TestCase
         $response->assertSee($this->student->name);
     }
 
+    public function test_admin_can_print_monthly_schedule_using_teachers_timezone_for_boundary_sessions()
+    {
+        $this->admin->update(['timezone' => 'America/New_York']);
+        $this->teacher->update(['timezone' => 'Africa/Cairo']);
+        $this->actingAs($this->admin);
+
+        Schedule::create([
+            'enrollment_id' => $this->enrollment->id,
+            'student_id' => $this->student->id,
+            'course_id' => $this->enrollment->course_id,
+            'teacher_id' => $this->teacher->id,
+            'starts_at' => Carbon::create(2026, 8, 1, 0, 30, 0, 'Africa/Cairo'),
+            'ends_at' => Carbon::create(2026, 8, 1, 1, 30, 0, 'Africa/Cairo'),
+            'status' => 'scheduled',
+        ]);
+
+        $response = $this->get(route('scheduler.schedules.print', [
+            'teacher_id' => $this->teacher->id,
+            'month' => '2026-08',
+        ]));
+
+        $response->assertStatus(200);
+        $response->assertSee('12:30am');
+        $response->assertSee($this->student->name);
+    }
+
     public function test_admin_print_monthly_schedule_fails_without_params()
     {
         $this->actingAs($this->admin);
