@@ -121,11 +121,9 @@
                                         $time = $hourList[$hourIndex];
                                         $visibleSchedules = $day['schedules']->filter(function ($schedule) use ($timezone, $time) {
                                             $start = $schedule->getStartsAtInTimezone($timezone);
-                                            $end = $schedule->getEndsAtInTimezone($timezone);
                                             $hourStart = $start->format('H');
-                                            $hourEnd = $end->copy()->subMinute()->format('H');
 
-                                            return $hourStart === $time && $hourEnd >= $time;
+                                            return $hourStart === $time;
                                         });
                                         $spanHours = $visibleSchedules->map(function ($schedule) use ($timezone) {
                                             $start = $schedule->getStartsAtInTimezone($timezone);

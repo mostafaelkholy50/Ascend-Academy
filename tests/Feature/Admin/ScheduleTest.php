@@ -460,6 +460,32 @@ class ScheduleTest extends TestCase
         $response->assertSee($this->student->name);
     }
 
+    public function test_admin_can_print_monthly_schedule_with_sessions_crossing_midnight()
+    {
+        $this->actingAs($this->admin);
+
+        $this->student->update(['name' => 'Aunt Sabah(Aunt Sabah)']);
+
+        Schedule::create([
+            'enrollment_id' => $this->enrollment->id,
+            'student_id' => $this->student->id,
+            'course_id' => $this->enrollment->course_id,
+            'teacher_id' => $this->teacher->id,
+            'starts_at' => Carbon::create(2026, 8, 2, 23, 30, 0, 'Africa/Cairo'),
+            'ends_at' => Carbon::create(2026, 8, 3, 0, 30, 0, 'Africa/Cairo'),
+            'status' => 'scheduled',
+        ]);
+
+        $response = $this->get(route('scheduler.schedules.print', [
+            'teacher_id' => $this->teacher->id,
+            'month' => '2026-08',
+        ]));
+
+        $response->assertStatus(200);
+        $response->assertSee('Aunt Sabah(Aunt Sabah)');
+        $response->assertSee('11:30pm-12:30am');
+    }
+
     public function test_admin_can_print_monthly_schedule_using_teachers_timezone_for_boundary_sessions()
     {
         $this->admin->update(['timezone' => 'America/New_York']);
