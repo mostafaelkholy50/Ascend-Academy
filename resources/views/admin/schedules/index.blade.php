@@ -251,7 +251,7 @@
                                                 @endphp
                                                 
                                                 <!-- Base Appointment Card -->
-                                                <div class="schedule-block absolute left-1 right-1 top-1 z-20 rounded-lg border shadow-sm transition-all duration-200 hover:shadow-md cursor-pointer flex flex-col {{ $statusClass }} {{ 'border-'.$statusColor.'-300' }} w-[calc(100%-0.5rem)] overflow-hidden"
+                                                <div class="schedule-block relative z-20 rounded-lg border shadow-sm transition-all duration-200 hover:shadow-md cursor-pointer flex flex-col {{ $statusClass }} {{ 'border-'.$statusColor.'-300' }} w-full overflow-hidden"
                                                      style="--schedule-block-height-mobile: {{ $mobileBlockHeight }}px; --schedule-block-height-desktop: {{ $desktopBlockHeight }}px;"
                                                      onclick="window.location='{{ route('admin.schedules.show', $schedule->id) }}'">
                                                      
