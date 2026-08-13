@@ -34,9 +34,14 @@
                     @endforeach
                 </select>
             </div>
-            <button type="submit" class="bg-vibrant-green text-white px-6 py-2 rounded-lg hover:bg-deep-blue transition font-semibold">
-                <i class="fa-solid fa-filter mr-2"></i>View
-            </button>
+            <div class="flex gap-2">
+                <button type="submit" class="bg-vibrant-green text-white px-6 py-2 rounded-lg hover:bg-deep-blue transition font-semibold">
+                    <i class="fa-solid fa-filter mr-2"></i>View
+                </button>
+                <a href="{{ route('accountant.teacher-hours.pdf', ['teacher' => $teacher->id, 'month' => $selectedMonth, 'year' => $selectedYear]) }}" target="_blank" class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition font-semibold flex items-center">
+                    <i class="fa-solid fa-file-pdf mr-2"></i>Export PDF
+                </a>
+            </div>
         </form>
     </div>
 

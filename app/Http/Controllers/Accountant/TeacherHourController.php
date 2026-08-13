@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Services\TeacherHourService;
 use App\Traits\HasRegionalAccess;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class TeacherHourController extends Controller
 {
@@ -121,5 +122,25 @@ class TeacherHourController extends Controller
         }
 
         return back()->with('success', 'Attendance record deleted successfully.');
+    }
+
+    public function exportPdf(\App\Models\User $teacher, Request $request, \App\Services\TeacherHoursService $teacherHoursService)
+    {
+        $user = auth()->user();
+        
+        if (!$this->canAccessPayroll($user)) {
+            abort(403, 'Unauthorized access to payroll records.');
+        }
+
+        $month = $request->input('month', now()->month);
+        $year = $request->input('year', now()->year);
+
+        $data = $teacherHoursService->getPdfData($teacher, (int)$month, (int)$year);
+
+        $pdf = Pdf::loadView('accountant.teacher-hours.pdf', $data);
+        
+        $filename = "{$teacher->name}_Hours_{$year}_{$month}.pdf";
+
+        return $pdf->download($filename);
     }
 }
