@@ -87,4 +87,65 @@ class TeacherHoursPdfTest extends TestCase
 
         $response->assertStatus(403);
     }
+
+    public function test_accountant_pdf_includes_duration_and_total_hours()
+    {
+        $accountant = User::factory()->create([
+            'role' => 'Accountant',
+            'can_access_payroll' => true,
+        ]);
+        $accountant->assignRole('Accountant');
+
+        $teacher = User::factory()->create(['role' => 'Teacher', 'hourly_rate' => 20]);
+        $student = User::factory()->create(['role' => 'Student']);
+        $course = Course::first() ?? Course::factory()->create();
+
+        $startsAt1 = Carbon::now()->startOfMonth()->addDays(1)->setHour(10);
+        $schedule1 = Schedule::create([
+            'teacher_id' => $teacher->id,
+            'student_id' => $student->id,
+            'course_id' => $course->id,
+            'starts_at' => $startsAt1,
+            'ends_at' => $startsAt1->copy()->addMinutes(30),
+            'status' => 'scheduled',
+            'zoom_link' => 'https://zoom.us',
+        ]);
+        Attendance::create([
+            'schedule_id' => $schedule1->id,
+            'teacher_id' => $teacher->id,
+            'student_id' => $student->id,
+            'teacher_present' => true,
+            'student_present' => true,
+        ]);
+
+        $startsAt2 = Carbon::now()->startOfMonth()->addDays(2)->setHour(10);
+        $schedule2 = Schedule::create([
+            'teacher_id' => $teacher->id,
+            'student_id' => $student->id,
+            'course_id' => $course->id,
+            'starts_at' => $startsAt2,
+            'ends_at' => $startsAt2->copy()->addMinutes(60),
+            'status' => 'scheduled',
+            'zoom_link' => 'https://zoom.us',
+        ]);
+        Attendance::create([
+            'schedule_id' => $schedule2->id,
+            'teacher_id' => $teacher->id,
+            'student_id' => $student->id,
+            'teacher_present' => true,
+            'student_present' => true,
+        ]);
+
+        $service = app(\App\Services\TeacherHoursService::class);
+        $data = $service->getPdfData($teacher, now()->month, now()->year);
+
+        $this->assertArrayHasKey($student->id, $data['studentStats']);
+        $stats = $data['studentStats'][$student->id];
+
+        $this->assertEquals(1.5, $stats['total_hours']);
+        $this->assertArrayHasKey('30 mins', $stats['durations']);
+        $this->assertArrayHasKey('1 hr', $stats['durations']);
+        $this->assertEquals(1, $stats['durations']['30 mins']);
+        $this->assertEquals(1, $stats['durations']['1 hr']);
+    }
 }

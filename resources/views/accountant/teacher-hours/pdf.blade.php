@@ -164,16 +164,28 @@
                     <th class="text-center">Attended</th>
                     <th class="text-center">Missed</th>
                     <th class="text-center">Waited Half Time</th>
+                    <th class="text-center">Total Hours</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach($studentStats as $student)
                 <tr>
-                    <td>{{ $student['name'] }}</td>
+                    <td>
+                        {{ $student['name'] }}
+                        @if(!empty($student['durations']))
+                            <div style="font-size: 10px; color: #718096; margin-top: 4px;">
+                                Attended: 
+                                @foreach($student['durations'] as $duration => $count)
+                                    {{ $count }} session{{ $count > 1 ? 's' : '' }} of {{ $duration }}@if(!$loop->last), @endif
+                                @endforeach
+                            </div>
+                        @endif
+                    </td>
                     <td class="text-center">{{ $student['total_classes'] }}</td>
                     <td class="text-center"><span class="badge badge-success">{{ $student['attended'] }}</span></td>
                     <td class="text-center"><span class="badge {{ $student['missed'] > 0 ? 'badge-danger' : '' }}">{{ $student['missed'] }}</span></td>
                     <td class="text-center"><span class="badge {{ $student['waited_half_time'] > 0 ? 'badge-warning' : '' }}">{{ $student['waited_half_time'] }}</span></td>
+                    <td class="text-center"><strong>{{ $student['total_hours'] }} hrs</strong></td>
                 </tr>
                 @endforeach
             </tbody>

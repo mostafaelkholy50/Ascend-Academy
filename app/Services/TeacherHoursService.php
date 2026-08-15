@@ -132,6 +132,8 @@ class TeacherHoursService
                     'attended' => 0,
                     'missed' => 0,
                     'waited_half_time' => 0,
+                    'durations' => [],
+                    'total_hours' => 0,
                 ];
             }
 
@@ -156,6 +158,7 @@ class TeacherHoursService
                         $stats['waited_half_time']++;
                         $studentStats[$studentId]['waited_half_time']++;
                         $totalHours += ($duration / 2);
+                        $studentStats[$studentId]['total_hours'] += ($duration / 2);
                     }
                     
                     $studentAbsencesList[] = [
@@ -167,6 +170,25 @@ class TeacherHoursService
                 } else {
                     $studentStats[$studentId]['attended']++;
                     $totalHours += $duration;
+                    $studentStats[$studentId]['total_hours'] += $duration;
+
+                    $minutes = $schedule->getDurationInMinutes();
+                    $durationLabel = $minutes . ' mins';
+                    if ($minutes == 30) $durationLabel = '30 mins';
+                    elseif ($minutes == 45) $durationLabel = '45 mins';
+                    elseif ($minutes == 60) $durationLabel = '1 hr';
+                    elseif ($minutes == 90) $durationLabel = '1.5 hrs';
+                    elseif ($minutes == 120) $durationLabel = '2 hrs';
+                    elseif ($minutes > 60) {
+                        $hours = floor($minutes / 60);
+                        $rem = $minutes % 60;
+                        $durationLabel = $rem == 0 ? $hours . ' hr' . ($hours > 1 ? 's' : '') : $hours . ' hr ' . $rem . ' mins';
+                    }
+
+                    if (!isset($studentStats[$studentId]['durations'][$durationLabel])) {
+                        $studentStats[$studentId]['durations'][$durationLabel] = 0;
+                    }
+                    $studentStats[$studentId]['durations'][$durationLabel]++;
                 }
             }
         }
