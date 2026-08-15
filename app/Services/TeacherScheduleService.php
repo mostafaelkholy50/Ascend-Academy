@@ -29,13 +29,18 @@ class TeacherScheduleService
         // Get all schedules for this week
         $schedules = $this->repository->getSchedulesForRange($teacher, $weekStart, $weekEnd);
         
+        $timezone = $teacher->getUserTimezone();
+        
         // Group schedules by day
         $schedulesByDay = [];
         for ($i = 0; $i < 7; $i++) {
             $date = $weekStart->copy()->addDays($i);
             $schedulesByDay[$date->format('Y-m-d')] = [
                 'date' => $date,
-                'schedules' => $schedules->filter(function($schedule) use ($date) {
+                'schedules' => $schedules->filter(function($schedule) use ($date, $timezone) {
+                    if (!$this->isActiveSchedule($schedule, $timezone)) {
+                        return false;
+                    }
                     return $schedule->starts_at->isSameDay($date);
                 })->values()
             ];
@@ -65,7 +70,12 @@ class TeacherScheduleService
         $startOfDay = $date->copy()->startOfDay();
         $endOfDay = $date->copy()->endOfDay();
         
-        $schedules = $this->repository->getSchedulesForRange($teacher, $startOfDay, $endOfDay);
+        $timezone = $teacher->getUserTimezone();
+        
+        $schedules = $this->repository->getSchedulesForRange($teacher, $startOfDay, $endOfDay)
+            ->filter(function($schedule) use ($timezone) {
+                return $this->isActiveSchedule($schedule, $timezone);
+            })->values();
         
         // Calculate navigation dates
         $prevDay = $date->copy()->subDay();
@@ -120,7 +130,7 @@ class TeacherScheduleService
         }
 
         foreach ($schedules as $schedule) {
-            if (!$this->isPrintableSchedule($schedule, $timezone)) {
+            if (!$this->isActiveSchedule($schedule, $timezone)) {
                 continue;
             }
 
@@ -134,7 +144,7 @@ class TeacherScheduleService
         return compact('teacher', 'targetMonth', 'monthDays');
     }
 
-    protected function isPrintableSchedule(Schedule $schedule, string $timezone): bool
+    protected function isActiveSchedule(Schedule $schedule, string $timezone): bool
     {
         $enrollment = $schedule->enrollment;
 

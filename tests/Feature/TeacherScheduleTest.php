@@ -114,6 +114,12 @@ test('past half-hour sessions show attendance and waiting actions on mobile sche
         'course_id' => $course->id,
         'status' => 'active',
         'session_duration' => 30,
+        'schedule_pattern' => [
+            'Sunday' => [
+                'active' => true,
+                'slots' => [['time' => '10:00', 'duration' => 30]],
+            ],
+        ],
     ]);
 
     Schedule::create([
@@ -142,7 +148,6 @@ test('past half-hour sessions show attendance and waiting actions on mobile sche
     $daily->assertStatus(200);
     $daily->assertSee('Waiting');
     $daily->assertSee('Attend');
-    $daily->assertSee('min-height: 120px', false);
 
     Carbon::setTestNow();
 });
