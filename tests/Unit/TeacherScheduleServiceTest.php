@@ -68,3 +68,61 @@ test('it builds printable monthly schedule data for a teacher', function () {
 
     Carbon::setTestNow();
 });
+
+test('it does not include schedules for inactive days in printable monthly data', function () {
+    Carbon::setTestNow(Carbon::create(2026, 7, 25, 12, 0, 0, 'Africa/Cairo'));
+
+    $service = app(TeacherScheduleService::class);
+
+    $teacher = User::factory()->teacher()->create([
+        'role' => 'Teacher',
+        'timezone' => 'Africa/Cairo',
+    ]);
+    $student = User::factory()->student()->create();
+    $course = Course::factory()->create();
+    $enrollment = Enrollment::create([
+        'student_id' => $student->id,
+        'course_id' => $course->id,
+        'status' => 'active',
+        'session_duration' => 60,
+        'schedule_pattern' => [
+            'Monday' => [
+                'active' => false,
+                'slots' => [['time' => '10:00', 'duration' => 60]],
+            ],
+            'Thursday' => [
+                'active' => true,
+                'slots' => [['time' => '10:00', 'duration' => 60]],
+            ],
+        ],
+    ]);
+
+    // Monday (Inactive)
+    Schedule::create([
+        'enrollment_id' => $enrollment->id,
+        'student_id' => $student->id,
+        'course_id' => $course->id,
+        'teacher_id' => $teacher->id,
+        'starts_at' => Carbon::create(2026, 7, 6, 10, 0, 0, 'Africa/Cairo'),
+        'ends_at' => Carbon::create(2026, 7, 6, 11, 0, 0, 'Africa/Cairo'),
+        'status' => 'scheduled',
+    ]);
+
+    // Thursday (Active)
+    Schedule::create([
+        'enrollment_id' => $enrollment->id,
+        'student_id' => $student->id,
+        'course_id' => $course->id,
+        'teacher_id' => $teacher->id,
+        'starts_at' => Carbon::create(2026, 7, 9, 10, 0, 0, 'Africa/Cairo'),
+        'ends_at' => Carbon::create(2026, 7, 9, 11, 0, 0, 'Africa/Cairo'),
+        'status' => 'scheduled',
+    ]);
+
+    $data = $service->getPrintableMonthlyData($teacher, '2026-07');
+
+    expect($data['monthDays']['2026-07-06']['schedules'])->toHaveCount(0);
+    expect($data['monthDays']['2026-07-09']['schedules'])->toHaveCount(1);
+
+    Carbon::setTestNow();
+});

@@ -120,6 +120,10 @@ class TeacherScheduleService
         }
 
         foreach ($schedules as $schedule) {
+            if (!$this->isPrintableSchedule($schedule, $timezone)) {
+                continue;
+            }
+
             $dateString = $schedule->getStartsAtInTimezone($timezone)->format('Y-m-d');
 
             if (isset($monthDays[$dateString])) {
@@ -128,5 +132,17 @@ class TeacherScheduleService
         }
 
         return compact('teacher', 'targetMonth', 'monthDays');
+    }
+
+    protected function isPrintableSchedule(Schedule $schedule, string $timezone): bool
+    {
+        $enrollment = $schedule->enrollment;
+
+        if (!$enrollment || !$enrollment->hasSchedulePattern()) {
+            return true;
+        }
+
+        $dayName = $schedule->getStartsAtInTimezone($timezone)->format('l');
+        return $enrollment->isDayScheduleActive($dayName);
     }
 }
