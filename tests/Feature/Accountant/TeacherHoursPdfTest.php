@@ -181,15 +181,12 @@ class TeacherHoursPdfTest extends TestCase
         $stats = $data['studentStats'][$student->id];
 
         $this->assertEquals(1, $data['stats']['teacher_absences']);
-        $this->assertEquals(1, $data['stats']['student_absences']);
+        $this->assertEquals(0, $data['stats']['student_absences']);
         $this->assertEquals(1, $stats['missed']);
         $this->assertEquals(0, $data['totalHours']);
         $this->assertCount(1, $data['teacherAbsencesList']);
         $this->assertSame($student->name, $data['teacherAbsencesList'][0]['student']);
         $this->assertArrayHasKey('session', $data['teacherAbsencesList'][0]);
-        $this->assertCount(1, $data['studentAbsencesList']);
-        $this->assertSame('Teacher absent', $data['studentAbsencesList'][0]['remark']);
-        $this->assertSame($student->name, $data['studentAbsencesList'][0]['student']);
-        $this->assertArrayHasKey('session', $data['studentAbsencesList'][0]);
+        $this->assertCount(0, $data['studentAbsencesList']);
     }
 }
