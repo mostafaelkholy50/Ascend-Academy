@@ -164,8 +164,7 @@ class TeacherHoursService
                     
                     $studentAbsencesList[] = [
                         'student' => $studentName,
-                        'date' => $schedule->starts_at->format('Y-m-d'),
-                        'time' => $schedule->starts_at->format('H:i'),
+                        'session' => $schedule->starts_at->format('Y-m-d g:i A'),
                         'remark' => $attendance->remark ?: 'No remark',
                     ];
                 } else {

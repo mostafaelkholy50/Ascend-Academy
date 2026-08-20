@@ -208,9 +208,9 @@
             <tbody>
                 @foreach($teacherAbsencesList as $absence)
                 <tr>
-                    <td>{{ $absence['student'] }}</td>
-                    <td>{{ $absence['session'] }}</td>
-                    <td>{{ $absence['remark'] }}</td>
+                    <td>{{ $absence['student'] ?? 'Unknown Student' }}</td>
+                    <td>{{ $absence['session'] ?? (($absence['date'] ?? '') . ' ' . ($absence['time'] ?? '')) }}</td>
+                    <td>{{ $absence['remark'] ?? 'No remark' }}</td>
                 </tr>
                 @endforeach
             </tbody>
@@ -231,9 +231,9 @@
             <tbody>
                 @foreach($studentAbsencesList as $absence)
                 <tr>
-                    <td>{{ $absence['student'] }}</td>
-                    <td>{{ $absence['session'] }}</td>
-                    <td>{{ $absence['remark'] }}</td>
+                    <td>{{ $absence['student'] ?? 'Unknown Student' }}</td>
+                    <td>{{ $absence['session'] ?? (($absence['date'] ?? '') . ' ' . ($absence['time'] ?? '')) }}</td>
+                    <td>{{ $absence['remark'] ?? 'No remark' }}</td>
                 </tr>
                 @endforeach
             </tbody>
