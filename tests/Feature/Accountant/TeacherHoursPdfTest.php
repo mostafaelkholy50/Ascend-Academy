@@ -148,4 +148,48 @@ class TeacherHoursPdfTest extends TestCase
         $this->assertEquals(1, $stats['durations']['30 mins']);
         $this->assertEquals(1, $stats['durations']['1 hr']);
     }
+
+    public function test_teacher_absence_counts_as_student_miss_in_pdf_data()
+    {
+        $teacher = User::factory()->create(['role' => 'Teacher', 'hourly_rate' => 20]);
+        $student = User::factory()->create(['role' => 'Student']);
+        $course = Course::first() ?? Course::factory()->create();
+
+        $startsAt = Carbon::now()->startOfMonth()->addDays(3)->setHour(9);
+        $schedule = Schedule::create([
+            'teacher_id' => $teacher->id,
+            'student_id' => $student->id,
+            'course_id' => $course->id,
+            'starts_at' => $startsAt,
+            'ends_at' => $startsAt->copy()->addHour(),
+            'status' => 'scheduled',
+            'zoom_link' => 'https://zoom.us',
+        ]);
+
+        Attendance::create([
+            'schedule_id' => $schedule->id,
+            'teacher_id' => $teacher->id,
+            'student_id' => $student->id,
+            'teacher_present' => false,
+            'student_present' => false,
+            'remark' => 'Teacher was late',
+        ]);
+
+        $service = app(\App\Services\TeacherHoursService::class);
+        $data = $service->getPdfData($teacher, now()->month, now()->year);
+
+        $stats = $data['studentStats'][$student->id];
+
+        $this->assertEquals(1, $data['stats']['teacher_absences']);
+        $this->assertEquals(1, $data['stats']['student_absences']);
+        $this->assertEquals(1, $stats['missed']);
+        $this->assertEquals(0, $data['totalHours']);
+        $this->assertCount(1, $data['teacherAbsencesList']);
+        $this->assertSame($student->name, $data['teacherAbsencesList'][0]['student']);
+        $this->assertArrayHasKey('session', $data['teacherAbsencesList'][0]);
+        $this->assertCount(1, $data['studentAbsencesList']);
+        $this->assertSame('Teacher absent', $data['studentAbsencesList'][0]['remark']);
+        $this->assertSame($student->name, $data['studentAbsencesList'][0]['student']);
+        $this->assertArrayHasKey('session', $data['studentAbsencesList'][0]);
+    }
 }

@@ -141,10 +141,17 @@ class TeacherHoursService
 
             if (!$attendance->teacher_present) {
                 $stats['teacher_absences']++;
+                $stats['student_absences']++;
+                $studentStats[$studentId]['missed']++;
                 $teacherAbsencesList[] = [
-                    'date' => $schedule->starts_at->format('Y-m-d'),
-                    'time' => $schedule->starts_at->format('H:i'),
+                    'student' => $studentName,
+                    'session' => $schedule->starts_at->format('Y-m-d g:i A'),
                     'remark' => $attendance->remark ?: 'No remark',
+                ];
+                $studentAbsencesList[] = [
+                    'student' => $studentName,
+                    'session' => $schedule->starts_at->format('Y-m-d g:i A'),
+                    'remark' => 'Teacher absent',
                 ];
             } else {
                 $stats['total_attendances']++;

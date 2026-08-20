@@ -200,16 +200,16 @@
         <table>
             <thead>
                 <tr>
-                    <th style="width: 150px;">Date</th>
-                    <th style="width: 100px;">Time</th>
+                    <th style="width: 180px;">Student</th>
+                    <th style="width: 180px;">Date & Time</th>
                     <th>Excuse / Remark</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach($teacherAbsencesList as $absence)
                 <tr>
-                    <td>{{ $absence['date'] }}</td>
-                    <td>{{ $absence['time'] }}</td>
+                    <td>{{ $absence['student'] }}</td>
+                    <td>{{ $absence['session'] }}</td>
                     <td>{{ $absence['remark'] }}</td>
                 </tr>
                 @endforeach
@@ -223,9 +223,8 @@
         <table>
             <thead>
                 <tr>
-                    <th style="width: 150px;">Student Name</th>
-                    <th style="width: 100px;">Date</th>
-                    <th style="width: 80px;">Time</th>
+                    <th style="width: 180px;">Student Name</th>
+                    <th style="width: 180px;">Date & Time</th>
                     <th>Excuse / Remark</th>
                 </tr>
             </thead>
@@ -233,8 +232,7 @@
                 @foreach($studentAbsencesList as $absence)
                 <tr>
                     <td>{{ $absence['student'] }}</td>
-                    <td>{{ $absence['date'] }}</td>
-                    <td>{{ $absence['time'] }}</td>
+                    <td>{{ $absence['session'] }}</td>
                     <td>{{ $absence['remark'] }}</td>
                 </tr>
                 @endforeach
