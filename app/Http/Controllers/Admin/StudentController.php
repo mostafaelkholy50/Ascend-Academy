@@ -32,6 +32,7 @@ class StudentController extends Controller
             'parents',
             'enrollments.course',
             'schedules.teacher',
+            'schedules.attendance',
             'reports.teacher',
             'attendances'
         ]);

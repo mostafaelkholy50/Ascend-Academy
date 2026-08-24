@@ -198,16 +198,47 @@
             @if($student->schedules && $student->schedules->count() > 0)
                 <div class="bg-white p-6 rounded-2xl shadow-sm">
                     <h2 class="text-xl font-bold text-gray-800 mb-6">Class Schedule</h2>
-                    <div class="space-y-3">
-                        @foreach($student->schedules as $schedule)
-                            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div class="space-y-3 max-h-96 overflow-y-auto pr-2">
+                        @foreach($student->schedules->sortByDesc('starts_at') as $schedule)
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-100">
                                 <div>
-                                    <p class="font-semibold text-gray-800">{{ $schedule->day_of_week }}</p>
-                                    <p class="text-sm text-gray-600">{{ $schedule->start_time }} - {{ $schedule->end_time }}</p>
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <p class="font-semibold text-gray-800">
+                                            {{ $schedule->starts_at ? $schedule->starts_at->format('D, M d, Y') : 'N/A' }}
+                                        </p>
+                                        <span class="text-xs px-2 py-0.5 rounded-full 
+                                            {{ $schedule->status === 'scheduled' ? 'bg-blue-100 text-blue-700' : '' }}
+                                            {{ $schedule->status === 'completed' ? 'bg-green-100 text-green-700' : '' }}
+                                            {{ $schedule->status === 'cancelled' ? 'bg-red-100 text-red-700' : '' }}">
+                                            {{ ucfirst($schedule->status) }}
+                                        </span>
+                                    </div>
+                                    <p class="text-sm text-gray-600">
+                                        <i class="fa-regular fa-clock mr-1"></i>
+                                        {{ $schedule->starts_at ? $schedule->starts_at->format('h:i A') : '--' }} - 
+                                        {{ $schedule->ends_at ? $schedule->ends_at->format('h:i A') : '--' }}
+                                    </p>
+                                    @if($schedule->attendance)
+                                        <div class="mt-2 text-sm">
+                                            <span class="font-medium text-gray-700">Attendance:</span>
+                                            @if($schedule->attendance->student_present)
+                                                <span class="text-green-600 font-semibold"><i class="fa-solid fa-check-circle mr-1"></i>Present</span>
+                                            @else
+                                                <span class="text-red-600 font-semibold"><i class="fa-solid fa-times-circle mr-1"></i>Absent</span>
+                                                @if($schedule->attendance->remark)
+                                                    <span class="text-gray-500 italic ml-2">Reason: {{ $schedule->attendance->remark }}</span>
+                                                @endif
+                                            @endif
+                                        </div>
+                                    @else
+                                        @if($schedule->status === 'completed')
+                                            <div class="mt-2 text-sm text-yellow-600"><i class="fa-solid fa-circle-exclamation mr-1"></i>Attendance not recorded</div>
+                                        @endif
+                                    @endif
                                 </div>
                                 @if($schedule->teacher)
-                                    <div class="text-right">
-                                        <p class="text-sm text-gray-600">Teacher:</p>
+                                    <div class="mt-3 sm:mt-0 sm:text-right">
+                                        <p class="text-xs text-gray-500 uppercase tracking-wider">Teacher</p>
                                         <p class="font-semibold text-gray-800">{{ $schedule->teacher->name }}</p>
                                     </div>
                                 @endif
