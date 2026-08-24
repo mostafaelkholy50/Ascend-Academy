@@ -90,6 +90,13 @@
 </a>
 @endcan
 
+@can('view_absent_students')
+<a href="{{ route('admin.absent-students.index') }}"
+    class="flex items-center px-4 py-2.5 rounded-xl {{ request()->routeIs('admin.absent-students.*') ? 'bg-white/20 backdrop-blur-sm font-medium' : 'hover:bg-white/10 opacity-80 hover:opacity-100' }} transition text-red-100 hover:text-white">
+    <i class="fa-solid fa-user-xmark mr-3 text-base text-red-400"></i> Absent Students
+</a>
+@endcan
+
 @can('manage availability')
 <a href="{{ route('scheduler.teachers.index') }}"
     class="flex items-center px-4 py-2.5 rounded-xl {{ request()->routeIs('scheduler.teachers.*') ? 'bg-white/20 backdrop-blur-sm font-medium' : 'hover:bg-white/10 opacity-80 hover:opacity-100' }} transition">
