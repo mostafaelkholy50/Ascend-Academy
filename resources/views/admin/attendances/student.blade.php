@@ -87,10 +87,14 @@
                                 <div class="text-sm font-bold text-gray-900">{{ $attendance->schedule->teacher->name }}</div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                @if($attendance->student_present)
-                                    <span class="px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700">Present</span>
+                                @if($attendance->student_present && $attendance->teacher_present)
+                                    <span class="px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700">Attended</span>
+                                @elseif(!$attendance->student_present && $attendance->teacher_present)
+                                    <span class="px-3 py-1 rounded-full text-xs font-bold bg-orange-100 text-orange-700">Student Absent</span>
+                                @elseif($attendance->student_present && !$attendance->teacher_present)
+                                    <span class="px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700">Teacher Absent</span>
                                 @else
-                                    <span class="px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700">Absent</span>
+                                    <span class="px-3 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-700">Both Absent</span>
                                 @endif
                             </td>
                             <td class="px-6 py-4 max-w-xs">
@@ -122,10 +126,14 @@
                             <div class="text-xs text-gray-500">{{ $attendance->schedule->starts_at->format('g:i A') }}</div>
                         </div>
                         <div>
-                            @if($attendance->student_present)
-                                <span class="px-2 py-1 rounded-md text-[10px] font-bold bg-green-100 text-green-700 uppercase">Present</span>
+                            @if($attendance->student_present && $attendance->teacher_present)
+                                <span class="px-2 py-1 rounded-md text-[10px] font-bold bg-green-100 text-green-700 uppercase">Attended</span>
+                            @elseif(!$attendance->student_present && $attendance->teacher_present)
+                                <span class="px-2 py-1 rounded-md text-[10px] font-bold bg-orange-100 text-orange-700 uppercase">Std Absent</span>
+                            @elseif($attendance->student_present && !$attendance->teacher_present)
+                                <span class="px-2 py-1 rounded-md text-[10px] font-bold bg-red-100 text-red-700 uppercase">Tch Absent</span>
                             @else
-                                <span class="px-2 py-1 rounded-md text-[10px] font-bold bg-red-100 text-red-700 uppercase">Absent</span>
+                                <span class="px-2 py-1 rounded-md text-[10px] font-bold bg-gray-100 text-gray-700 uppercase">Both Absent</span>
                             @endif
                         </div>
                     </div>
