@@ -141,7 +141,7 @@
             <div class="bg-gradient-to-r from-emerald-50 to-teal-50 px-6 py-4 border-b border-emerald-100">
                 <h3 class="text-emerald-800 font-bold text-lg"><i class="fa-solid fa-chalkboard-teacher mr-2"></i> Teachers Attendance</h3>
             </div>
-            <div class="overflow-x-auto flex-1">
+            <div class="hidden md:block overflow-x-auto flex-1">
                 <table class="w-full">
                     <thead class="bg-gray-50 border-b border-gray-100">
                         <tr>
@@ -172,6 +172,38 @@
                     </tbody>
                 </table>
             </div>
+
+            <!-- Mobile View (Cards) -->
+            <div class="md:hidden divide-y divide-gray-100 flex-1">
+                @forelse($teachersList as $teacher)
+                    <div class="p-4 hover:bg-emerald-50/50 transition">
+                        <div class="mb-3">
+                            <div class="text-sm font-bold text-gray-900">{{ $teacher->name }}</div>
+                            <div class="text-xs text-gray-500">{{ $teacher->email }}</div>
+                        </div>
+                        <div class="grid grid-cols-4 gap-2 text-center">
+                            <div class="bg-gray-50 p-2 rounded-lg border border-gray-100">
+                                <p class="text-[9px] text-gray-500 uppercase font-bold mb-1">Total</p>
+                                <p class="text-sm font-bold text-gray-700">{{ $teacher->total_sessions }}</p>
+                            </div>
+                            <div class="bg-green-50 p-2 rounded-lg border border-green-100">
+                                <p class="text-[9px] text-green-600 uppercase font-bold mb-1">Attended</p>
+                                <p class="text-sm font-bold text-green-700">{{ $teacher->attended_count }}</p>
+                            </div>
+                            <div class="bg-red-50 p-2 rounded-lg border border-red-100">
+                                <p class="text-[9px] text-red-600 uppercase font-bold mb-1">Absent</p>
+                                <p class="text-sm font-bold text-red-700">{{ $teacher->absent_count }}</p>
+                            </div>
+                            <div class="bg-orange-50 p-2 rounded-lg border border-orange-100">
+                                <p class="text-[9px] text-orange-600 uppercase font-bold mb-1">Std Abs</p>
+                                <p class="text-sm font-bold text-orange-700">{{ $teacher->student_absent_count }}</p>
+                            </div>
+                        </div>
+                    </div>
+                @empty
+                    <div class="p-6 text-center text-gray-500">No teachers found.</div>
+                @endforelse
+            </div>
             <!-- Pagination -->
             @if($teachersList->hasPages())
                 <div class="px-6 py-4 border-t border-gray-100 bg-gray-50">
@@ -185,7 +217,7 @@
             <div class="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 border-b border-blue-100">
                 <h3 class="text-blue-800 font-bold text-lg"><i class="fa-solid fa-user-graduate mr-2"></i> Students Attendance</h3>
             </div>
-            <div class="overflow-x-auto flex-1">
+            <div class="hidden md:block overflow-x-auto flex-1">
                 <table class="w-full">
                     <thead class="bg-gray-50 border-b border-gray-100">
                         <tr>
@@ -215,6 +247,38 @@
                         @endforelse
                     </tbody>
                 </table>
+            </div>
+
+            <!-- Mobile View (Cards) -->
+            <div class="md:hidden divide-y divide-gray-100 flex-1">
+                @forelse($studentsList as $student)
+                    <div class="p-4 hover:bg-blue-50/50 transition">
+                        <div class="mb-3">
+                            <div class="text-sm font-bold text-gray-900">{{ $student->name }}</div>
+                            <div class="text-xs text-gray-500">{{ $student->email }}</div>
+                        </div>
+                        <div class="grid grid-cols-4 gap-2 text-center">
+                            <div class="bg-gray-50 p-2 rounded-lg border border-gray-100">
+                                <p class="text-[9px] text-gray-500 uppercase font-bold mb-1">Total</p>
+                                <p class="text-sm font-bold text-gray-700">{{ $student->total_sessions }}</p>
+                            </div>
+                            <div class="bg-green-50 p-2 rounded-lg border border-green-100">
+                                <p class="text-[9px] text-green-600 uppercase font-bold mb-1">Attended</p>
+                                <p class="text-sm font-bold text-green-700">{{ $student->attended_count }}</p>
+                            </div>
+                            <div class="bg-red-50 p-2 rounded-lg border border-red-100">
+                                <p class="text-[9px] text-red-600 uppercase font-bold mb-1">Absent</p>
+                                <p class="text-sm font-bold text-red-700">{{ $student->absent_count }}</p>
+                            </div>
+                            <div class="bg-orange-50 p-2 rounded-lg border border-orange-100">
+                                <p class="text-[9px] text-orange-600 uppercase font-bold mb-1">Tch Abs</p>
+                                <p class="text-sm font-bold text-orange-700">{{ $student->teacher_absent_count }}</p>
+                            </div>
+                        </div>
+                    </div>
+                @empty
+                    <div class="p-6 text-center text-gray-500">No students found.</div>
+                @endforelse
             </div>
             <!-- Pagination -->
             @if($studentsList->hasPages())
