@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\InquiryController as AdminInquiryController;
 use App\Http\Controllers\Admin\ParentController as AdminParentController;
 use App\Http\Controllers\Admin\TeacherApplicationController as AdminTeacherApplicationController;
 use App\Http\Controllers\Admin\StudentController as AdminStudentController;
+use App\Http\Controllers\Admin\AbsentStudentController;
 use App\Http\Controllers\Admin\TeacherController as AdminTeacherController;
 use App\Http\Controllers\Admin\CourseController as AdminCourseController;
 use App\Http\Controllers\Admin\NewsController as AdminNewsController;
@@ -60,6 +61,8 @@ Route::middleware([
     Route::patch('/students/{student}', [AdminStudentController::class, 'update'])->name('students.update');
     Route::delete('/students/{student}', [AdminStudentController::class, 'destroy'])->name('students.destroy');
     Route::patch('/students/{student}/password', [AdminStudentController::class, 'updatePassword'])->name('students.update-password');
+    Route::get('/absent-students', [AbsentStudentController::class, 'index'])->name('absent-students.index');
+    Route::get('/absent-students/list', [AbsentStudentController::class, 'list'])->name('absent-students.list');
 
     // Teachers Management
     Route::get('/teachers', [AdminTeacherController::class, 'index'])->name('teachers.index');

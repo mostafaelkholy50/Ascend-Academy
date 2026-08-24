@@ -22,6 +22,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        \App\Models\Attendance::observe(\App\Observers\AttendanceObserver::class);
+        
         \Illuminate\Pagination\Paginator::defaultView('vendor.pagination.custom');
 
         // Implicitly grant "SuperAdmin" role all permissions
