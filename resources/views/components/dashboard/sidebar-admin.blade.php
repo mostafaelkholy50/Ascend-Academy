@@ -37,7 +37,7 @@
 </a>
 @endcan
 
-@canany(['manage schedules', 'manage news'])
+@canany(['manage schedules', 'manage news', 'view_absent_students'])
 <div class="px-4 pt-4 pb-2 text-[10px] uppercase tracking-wider text-white/50 font-bold">Academic</div>
 @can('manage schedules')
 <a href="{{ route('admin.courses.index') }}"
