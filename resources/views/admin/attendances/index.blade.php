@@ -156,8 +156,10 @@
                         @forelse($teachersList as $teacher)
                             <tr class="hover:bg-emerald-50/50 transition">
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm font-bold text-gray-900">{{ $teacher->name }}</div>
-                                    <div class="text-xs text-gray-500">{{ $teacher->email }}</div>
+                                    <a href="{{ route('admin.attendances.teacher', $teacher->id) }}" class="block group">
+                                        <div class="text-sm font-bold text-gray-900 group-hover:text-emerald-600 transition">{{ $teacher->name }}</div>
+                                        <div class="text-xs text-gray-500 group-hover:text-emerald-500 transition">{{ $teacher->email }}</div>
+                                    </a>
                                 </td>
                                 <td class="px-4 py-4 whitespace-nowrap text-center text-sm font-medium text-gray-700">{{ $teacher->total_sessions }}</td>
                                 <td class="px-4 py-4 whitespace-nowrap text-center text-sm font-bold text-green-600">{{ $teacher->attended_count }}</td>
@@ -177,10 +179,10 @@
             <div class="md:hidden divide-y divide-gray-100 flex-1">
                 @forelse($teachersList as $teacher)
                     <div class="p-4 hover:bg-emerald-50/50 transition">
-                        <div class="mb-3">
-                            <div class="text-sm font-bold text-gray-900">{{ $teacher->name }}</div>
-                            <div class="text-xs text-gray-500">{{ $teacher->email }}</div>
-                        </div>
+                        <a href="{{ route('admin.attendances.teacher', $teacher->id) }}" class="block mb-3 group">
+                            <div class="text-sm font-bold text-gray-900 group-hover:text-emerald-600 transition">{{ $teacher->name }}</div>
+                            <div class="text-xs text-gray-500 group-hover:text-emerald-500 transition">{{ $teacher->email }}</div>
+                        </a>
                         <div class="grid grid-cols-4 gap-2 text-center">
                             <div class="bg-gray-50 p-2 rounded-lg border border-gray-100">
                                 <p class="text-[9px] text-gray-500 uppercase font-bold mb-1">Total</p>
@@ -232,8 +234,10 @@
                         @forelse($studentsList as $student)
                             <tr class="hover:bg-blue-50/50 transition">
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm font-bold text-gray-900">{{ $student->name }}</div>
-                                    <div class="text-xs text-gray-500">{{ $student->email }}</div>
+                                    <a href="{{ route('admin.attendances.student', $student->id) }}" class="block group">
+                                        <div class="text-sm font-bold text-gray-900 group-hover:text-blue-600 transition">{{ $student->name }}</div>
+                                        <div class="text-xs text-gray-500 group-hover:text-blue-500 transition">{{ $student->email }}</div>
+                                    </a>
                                 </td>
                                 <td class="px-4 py-4 whitespace-nowrap text-center text-sm font-medium text-gray-700">{{ $student->total_sessions }}</td>
                                 <td class="px-4 py-4 whitespace-nowrap text-center text-sm font-bold text-green-600">{{ $student->attended_count }}</td>
@@ -253,10 +257,10 @@
             <div class="md:hidden divide-y divide-gray-100 flex-1">
                 @forelse($studentsList as $student)
                     <div class="p-4 hover:bg-blue-50/50 transition">
-                        <div class="mb-3">
-                            <div class="text-sm font-bold text-gray-900">{{ $student->name }}</div>
-                            <div class="text-xs text-gray-500">{{ $student->email }}</div>
-                        </div>
+                        <a href="{{ route('admin.attendances.student', $student->id) }}" class="block mb-3 group">
+                            <div class="text-sm font-bold text-gray-900 group-hover:text-blue-600 transition">{{ $student->name }}</div>
+                            <div class="text-xs text-gray-500 group-hover:text-blue-500 transition">{{ $student->email }}</div>
+                        </a>
                         <div class="grid grid-cols-4 gap-2 text-center">
                             <div class="bg-gray-50 p-2 rounded-lg border border-gray-100">
                                 <p class="text-[9px] text-gray-500 uppercase font-bold mb-1">Total</p>

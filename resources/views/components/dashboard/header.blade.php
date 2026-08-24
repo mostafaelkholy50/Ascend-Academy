@@ -4,7 +4,8 @@
     $recentNotifications = $user->unreadNotifications()->take(5)->get();
     
     // Unify role prefix for routes
-    $rolePrefix = strtolower($user->role);
+    $roleName = $user->getRoleNames()->first() ?? 'student';
+    $rolePrefix = strtolower($roleName);
     if ($rolePrefix === 'superadmin' || $rolePrefix === 'schedulermanager' || $rolePrefix === 'accountant' || $rolePrefix === 'qualitycontrol') {
         $rolePrefix = 'admin';
     }

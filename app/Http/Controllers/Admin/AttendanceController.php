@@ -37,6 +37,28 @@ class AttendanceController extends Controller
     }
 
     /**
+     * Display a student's attendance profile
+     */
+    public function studentProfile(\App\Models\User $user)
+    {
+        abort_unless($user->hasRole('Student'), 404);
+        
+        $data = $this->service->getStudentProfileData($user);
+        return view('admin.attendances.student', $data);
+    }
+
+    /**
+     * Display a teacher's attendance profile
+     */
+    public function teacherProfile(\App\Models\User $user)
+    {
+        abort_unless($user->hasRole('Teacher'), 404);
+        
+        $data = $this->service->getTeacherProfileData($user);
+        return view('admin.attendances.teacher', $data);
+    }
+
+    /**
      * Show the form for creating/marking attendance (Daily/Weekly view)
      */
     public function create(Request $request)

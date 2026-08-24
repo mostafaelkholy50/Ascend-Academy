@@ -105,6 +105,8 @@ Route::middleware([
 
     // Attendance Management
     Route::get('/attendances', [AttendanceController::class, 'index'])->name('attendances.index');
+    Route::get('/attendances/student/{user}', [AttendanceController::class, 'studentProfile'])->name('attendances.student');
+    Route::get('/attendances/teacher/{user}', [AttendanceController::class, 'teacherProfile'])->name('attendances.teacher');
     Route::get('/attendances/{attendance}', [AttendanceController::class, 'show'])->name('attendances.show');
 
     // Reports Management

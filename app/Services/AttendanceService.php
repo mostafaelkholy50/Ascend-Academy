@@ -109,6 +109,48 @@ class AttendanceService
         return $this->repository->getAttendanceWithRelations($attendance);
     }
 
+    public function getStudentProfileData(User $student)
+    {
+        $teachers = User::roleTeacher()->whereHas('teacherAttendances', function($q) use ($student) {
+            $q->where('attendances.student_id', $student->id);
+        })->withCount([
+            'teacherAttendances as total_sessions' => function($q) use ($student) { $q->where('attendances.student_id', $student->id); },
+            'teacherAttendances as attended_count' => function($q) use ($student) { $q->where('attendances.student_id', $student->id)->where('attendances.student_present', true); },
+            'teacherAttendances as absent_count' => function($q) use ($student) { $q->where('attendances.student_id', $student->id)->where('attendances.student_present', false); },
+            'teacherAttendances as teacher_absent_count' => function($q) use ($student) { $q->where('attendances.student_id', $student->id)->where('attendances.teacher_present', false); }
+        ])->get();
+
+        $attendances = Attendance::where('attendances.student_id', $student->id)
+            ->with(['schedule.teacher', 'schedule.course'])
+            ->join('schedules', 'attendances.schedule_id', '=', 'schedules.id')
+            ->orderBy('schedules.starts_at', 'desc')
+            ->select('attendances.*')
+            ->paginate(15);
+
+        return compact('student', 'teachers', 'attendances');
+    }
+
+    public function getTeacherProfileData(User $teacher)
+    {
+        $students = User::roleStudent()->whereHas('attendances', function($q) use ($teacher) {
+            $q->where('attendances.teacher_id', $teacher->id);
+        })->withCount([
+            'attendances as total_sessions' => function($q) use ($teacher) { $q->where('attendances.teacher_id', $teacher->id); },
+            'attendances as attended_count' => function($q) use ($teacher) { $q->where('attendances.teacher_id', $teacher->id)->where('attendances.teacher_present', true); },
+            'attendances as absent_count' => function($q) use ($teacher) { $q->where('attendances.teacher_id', $teacher->id)->where('attendances.teacher_present', false); },
+            'attendances as student_absent_count' => function($q) use ($teacher) { $q->where('attendances.teacher_id', $teacher->id)->where('attendances.student_present', false); }
+        ])->get();
+
+        $attendances = Attendance::where('attendances.teacher_id', $teacher->id)
+            ->with(['schedule.student', 'schedule.course'])
+            ->join('schedules', 'attendances.schedule_id', '=', 'schedules.id')
+            ->orderBy('schedules.starts_at', 'desc')
+            ->select('attendances.*')
+            ->paginate(15);
+
+        return compact('teacher', 'students', 'attendances');
+    }
+
     public function getCreateData(Request $request)
     {
         $view = $request->get('view', 'daily');
