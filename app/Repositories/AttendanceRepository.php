@@ -42,29 +42,50 @@ class AttendanceRepository
     }
 
     /**
-     * Get attendance statistics.
+     * Get attendance statistics for the current month or filtered period.
      *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param \Illuminate\Http\Request $request
      * @return array
      */
-    public function getStats()
+    public function getStats(\Illuminate\Database\Eloquent\Builder $query, \Illuminate\Http\Request $request)
     {
-        $totalSessions = Attendance::count();
-        $bothPresent = Attendance::where('student_present', true)
-            ->where('teacher_present', true)
-            ->count();
-        $partialAttendance = Attendance::where(function($q) {
-            $q->where('student_present', true)->where('teacher_present', false)
-              ->orWhere('student_present', false)->where('teacher_present', true);
-        })->count();
-        $bothAbsent = Attendance::where('student_present', false)
-            ->where('teacher_present', false)
-            ->count();
+        // Clone the query so we don't modify the original query used for pagination
+        $statsQuery = clone $query;
+
+        // If no date filters are provided, restrict stats to the current month
+        if (!$request->filled('date_from') && !$request->filled('date_to')) {
+            $statsQuery->whereHas('schedule', function($q) {
+                $q->whereMonth('starts_at', now()->month)
+                  ->whereYear('starts_at', now()->year);
+            });
+        }
+
+        // Student Stats
+        $studentAttended = (clone $statsQuery)->where('student_present', true)->count();
+        $studentAbsent = (clone $statsQuery)->where('student_present', false)->count();
+        $teacherAbsentForStudent = (clone $statsQuery)->where('teacher_present', false)->count();
+        $totalStudentSessions = (clone $statsQuery)->count(); // Actually total sessions
+
+        // Teacher Stats
+        $teacherAttended = (clone $statsQuery)->where('teacher_present', true)->count();
+        $teacherAbsent = (clone $statsQuery)->where('teacher_present', false)->count();
+        $studentAbsentForTeacher = (clone $statsQuery)->where('student_present', false)->count();
+        $totalTeacherSessions = (clone $statsQuery)->count();
 
         return [
-            'totalSessions' => $totalSessions,
-            'bothPresent' => $bothPresent,
-            'partialAttendance' => $partialAttendance,
-            'bothAbsent' => $bothAbsent,
+            'studentStats' => [
+                'total' => $totalStudentSessions,
+                'attended' => $studentAttended,
+                'absent' => $studentAbsent,
+                'teacher_absent' => $teacherAbsentForStudent,
+            ],
+            'teacherStats' => [
+                'total' => $totalTeacherSessions,
+                'attended' => $teacherAttended,
+                'absent' => $teacherAbsent,
+                'student_absent' => $studentAbsentForTeacher,
+            ]
         ];
     }
 }

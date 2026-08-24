@@ -9,31 +9,73 @@
         </div>
     </div>
 
-    <!-- Statistics Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-        <div class="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl shadow-lg p-6 text-white">
-            <i class="fa-solid fa-calendar-check text-2xl opacity-80 mb-2"></i>
-            <p class="text-white/80 text-sm font-medium">Total Sessions</p>
-            <p class="text-3xl font-bold mt-1">{{ $totalSessions }}</p>
+    <!-- Statistics Cards: Students & Teachers (Current Month or Filtered Period) -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+        
+        <!-- Students Section -->
+        <div class="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden">
+            <div class="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-white text-lg font-bold"><i class="fa-solid fa-user-graduate mr-2"></i> Student Statistics</h2>
+                    <span class="bg-white/20 text-white text-xs px-3 py-1 rounded-full font-medium">Total Sessions: {{ $studentStats['total'] }}</span>
+                </div>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-3 gap-4">
+                    <!-- Attended -->
+                    <div class="bg-green-50 rounded-2xl p-4 border border-green-100 text-center flex flex-col justify-center transition hover:shadow-md">
+                        <i class="fa-solid fa-check-circle text-green-500 text-2xl mb-2"></i>
+                        <p class="text-xs text-gray-500 font-bold uppercase mb-1">Attended</p>
+                        <p class="text-2xl font-black text-green-700">{{ $studentStats['attended'] }}</p>
+                    </div>
+                    <!-- Student Absent -->
+                    <div class="bg-red-50 rounded-2xl p-4 border border-red-100 text-center flex flex-col justify-center transition hover:shadow-md">
+                        <i class="fa-solid fa-user-xmark text-red-500 text-2xl mb-2"></i>
+                        <p class="text-xs text-gray-500 font-bold uppercase mb-1">Absent (Student)</p>
+                        <p class="text-2xl font-black text-red-700">{{ $studentStats['absent'] }}</p>
+                    </div>
+                    <!-- Teacher Absent -->
+                    <div class="bg-orange-50 rounded-2xl p-4 border border-orange-100 text-center flex flex-col justify-center transition hover:shadow-md">
+                        <i class="fa-solid fa-chalkboard-user text-orange-500 text-2xl mb-2"></i>
+                        <p class="text-xs text-gray-500 font-bold uppercase mb-1">Absent (Teacher)</p>
+                        <p class="text-2xl font-black text-orange-700">{{ $studentStats['teacher_absent'] }}</p>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <div class="bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl shadow-lg p-6 text-white">
-            <i class="fa-solid fa-check-double text-2xl opacity-80 mb-2"></i>
-            <p class="text-white/80 text-sm font-medium">Both Present</p>
-            <p class="text-3xl font-bold mt-1">{{ $bothPresent }}</p>
+        <!-- Teachers Section -->
+        <div class="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden">
+            <div class="bg-gradient-to-r from-emerald-600 to-teal-600 px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-white text-lg font-bold"><i class="fa-solid fa-chalkboard-teacher mr-2"></i> Teacher Statistics</h2>
+                    <span class="bg-white/20 text-white text-xs px-3 py-1 rounded-full font-medium">Total Sessions: {{ $teacherStats['total'] }}</span>
+                </div>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-3 gap-4">
+                    <!-- Attended -->
+                    <div class="bg-green-50 rounded-2xl p-4 border border-green-100 text-center flex flex-col justify-center transition hover:shadow-md">
+                        <i class="fa-solid fa-check-circle text-green-500 text-2xl mb-2"></i>
+                        <p class="text-xs text-gray-500 font-bold uppercase mb-1">Attended</p>
+                        <p class="text-2xl font-black text-green-700">{{ $teacherStats['attended'] }}</p>
+                    </div>
+                    <!-- Teacher Absent -->
+                    <div class="bg-orange-50 rounded-2xl p-4 border border-orange-100 text-center flex flex-col justify-center transition hover:shadow-md">
+                        <i class="fa-solid fa-user-xmark text-orange-500 text-2xl mb-2"></i>
+                        <p class="text-xs text-gray-500 font-bold uppercase mb-1">Absent (Teacher)</p>
+                        <p class="text-2xl font-black text-orange-700">{{ $teacherStats['absent'] }}</p>
+                    </div>
+                    <!-- Student Absent -->
+                    <div class="bg-red-50 rounded-2xl p-4 border border-red-100 text-center flex flex-col justify-center transition hover:shadow-md">
+                        <i class="fa-solid fa-user-graduate text-red-500 text-2xl mb-2"></i>
+                        <p class="text-xs text-gray-500 font-bold uppercase mb-1">Absent (Student)</p>
+                        <p class="text-2xl font-black text-red-700">{{ $teacherStats['student_absent'] }}</p>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <div class="bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl shadow-lg p-6 text-white">
-            <i class="fa-solid fa-user-slash text-2xl opacity-80 mb-2"></i>
-            <p class="text-white/80 text-sm font-medium">Partial Attendance</p>
-            <p class="text-3xl font-bold mt-1">{{ $partialAttendance }}</p>
-        </div>
-
-        <div class="bg-gradient-to-br from-red-500 to-pink-600 rounded-2xl shadow-lg p-6 text-white">
-            <i class="fa-solid fa-times-circle text-2xl opacity-80 mb-2"></i>
-            <p class="text-white/80 text-sm font-medium">Both Absent</p>
-            <p class="text-3xl font-bold mt-1">{{ $bothAbsent }}</p>
-        </div>
     </div>
 
     <!-- Filters -->

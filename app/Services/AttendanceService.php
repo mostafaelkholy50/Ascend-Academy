@@ -30,7 +30,7 @@ class AttendanceService
         $query = $this->filter->apply($query, $request);
 
         $attendances = $query->paginate($perPage);
-        $stats = $this->repository->getStats();
+        $stats = $this->repository->getStats($query, $request);
 
         // Get filter options
         $students = User::roleStudent()->orderBy('name')->get();
