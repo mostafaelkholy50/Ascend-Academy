@@ -111,6 +111,10 @@ class MonthlyAttendanceStatsTest extends TestCase
         // View should have studentStats and teacherStats
         $response->assertViewHas('studentStats');
         $response->assertViewHas('teacherStats');
+        
+        // View should have lists of users
+        $response->assertViewHas('studentsList');
+        $response->assertViewHas('teachersList');
 
         $studentStats = $response->viewData('studentStats');
         $teacherStats = $response->viewData('teacherStats');

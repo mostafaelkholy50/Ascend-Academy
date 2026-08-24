@@ -24,23 +24,82 @@ class AttendanceService
         $this->scheduleService = $scheduleService;
     }
 
-    public function getAttendances(Request $request, int $perPage = 15)
+    public function getAttendances(Request $request)
     {
+        $applyFilters = function ($query) use ($request) {
+            if ($request->filled('date_from')) {
+                $query->whereHas('schedule', function($q) use ($request) {
+                    $q->whereDate('starts_at', '>=', $request->date_from);
+                });
+            }
+            if ($request->filled('date_to')) {
+                $query->whereHas('schedule', function($q) use ($request) {
+                    $q->whereDate('starts_at', '<=', $request->date_to);
+                });
+            }
+            if (!$request->filled('date_from') && !$request->filled('date_to')) {
+                $query->whereHas('schedule', function($q) {
+                    $q->whereMonth('starts_at', now()->month)
+                      ->whereYear('starts_at', now()->year);
+                });
+            }
+            if ($request->filled('course_id')) {
+                $query->whereHas('schedule', function($q) use ($request) {
+                    $q->where('course_id', $request->course_id);
+                });
+            }
+        };
+
+        $students = User::roleStudent()->orderBy('name')
+            ->withCount([
+                'attendances as total_sessions' => function ($q) use ($applyFilters) {
+                    $applyFilters($q);
+                },
+                'attendances as attended_count' => function ($q) use ($applyFilters) {
+                    $applyFilters($q);
+                    $q->where('student_present', true);
+                },
+                'attendances as absent_count' => function ($q) use ($applyFilters) {
+                    $applyFilters($q);
+                    $q->where('student_present', false);
+                },
+                'attendances as teacher_absent_count' => function ($q) use ($applyFilters) {
+                    $applyFilters($q);
+                    $q->where('teacher_present', false);
+                }
+            ])
+            ->paginate(10, ['*'], 'students_page')->withQueryString();
+
+        $teachers = User::roleTeacher()->orderBy('name')
+            ->withCount([
+                'teacherAttendances as total_sessions' => function ($q) use ($applyFilters) {
+                    $applyFilters($q);
+                },
+                'teacherAttendances as attended_count' => function ($q) use ($applyFilters) {
+                    $applyFilters($q);
+                    $q->where('teacher_present', true);
+                },
+                'teacherAttendances as absent_count' => function ($q) use ($applyFilters) {
+                    $applyFilters($q);
+                    $q->where('teacher_present', false);
+                },
+                'teacherAttendances as student_absent_count' => function ($q) use ($applyFilters) {
+                    $applyFilters($q);
+                    $q->where('student_present', false);
+                }
+            ])
+            ->paginate(10, ['*'], 'teachers_page')->withQueryString();
+
+        // The top aggregate stats
         $query = $this->repository->getAttendancesQuery();
         $query = $this->filter->apply($query, $request);
-
-        $attendances = $query->paginate($perPage);
         $stats = $this->repository->getStats($query, $request);
 
-        // Get filter options
-        $students = User::roleStudent()->orderBy('name')->get();
-        $teachers = User::roleTeacher()->orderBy('name')->get();
         $courses = Course::orderBy('title')->get();
 
         return array_merge([
-            'attendances' => $attendances,
-            'students' => $students,
-            'teachers' => $teachers,
+            'studentsList' => $students,
+            'teachersList' => $teachers,
             'courses' => $courses,
         ], $stats);
     }
