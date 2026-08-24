@@ -134,52 +134,8 @@
     </div>
 
     <!-- Data Tables Grid -->
-    <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
+    <div class="grid grid-cols-1 gap-8">
         
-        <!-- Students List Table -->
-        <div class="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden flex flex-col">
-            <div class="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 border-b border-blue-100">
-                <h3 class="text-blue-800 font-bold text-lg"><i class="fa-solid fa-user-graduate mr-2"></i> Students Attendance</h3>
-            </div>
-            <div class="overflow-x-auto flex-1">
-                <table class="w-full">
-                    <thead class="bg-gray-50 border-b border-gray-100">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Student Name</th>
-                            <th class="px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Sessions</th>
-                            <th class="px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Attended</th>
-                            <th class="px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Absent</th>
-                            <th class="px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Teacher Abs</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100">
-                        @forelse($studentsList as $student)
-                            <tr class="hover:bg-blue-50/50 transition">
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm font-bold text-gray-900">{{ $student->name }}</div>
-                                    <div class="text-xs text-gray-500">{{ $student->email }}</div>
-                                </td>
-                                <td class="px-4 py-4 whitespace-nowrap text-center text-sm font-medium text-gray-700">{{ $student->total_sessions }}</td>
-                                <td class="px-4 py-4 whitespace-nowrap text-center text-sm font-bold text-green-600">{{ $student->attended_count }}</td>
-                                <td class="px-4 py-4 whitespace-nowrap text-center text-sm font-bold text-red-600">{{ $student->absent_count }}</td>
-                                <td class="px-4 py-4 whitespace-nowrap text-center text-sm font-medium text-orange-500">{{ $student->teacher_absent_count }}</td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="5" class="px-6 py-8 text-center text-gray-500">No students found.</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-            <!-- Pagination -->
-            @if($studentsList->hasPages())
-                <div class="px-6 py-4 border-t border-gray-100 bg-gray-50">
-                    {{ $studentsList->links('vendor.pagination.custom') }}
-                </div>
-            @endif
-        </div>
-
         <!-- Teachers List Table -->
         <div class="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden flex flex-col">
             <div class="bg-gradient-to-r from-emerald-50 to-teal-50 px-6 py-4 border-b border-emerald-100">
@@ -220,6 +176,50 @@
             @if($teachersList->hasPages())
                 <div class="px-6 py-4 border-t border-gray-100 bg-gray-50">
                     {{ $teachersList->links('vendor.pagination.custom') }}
+                </div>
+            @endif
+        </div>
+
+        <!-- Students List Table -->
+        <div class="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden flex flex-col">
+            <div class="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 border-b border-blue-100">
+                <h3 class="text-blue-800 font-bold text-lg"><i class="fa-solid fa-user-graduate mr-2"></i> Students Attendance</h3>
+            </div>
+            <div class="overflow-x-auto flex-1">
+                <table class="w-full">
+                    <thead class="bg-gray-50 border-b border-gray-100">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Student Name</th>
+                            <th class="px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Sessions</th>
+                            <th class="px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Attended</th>
+                            <th class="px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Absent</th>
+                            <th class="px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Teacher Abs</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        @forelse($studentsList as $student)
+                            <tr class="hover:bg-blue-50/50 transition">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-bold text-gray-900">{{ $student->name }}</div>
+                                    <div class="text-xs text-gray-500">{{ $student->email }}</div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap text-center text-sm font-medium text-gray-700">{{ $student->total_sessions }}</td>
+                                <td class="px-4 py-4 whitespace-nowrap text-center text-sm font-bold text-green-600">{{ $student->attended_count }}</td>
+                                <td class="px-4 py-4 whitespace-nowrap text-center text-sm font-bold text-red-600">{{ $student->absent_count }}</td>
+                                <td class="px-4 py-4 whitespace-nowrap text-center text-sm font-medium text-orange-500">{{ $student->teacher_absent_count }}</td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="5" class="px-6 py-8 text-center text-gray-500">No students found.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+            <!-- Pagination -->
+            @if($studentsList->hasPages())
+                <div class="px-6 py-4 border-t border-gray-100 bg-gray-50">
+                    {{ $studentsList->links('vendor.pagination.custom') }}
                 </div>
             @endif
         </div>
