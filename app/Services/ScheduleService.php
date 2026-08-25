@@ -402,7 +402,9 @@ class ScheduleService
 
     public function deleteSchedule(Schedule $schedule)
     {
-        return $this->repository->delete($schedule);
+        // Instead of hard deleting, we cancel it so that generateMonthlySchedules 
+        // doesn't see a missing slot and automatically recreate it.
+        return $this->repository->update($schedule, ['status' => 'cancelled']);
     }
 
     public function bulkCancel(Enrollment $enrollment)
@@ -544,8 +546,8 @@ class ScheduleService
             $existingStarts = Schedule::where('enrollment_id', $enrollment->id)
                 ->whereYear('starts_at', $targetMonth->year)
                 ->whereMonth('starts_at', $targetMonth->month)
-                ->pluck('starts_at')
-                ->map(fn ($date) => Carbon::parse($date)->format('Y-m-d H:i:s'))
+                ->get(['starts_at'])
+                ->map(fn ($schedule) => $schedule->starts_at->format('Y-m-d H:i:s'))
                 ->flip();
 
             $createdCount = 0;

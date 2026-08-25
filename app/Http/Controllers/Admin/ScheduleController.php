@@ -153,7 +153,7 @@ class ScheduleController extends Controller
     {
         $this->scheduleService->deleteSchedule($schedule);
         return redirect()->route('admin.schedules.index')
-            ->with('success', 'Schedule deleted successfully.');
+            ->with('success', 'Schedule cancelled successfully.');
     }
 
     public function bulkCancel(Request $request, Enrollment $enrollment)
