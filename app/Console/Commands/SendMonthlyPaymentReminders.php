@@ -32,6 +32,11 @@ class SendMonthlyPaymentReminders extends Command
     private const LOCK_TTL_MINUTES = 55;
 
     /**
+     * Spread queued emails apart so the SMTP server never sees a burst.
+     */
+    private const EMAIL_STAGGER_SECONDS = 60;
+
+    /**
      * Execute the console command.
      */
     public function handle()
@@ -59,6 +64,7 @@ class SendMonthlyPaymentReminders extends Command
 
             $sentCount = 0;
             $skippedCount = 0;
+            $emailIndex = 0;
 
             foreach ($unpaidPayments as $payment) {
                 if ($sentCount >= self::MAX_EMAILS_PER_RUN) {
@@ -77,7 +83,10 @@ class SendMonthlyPaymentReminders extends Command
 
                     // Send to student
                     if ($remainingEmails > 0) {
-                        $student->notify(new MonthlyPaymentReminderNotification($payment));
+                        $student->notify(
+                            (new MonthlyPaymentReminderNotification($payment))
+                                ->delay(now()->addSeconds(self::EMAIL_STAGGER_SECONDS * $emailIndex++))
+                        );
                         $sentCount++;
                         $remainingEmails--;
                     }
@@ -89,7 +98,10 @@ class SendMonthlyPaymentReminders extends Command
                             break;
                         }
 
-                        $parent->notify(new MonthlyPaymentReminderNotification($payment));
+                        $parent->notify(
+                            (new MonthlyPaymentReminderNotification($payment))
+                                ->delay(now()->addSeconds(self::EMAIL_STAGGER_SECONDS * $emailIndex++))
+                        );
                         $sentCount++;
                         $remainingEmails--;
                     }

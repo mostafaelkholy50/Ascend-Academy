@@ -282,6 +282,8 @@ sudo certbot --nginx -d your-domain.com -d www.your-domain.com
   /usr/local/bin/php /home/username/ascend-academy/queue.php >> /dev/null 2>&1
   ```
 
+> ⚠️ **تحذير مهم جداً:** استخدم **طريقة واحدة فقط** (إما `artisan queue:work` مباشرة أو ملف `queue.php`)، ولا تُفعّل الاثنين معاً كـ Cron Jobs منفصلين. تشغيل أكثر من Worker في نفس الوقت هو السبب الرئيسي لتكرار الإيميلات وتعليق الإرسال من Hostinger (Email sending has been temporarily suspended).
+
 > 💡 **خيار بديل وسهل:** إذا كنت لا ترغب في إعداد مهمة Cron ثانية للـ Queue Worker، يمكنك تعديل ملف `.env` على السيرفر وجعل قيمة `QUEUE_CONNECTION=sync`. هذا سيجعل النظام يرسل الإيميلات مباشرة وتلقائياً بمجرد تشغيل المجدول، ولكن قد يأخذ المجدول وقتاً أطول في التنفيذ.
 
 *(ملاحظة: تأكد من كتابة المسار الصحيح لإصدار الـ PHP ومجلد مشروعك في الاستضافة بدلاً من /home/username/)*.

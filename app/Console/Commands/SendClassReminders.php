@@ -33,6 +33,11 @@ class SendClassReminders extends Command
     private const LOCK_TTL_MINUTES = 55;
 
     /**
+     * Spread queued emails apart so the SMTP server never sees a burst.
+     */
+    private const EMAIL_STAGGER_SECONDS = 45;
+
+    /**
      * Execute the console command.
      */
     public function handle()
@@ -62,6 +67,7 @@ class SendClassReminders extends Command
             $teacherDigestCount = 0;
             $classReminderCount = 0;
             $skippedCount = 0;
+            $emailIndex = 0;
 
             // Group schedules by teacher ID to send one daily email to each teacher
             $schedulesByTeacher = $schedules->groupBy('teacher_id');
@@ -79,7 +85,10 @@ class SendClassReminders extends Command
 
                 try {
                     $teacher = $teacherSchedules->first()->teacher;
-                    $teacher->notify(new TeacherDailyScheduleNotification($teacherSchedules));
+                    $teacher->notify(
+                        (new TeacherDailyScheduleNotification($teacherSchedules))
+                            ->delay(now()->addSeconds(self::EMAIL_STAGGER_SECONDS * $emailIndex++))
+                    );
                     $sentCount++;
                     $teacherDigestCount++;
                     $this->info("Sent daily schedule digest to teacher: {$teacher->name}");
@@ -108,7 +117,10 @@ class SendClassReminders extends Command
                     $anyParentDisabled = $parents->contains(fn($parent) => !$parent->class_reminders_enabled);
 
                     if (!$anyParentDisabled && $remainingEmails > 0) {
-                        $schedule->student->notify(new ClassReminderNotification($schedule));
+                        $schedule->student->notify(
+                            (new ClassReminderNotification($schedule))
+                                ->delay(now()->addSeconds(self::EMAIL_STAGGER_SECONDS * $emailIndex++))
+                        );
                         $sentCount++;
                         $classReminderCount++;
                         $remainingEmails--;
@@ -122,7 +134,10 @@ class SendClassReminders extends Command
                         }
 
                         if ($parent->class_reminders_enabled) {
-                            $parent->notify(new ClassReminderNotification($schedule));
+                            $parent->notify(
+                                (new ClassReminderNotification($schedule))
+                                    ->delay(now()->addSeconds(self::EMAIL_STAGGER_SECONDS * $emailIndex++))
+                            );
                             $sentCount++;
                             $classReminderCount++;
                             $remainingEmails--;

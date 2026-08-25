@@ -219,8 +219,8 @@ class ScheduleService
             $existingStarts = Schedule::where('enrollment_id', $enrollment->id)
                 ->whereYear('starts_at', $monthStart->year)
                 ->whereMonth('starts_at', $monthStart->month)
-                ->pluck('starts_at')
-                ->map(fn ($date) => Carbon::parse($date)->format('Y-m-d H:i:s'))
+                ->get(['starts_at'])
+                ->map(fn ($schedule) => $schedule->starts_at->format('Y-m-d H:i:s'))
                 ->flip();
 
             $conflicts = [];
@@ -254,7 +254,7 @@ class ScheduleService
 
                     // Check Teacher Conflict in-memory
                     $teacherConflict = $existingTeacherSchedules->first(function ($schedule) use ($startsAt, $endsAt, $data) {
-                        if ($schedule->student_id == $data['student_id'] && $schedule->course_id == $data['course_id']) return false;
+                        if ((int)$schedule->student_id === (int)$data['student_id'] && (int)$schedule->course_id === (int)$data['course_id']) return false;
                         return $schedule->starts_at < $endsAt
                             && $schedule->ends_at > $startsAt
                             && $schedule->isConflictRelevantFor($startsAt);
@@ -264,12 +264,12 @@ class ScheduleService
                         $studentName = $teacherConflict->student ? $teacherConflict->student->name : 'Unknown Student';
                         $teacherName = $teacherConflict->teacher ? $teacherConflict->teacher->name : 'Unknown Teacher';
                         $courseName = $teacherConflict->course ? $teacherConflict->course->title : 'Unknown Course';
-                        $conflicts[] = "Teacher conflict on {$startsAt->format('l, M d, Y')} at {$startsAt->format('g:i A')} (Teacher {$teacherName} is booked with Student {$studentName} for {$courseName})";
+                        $conflicts[] = "Teacher conflict on {$startsAt->format('l, M d, Y')} at {$startsAt->format('g:i A')} (Teacher {$teacherName} is booked with Student {$studentName} for {$courseName}. Check if you're booking a new course on the same days.)";
                     }
 
                     // Check Student Conflict in-memory
                     $studentConflict = $existingStudentSchedules->first(function ($schedule) use ($startsAt, $endsAt, $data) {
-                        if ($schedule->student_id == $data['student_id'] && $schedule->course_id == $data['course_id']) return false;
+                        if ((int)$schedule->student_id === (int)$data['student_id'] && (int)$schedule->course_id === (int)$data['course_id']) return false;
                         return $schedule->starts_at < $endsAt
                             && $schedule->ends_at > $startsAt
                             && $schedule->isConflictRelevantFor($startsAt);
@@ -279,7 +279,7 @@ class ScheduleService
                         $teacherName = $studentConflict->teacher ? $studentConflict->teacher->name : 'Unknown Teacher';
                         $studentName = $studentConflict->student ? $studentConflict->student->name : 'Unknown Student';
                         $courseName = $studentConflict->course ? $studentConflict->course->title : 'Unknown Course';
-                        $conflicts[] = "Student conflict on {$startsAt->format('l, M d, Y')} at {$startsAt->format('g:i A')} (Student {$studentName} is booked with Teacher {$teacherName} for {$courseName})";
+                        $conflicts[] = "Student conflict on {$startsAt->format('l, M d, Y')} at {$startsAt->format('g:i A')} (Student {$studentName} is booked with Teacher {$teacherName} for {$courseName}. Are you booking overlapping classes?)";
                     }
 
                     if (!$teacherConflict && !$studentConflict) {
