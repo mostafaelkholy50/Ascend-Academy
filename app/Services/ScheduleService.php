@@ -414,8 +414,9 @@ class ScheduleService
 
     public function bulkDelete(Enrollment $enrollment)
     {
-        // Clear the pattern so the automatic generator doesn't recreate them
+        // Clear the pattern and cancel the enrollment so the automatic generator doesn't recreate them
         $enrollment->setSchedulePattern([]);
+        $enrollment->update(['status' => 'cancelled']);
         return $this->repository->bulkDelete($enrollment);
     }
 
