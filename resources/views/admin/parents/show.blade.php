@@ -110,12 +110,41 @@
 
             <!-- Children List -->
             <div class="bg-white p-6 rounded-2xl shadow-sm">
-                <div class="flex items-center justify-between mb-6">
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
                     <h2 class="text-xl font-bold text-gray-800">Children ({{ $parent->children->count() }})</h2>
-                    <button onclick="document.getElementById('addChildModal').classList.remove('hidden')"
-                        class="bg-vibrant-green text-white px-4 py-2 rounded-lg hover:bg-deep-blue transition text-sm">
-                        <i class="fa-solid fa-plus mr-2"></i>Add Child
-                    </button>
+
+                    <div class="flex flex-col sm:flex-row gap-3">
+                        <!-- Attach Existing Students -->
+                        @if($availableStudents->count() > 0)
+                            <form action="{{ route('admin.parents.attach-students', $parent->id) }}" method="POST" class="flex items-center gap-2">
+                                @csrf
+                                <div class="flex flex-col">
+                                    <select name="student_ids[]" multiple
+                                        class="min-w-[200px] px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vibrant-green text-sm"
+                                        size="1"
+                                        onfocus="this.size=4;"
+                                        onblur="this.size=1;"
+                                        onchange="this.size=1; this.blur();">
+                                        @foreach($availableStudents as $student)
+                                            <option value="{{ $student->id }}">{{ $student->name }} ({{ $student->email }})</option>
+                                        @endforeach
+                                    </select>
+                                    @error('student_ids')
+                                        <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                                <button type="submit"
+                                    class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition text-sm whitespace-nowrap">
+                                    <i class="fa-solid fa-link mr-1"></i>Attach Student(s)
+                                </button>
+                            </form>
+                        @endif
+
+                        <button onclick="document.getElementById('addChildModal').classList.remove('hidden')"
+                            class="bg-vibrant-green text-white px-4 py-2 rounded-lg hover:bg-deep-blue transition text-sm">
+                            <i class="fa-solid fa-plus mr-2"></i>Add Child
+                        </button>
+                    </div>
                 </div>
 
                 @forelse($parent->children as $child)

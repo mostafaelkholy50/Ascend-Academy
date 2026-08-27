@@ -45,6 +45,7 @@ Route::middleware([
     Route::patch('/parents/{parent}/password', [AdminParentController::class, 'updatePassword'])->name('parents.update-password');
     Route::delete('/parents/{parent}', [AdminParentController::class, 'destroy'])->name('parents.destroy');
     Route::post('/parents/{parent}/children', [AdminParentController::class, 'addChild'])->name('parents.add-child');
+    Route::post('/parents/{parent}/attach-students', [AdminParentController::class, 'attachStudents'])->name('parents.attach-students');
     Route::delete('/parents/{parent}/children/{child}', [AdminParentController::class, 'removeChild'])->name('parents.remove-child');
 
     // Teacher Applications Management

@@ -75,6 +75,17 @@ class ParentService
         });
     }
 
+    public function attachStudents(User $parent, array $data)
+    {
+        return DB::transaction(function () use ($parent, $data) {
+            $studentIds = array_unique($data['student_ids']);
+
+            $parent->children()->attach($studentIds);
+
+            return $studentIds;
+        });
+    }
+
     public function removeChild(User $parent, User $child)
     {
         return Children::where('parent_id', $parent->id)

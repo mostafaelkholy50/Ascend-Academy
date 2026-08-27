@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 use App\Services\ParentService;
 use App\Http\Requests\Admin\StoreParentRequest;
 use App\Http\Requests\Admin\AddChildRequest;
+use App\Http\Requests\Admin\AttachStudentsRequest;
 use App\Http\Requests\Admin\UpdateParentRequest;
 use App\Http\Requests\Admin\UpdateParentPasswordRequest;
 
@@ -58,7 +59,14 @@ class ParentController extends Controller
         $parent->load(['children.enrollments.course', 'children.schedules', 'children.reports']);
         $courses = Course::all();
 
-        return view('admin.parents.show', compact('parent', 'courses'));
+        $existingChildIds = $parent->children->pluck('id')->toArray();
+        $availableStudents = User::where('role', 'Student')
+            ->where('active', true)
+            ->whereNotIn('id', $existingChildIds)
+            ->orderBy('name')
+            ->get();
+
+        return view('admin.parents.show', compact('parent', 'courses', 'availableStudents'));
     }
 
     /**
@@ -73,6 +81,20 @@ class ParentController extends Controller
 
         } catch (\Exception $e) {
             return back()->with('error', 'Failed to add student: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * ربط طالب/طلاب موجودين بولي الأمر
+     */
+    public function attachStudents(AttachStudentsRequest $request, User $parent)
+    {
+        try {
+            $this->parentService->attachStudents($parent, $request->validated());
+
+            return back()->with('success', 'Student(s) attached successfully!');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Failed to attach students: ' . $e->getMessage());
         }
     }
 
