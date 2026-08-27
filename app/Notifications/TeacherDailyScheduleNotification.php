@@ -35,8 +35,11 @@ class TeacherDailyScheduleNotification extends Notification implements ShouldQue
      */
     public function toMail(object $notifiable): MailMessage
     {
+        $teacherName = $notifiable->name ?? 'Teacher';
+        $date = $this->schedules->first()?->starts_at?->format('l, F j') ?? 'today';
+
         return (new MailMessage)
-            ->subject('Your Class Schedule for Today')
+            ->subject("Your schedule for {$date} — {$teacherName}")
             ->markdown('emails.teacher-daily-schedule', [
                 'schedules' => $this->schedules,
                 'teacher' => $notifiable,

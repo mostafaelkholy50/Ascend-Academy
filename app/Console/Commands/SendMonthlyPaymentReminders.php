@@ -33,8 +33,9 @@ class SendMonthlyPaymentReminders extends Command
 
     /**
      * Spread queued emails apart so the SMTP server never sees a burst.
+     * 300s = 5 minutes between messages; 30 emails ≈ 2.5 hours.
      */
-    private const EMAIL_STAGGER_SECONDS = 60;
+    private const EMAIL_STAGGER_SECONDS = 300;
 
     /**
      * Execute the console command.

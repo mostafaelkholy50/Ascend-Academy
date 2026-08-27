@@ -34,8 +34,9 @@ class SendClassReminders extends Command
 
     /**
      * Spread queued emails apart so the SMTP server never sees a burst.
+     * 300s = 5 minutes between messages; 40 emails ≈ 3.3 hours.
      */
-    private const EMAIL_STAGGER_SECONDS = 45;
+    private const EMAIL_STAGGER_SECONDS = 300;
 
     /**
      * Execute the console command.

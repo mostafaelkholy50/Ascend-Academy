@@ -35,8 +35,12 @@ class MonthlyPaymentReminderNotification extends Notification implements ShouldQ
      */
     public function toMail(object $notifiable): MailMessage
     {
+        $recipientName = $notifiable->name ?? 'Student';
+        $month = $this->payment->getMonthName();
+        $amount = $this->payment->getFormattedAmount();
+
         return (new MailMessage)
-            ->subject('Payment Reminder: ' . $this->payment->getMonthName())
+            ->subject("Payment reminder for {$recipientName} — {$month} ({$amount})")
             ->markdown('emails.payment-reminder', [
                 'payment' => $this->payment,
             ]);

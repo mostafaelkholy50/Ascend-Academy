@@ -35,8 +35,12 @@ class ClassReminderNotification extends Notification implements ShouldQueue
      */
     public function toMail(object $notifiable): MailMessage
     {
+        $recipientName = $notifiable->name ?? 'Student';
+        $courseTitle = $this->schedule->course->title;
+        $startTime = $this->schedule->starts_at->format('g:i A');
+
         return (new MailMessage)
-            ->subject('Class Reminder: ' . $this->schedule->course->title)
+            ->subject("Class reminder for {$recipientName} — {$courseTitle} at {$startTime}")
             ->markdown('emails.class-reminder', [
                 'schedule' => $this->schedule,
                 'user' => $notifiable,
