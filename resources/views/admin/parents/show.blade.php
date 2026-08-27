@@ -110,41 +110,12 @@
 
             <!-- Children List -->
             <div class="bg-white p-6 rounded-2xl shadow-sm">
-                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+                <div class="flex items-center justify-between mb-6">
                     <h2 class="text-xl font-bold text-gray-800">Children ({{ $parent->children->count() }})</h2>
-
-                    <div class="flex flex-col sm:flex-row gap-3">
-                        <!-- Attach Existing Students -->
-                        @if($availableStudents->count() > 0)
-                            <form action="{{ route('admin.parents.attach-students', $parent->id) }}" method="POST" class="flex items-center gap-2">
-                                @csrf
-                                <div class="flex flex-col">
-                                    <select name="student_ids[]" multiple
-                                        class="min-w-[200px] px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vibrant-green text-sm"
-                                        size="1"
-                                        onfocus="this.size=4;"
-                                        onblur="this.size=1;"
-                                        onchange="this.size=1; this.blur();">
-                                        @foreach($availableStudents as $student)
-                                            <option value="{{ $student->id }}">{{ $student->name }} ({{ $student->email }})</option>
-                                        @endforeach
-                                    </select>
-                                    @error('student_ids')
-                                        <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
-                                    @enderror
-                                </div>
-                                <button type="submit"
-                                    class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition text-sm whitespace-nowrap">
-                                    <i class="fa-solid fa-link mr-1"></i>Attach Student(s)
-                                </button>
-                            </form>
-                        @endif
-
-                        <button onclick="document.getElementById('addChildModal').classList.remove('hidden')"
-                            class="bg-vibrant-green text-white px-4 py-2 rounded-lg hover:bg-deep-blue transition text-sm">
-                            <i class="fa-solid fa-plus mr-2"></i>Add Child
-                        </button>
-                    </div>
+                    <button onclick="document.getElementById('addChildModal').classList.remove('hidden')"
+                        class="bg-vibrant-green text-white px-4 py-2 rounded-lg hover:bg-deep-blue transition text-sm">
+                        <i class="fa-solid fa-plus mr-2"></i>Add Child
+                    </button>
                 </div>
 
                 @forelse($parent->children as $child)
@@ -264,91 +235,205 @@
         <div class="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div class="p-6">
                 <div class="flex items-center justify-between mb-6">
-                    <h3 class="text-2xl font-bold text-gray-800">Add New Child</h3>
+                    <h3 class="text-2xl font-bold text-gray-800">Add Child</h3>
                     <button onclick="document.getElementById('addChildModal').classList.add('hidden')"
                         class="text-gray-400 hover:text-gray-600">
                         <i class="fa-solid fa-times text-2xl"></i>
                     </button>
                 </div>
 
-                <form action="{{ route('admin.parents.add-child', $parent->id) }}" method="POST" class="space-y-4">
-                    @csrf
+                <!-- Mode Toggle -->
+                <div class="flex bg-gray-100 rounded-lg p-1 mb-6">
+                    <button type="button" id="tabCreateNew" onclick="switchChildMode('create')"
+                        class="flex-1 py-2 px-4 rounded-md text-sm font-semibold bg-white text-gray-800 shadow-sm transition">
+                        Create New
+                    </button>
+                    <button type="button" id="tabSelectExisting" onclick="switchChildMode('existing')"
+                        class="flex-1 py-2 px-4 rounded-md text-sm font-semibold text-gray-600 hover:text-gray-800 transition">
+                        Select Existing
+                    </button>
+                </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="md:col-span-2">
-                            <label class="block text-sm font-semibold text-gray-600 mb-2">Student Name *</label>
-                            <input type="text" name="name" required
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vibrant-green">
+                <!-- Create New Student Form -->
+                <div id="formCreateNew" class="space-y-4">
+                    <form action="{{ route('admin.parents.add-child', $parent->id) }}" method="POST" class="space-y-4">
+                        @csrf
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-semibold text-gray-600 mb-2">Student Name *</label>
+                                <input type="text" name="name" required
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vibrant-green">
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-600 mb-2">Email *</label>
+                                <input type="email" name="email" required
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vibrant-green">
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-600 mb-2">Password *</label>
+                                <input type="password" name="password" required minlength="8"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vibrant-green">
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-600 mb-2">Birth Date</label>
+                                <input type="date" name="birth_date" max="{{ date('Y-m-d') }}"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vibrant-green">
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-600 mb-2">Gender</label>
+                                <select name="gender" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vibrant-green">
+                                    <option value="">Select Gender</option>
+                                    <option value="male">Male</option>
+                                    <option value="female">Female</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-600 mb-2">Level</label>
+                                <select name="level" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vibrant-green">
+                                    <option value="">Select Level (Optional)</option>
+                                    <option value="Qaida Nooraniya">Qaida Nooraniya</option>
+                                    <option value="Nazira (Reading)">Nazira (Reading)</option>
+                                    <option value="Hifz (Memorization)">Hifz (Memorization)</option>
+                                    <option value="Tajweed Rules">Tajweed Rules</option>
+                                    <option value="Foundation">Foundation</option>
+                                    <option value="Beginner">Beginner</option>
+                                    <option value="Intermediate">Intermediate</option>
+                                    <option value="Advanced">Advanced</option>
+                                    <option value="Ijazah">Ijazah</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-600 mb-2">Location / Country</label>
+                                <select name="country" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vibrant-green">
+                                    <option value="">Select Country</option>
+                                    @foreach($countries as $country)
+                                        <option value="{{ $country }}">{{ $country }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
                         </div>
 
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-600 mb-2">Email *</label>
-                            <input type="email" name="email" required
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vibrant-green">
+                        <div class="flex space-x-3 pt-4">
+                            <button type="submit"
+                                class="flex-1 bg-vibrant-green text-white px-6 py-3 rounded-lg hover:bg-deep-blue transition font-semibold">
+                                <i class="fa-solid fa-plus mr-2"></i>Create Student
+                            </button>
+                            <button type="button"
+                                onclick="document.getElementById('addChildModal').classList.add('hidden')"
+                                class="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                                Cancel
+                            </button>
                         </div>
+                    </form>
+                </div>
 
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-600 mb-2">Password *</label>
-                            <input type="password" name="password" required minlength="8"
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vibrant-green">
+                <!-- Select Existing Students Form -->
+                <div id="formSelectExisting" class="hidden space-y-4">
+                    @if($availableStudents->count() > 0)
+                        <form action="{{ route('admin.parents.attach-students', $parent->id) }}" method="POST" class="space-y-4">
+                            @csrf
+
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-600 mb-2">Search Students</label>
+                                <input type="text" id="studentSearchInput" placeholder="Type student name..."
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vibrant-green"
+                                    oninput="filterStudents(this.value)">
+                            </div>
+
+                            <div class="border border-gray-300 rounded-lg p-4 max-h-60 overflow-y-auto">
+                                <div id="studentsList" class="space-y-2">
+                                    @foreach($availableStudents as $student)
+                                        <label class="student-item flex items-center p-2 hover:bg-gray-50 rounded-lg cursor-pointer transition"
+                                            data-name="{{ strtolower($student->name) }}">
+                                            <input type="checkbox" name="student_ids[]" value="{{ $student->id }}"
+                                                class="w-5 h-5 text-vibrant-green border-gray-300 rounded focus:ring-vibrant-green">
+                                            <div class="ml-3">
+                                                <p class="text-sm font-bold text-gray-800">{{ $student->name }}</p>
+                                                <p class="text-xs text-gray-500">{{ $student->email }}</p>
+                                            </div>
+                                        </label>
+                                    @endforeach
+                                </div>
+                                <p id="noStudentsMessage" class="hidden text-sm text-gray-500 italic text-center py-4">No students match your search.</p>
+                            </div>
+                            @error('student_ids')
+                                <p class="text-red-600 text-sm">{{ $message }}</p>
+                            @enderror
+
+                            <div class="flex space-x-3 pt-4">
+                                <button type="submit"
+                                    class="flex-1 bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition font-semibold">
+                                    <i class="fa-solid fa-link mr-2"></i>Attach Selected
+                                </button>
+                                <button type="button"
+                                    onclick="document.getElementById('addChildModal').classList.add('hidden')"
+                                    class="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                                    Cancel
+                                </button>
+                            </div>
+                        </form>
+                    @else
+                        <div class="text-center py-8 text-gray-500">
+                            <i class="fa-solid fa-users text-4xl mb-3 text-gray-300"></i>
+                            <p>No available students to attach.</p>
                         </div>
-
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-600 mb-2">Birth Date</label>
-                            <input type="date" name="birth_date" max="{{ date('Y-m-d') }}"
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vibrant-green">
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-600 mb-2">Gender</label>
-                            <select name="gender" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vibrant-green">
-                                <option value="">Select Gender</option>
-                                <option value="male">Male</option>
-                                <option value="female">Female</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-600 mb-2">Level</label>
-                            <select name="level" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vibrant-green">
-                                <option value="">Select Level (Optional)</option>
-                                <option value="Qaida Nooraniya">Qaida Nooraniya</option>
-                                <option value="Nazira (Reading)">Nazira (Reading)</option>
-                                <option value="Hifz (Memorization)">Hifz (Memorization)</option>
-                                <option value="Tajweed Rules">Tajweed Rules</option>
-                                <option value="Foundation">Foundation</option>
-                                <option value="Beginner">Beginner</option>
-                                <option value="Intermediate">Intermediate</option>
-                                <option value="Advanced">Advanced</option>
-                                <option value="Ijazah">Ijazah</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-600 mb-2">Location / Country</label>
-                            <select name="country" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vibrant-green">
-                                <option value="">Select Country</option>
-                                @foreach($countries as $country)
-                                    <option value="{{ $country }}">{{ $country }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-
-
-                    </div>
-
-                    <div class="flex space-x-3 pt-4">
-                        <button type="submit"
-                            class="flex-1 bg-vibrant-green text-white px-6 py-3 rounded-lg hover:bg-deep-blue transition font-semibold">
-                            <i class="fa-solid fa-plus mr-2"></i>Add Student
-                        </button>
-                        <button type="button"
-                            onclick="document.getElementById('addChildModal').classList.add('hidden')"
-                            class="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
-                            Cancel
-                        </button>
-                    </div>
-                </form>
+                    @endif
+                </div>
             </div>
         </div>
     </div>
+
+    <script>
+        function switchChildMode(mode) {
+            const createForm = document.getElementById('formCreateNew');
+            const existingForm = document.getElementById('formSelectExisting');
+            const tabCreate = document.getElementById('tabCreateNew');
+            const tabExisting = document.getElementById('tabSelectExisting');
+
+            if (mode === 'create') {
+                createForm.classList.remove('hidden');
+                existingForm.classList.add('hidden');
+                tabCreate.classList.add('bg-white', 'text-gray-800', 'shadow-sm');
+                tabCreate.classList.remove('text-gray-600', 'hover:text-gray-800');
+                tabExisting.classList.remove('bg-white', 'text-gray-800', 'shadow-sm');
+                tabExisting.classList.add('text-gray-600', 'hover:text-gray-800');
+            } else {
+                createForm.classList.add('hidden');
+                existingForm.classList.remove('hidden');
+                tabExisting.classList.add('bg-white', 'text-gray-800', 'shadow-sm');
+                tabExisting.classList.remove('text-gray-600', 'hover:text-gray-800');
+                tabCreate.classList.remove('bg-white', 'text-gray-800', 'shadow-sm');
+                tabCreate.classList.add('text-gray-600', 'hover:text-gray-800');
+            }
+        }
+
+        function filterStudents(query) {
+            const term = query.toLowerCase().trim();
+            const items = document.querySelectorAll('.student-item');
+            let visibleCount = 0;
+
+            items.forEach(item => {
+                const name = item.getAttribute('data-name');
+                if (name.includes(term)) {
+                    item.classList.remove('hidden');
+                    visibleCount++;
+                } else {
+                    item.classList.add('hidden');
+                }
+            });
+
+            const noMessage = document.getElementById('noStudentsMessage');
+            if (visibleCount === 0) {
+                noMessage.classList.remove('hidden');
+            } else {
+                noMessage.classList.add('hidden');
+            }
+        }
+    </script>
 </x-dashboard-layout>

@@ -92,7 +92,7 @@ class ParentTest extends TestCase
         ]);
     }
 
-    public function test_parent_show_page_displays_available_students()
+    public function test_parent_show_page_displays_available_students_in_modal()
     {
         $student = User::factory()->create([
             'role' => 'Student',
@@ -106,7 +106,8 @@ class ParentTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertSee($student->name);
-        $response->assertSee('Attach Student(s)');
+        $response->assertSee('Select Existing');
+        $response->assertSee('Attach Selected');
     }
 
     public function test_admin_can_attach_existing_student_to_parent()
@@ -180,7 +181,32 @@ class ParentTest extends TestCase
         $response->assertSessionHasErrors('student_ids.0');
     }
 
-    public function test_already_attached_student_is_not_shown_in_available_students()
+    public function test_attached_students_are_excluded_from_available_list()
+    {
+        $attachedStudent = User::factory()->create([
+            'role' => 'Student',
+            'active' => true,
+        ]);
+        $attachedStudent->assignRole('Student');
+        $this->parent->children()->attach($attachedStudent->id);
+
+        $availableStudent = User::factory()->create([
+            'role' => 'Student',
+            'active' => true,
+        ]);
+        $availableStudent->assignRole('Student');
+
+        $this->actingAs($this->admin);
+
+        $response = $this->get(route('admin.parents.show', $this->parent->id));
+
+        $response->assertStatus(200);
+        $response->assertSee($attachedStudent->name);
+        $response->assertSee($availableStudent->name);
+        $response->assertSee('Select Existing');
+    }
+
+    public function test_modal_shows_empty_state_when_no_available_students()
     {
         $student = User::factory()->create([
             'role' => 'Student',
@@ -194,6 +220,6 @@ class ParentTest extends TestCase
         $response = $this->get(route('admin.parents.show', $this->parent->id));
 
         $response->assertStatus(200);
-        $response->assertDontSee('Attach Student(s)');
+        $response->assertSee('No available students to attach.');
     }
 }
