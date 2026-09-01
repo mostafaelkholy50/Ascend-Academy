@@ -10,6 +10,7 @@ uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
 beforeEach(function () {
     Role::firstOrCreate(['name' => 'Teacher']);
     Role::firstOrCreate(['name' => 'Parent']);
+    Role::firstOrCreate(['name' => 'Student']);
 });
 
 test('teacher can view student evaluations index', function () {
