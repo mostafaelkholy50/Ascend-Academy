@@ -38,7 +38,8 @@ class StudentEvaluationRepository
         return User::whereHas('schedules', function ($query) use ($teacher, $month, $year) {
                 $query->where('teacher_id', $teacher->id)
                       ->whereMonth('starts_at', $month)
-                      ->whereYear('starts_at', $year);
+                      ->whereYear('starts_at', $year)
+                      ->where('status', '!=', 'cancelled');
             })
             ->whereNotIn('id', $evaluatedStudentIds)
             ->get();

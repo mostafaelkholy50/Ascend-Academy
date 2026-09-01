@@ -91,3 +91,39 @@ test('teacher sees empty state when no students in current month', function () {
     $response->assertStatus(200);
     $response->assertSee('No Students Yet');
 });
+
+test('teacher does not see students with only cancelled schedules in current month', function () {
+    // Arrange
+    $teacher = User::factory()->teacher()->create(['role' => 'Teacher']);
+    $teacher->assignRole('Teacher');
+
+    $student = User::factory()->student()->create(['role' => 'Student', 'name' => 'Cancelled Student']);
+    $student->assignRole('Student');
+
+    $course = Course::create(['title' => 'Test Course']);
+
+    $enrollment = Enrollment::create([
+        'student_id' => $student->id,
+        'course_id' => $course->id,
+        'status' => 'active'
+    ]);
+
+    // Create cancelled schedule for student in CURRENT MONTH
+    Schedule::create([
+        'teacher_id' => $teacher->id,
+        'student_id' => $student->id,
+        'course_id' => $course->id,
+        'enrollment_id' => $enrollment->id,
+        'starts_at' => now(),
+        'ends_at' => now()->addHour(),
+        'status' => 'cancelled'
+    ]);
+
+    // Act
+    $response = $this->actingAs($teacher)->get(route('teacher.my-students'));
+
+    // Assert
+    $response->assertStatus(200);
+    $response->assertDontSee('Cancelled Student');
+    $response->assertSee('No Students Yet');
+});

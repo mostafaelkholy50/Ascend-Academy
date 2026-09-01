@@ -34,7 +34,8 @@ class StudentEvaluationController extends Controller
             
             // Get students for this teacher for the filter dropdown
             $students = User::whereHas('schedules', function ($q) use ($teacher) {
-                    $q->where('teacher_id', $teacher->id);
+                    $q->where('teacher_id', $teacher->id)
+                      ->where('status', '!=', 'cancelled');
                 })->orderBy('name')->get();
             
             return view('teacher.student-evaluations.index', compact('evaluations', 'students'));
@@ -64,7 +65,8 @@ class StudentEvaluationController extends Controller
             $students = User::role('Student')->whereHas('schedules', function ($q) use ($teacher) {
                     $q->where('teacher_id', $teacher->id)
                       ->whereMonth('starts_at', now()->month)
-                      ->whereYear('starts_at', now()->year);
+                      ->whereYear('starts_at', now()->year)
+                      ->where('status', '!=', 'cancelled');
                 })->orderBy('name')->get();
                 
             // Calculate totals/averages for each student

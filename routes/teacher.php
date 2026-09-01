@@ -48,13 +48,13 @@ Route::middleware([
     // Hours & Earnings
     Route::get('/hours', [HoursController::class, 'index'])->name('hours.index');
 
-    // My Students page
     Route::get('/my-students', function () {
         $teacher = auth()->user();
         $students = \App\Models\User::roleStudent()->whereHas('schedules', function ($q) use ($teacher) {
             $q->where('teacher_id', $teacher->id)
                 ->whereMonth('starts_at', now()->month)
-                ->whereYear('starts_at', now()->year);
+                ->whereYear('starts_at', now()->year)
+                ->where('status', '!=', 'cancelled');
         })->with(['enrollments.course'])->get();
 
         return view('teacher.my-students', compact('students'));

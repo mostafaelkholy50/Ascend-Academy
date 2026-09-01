@@ -66,6 +66,44 @@ test('teacher can store student evaluation', function () {
     ]);
 });
 
+test('teacher pending evaluations exclude students with only cancelled schedules', function () {
+    // Arrange
+    $teacher = User::factory()->create(['role' => 'Teacher']);
+    $teacher->assignRole('Teacher');
+    
+    $student = User::factory()->create(['role' => 'Student', 'name' => 'Pending Student']);
+    $student->assignRole('Student');
+
+    $student2 = User::factory()->create(['role' => 'Student', 'name' => 'Cancelled Student']);
+    $student2->assignRole('Student');
+    
+    // Create a completed schedule to make the first student "pending"
+    Schedule::create([
+        'teacher_id' => $teacher->id,
+        'student_id' => $student->id,
+        'starts_at' => now(),
+        'ends_at' => now()->addHour(),
+        'status' => 'completed',
+    ]);
+
+    // Create a cancelled schedule for the second student
+    Schedule::create([
+        'teacher_id' => $teacher->id,
+        'student_id' => $student2->id,
+        'starts_at' => now(),
+        'ends_at' => now()->addHour(),
+        'status' => 'cancelled',
+    ]);
+    
+    // Act
+    $response = $this->actingAs($teacher)->get(route('teacher.student-evaluations.pending'));
+    
+    // Assert
+    $response->assertStatus(200);
+    $response->assertSee('Pending Student');
+    $response->assertDontSee('Cancelled Student');
+});
+
 test('teacher cannot store evaluation with invalid scores', function () {
     // Arrange
     $teacher = User::factory()->create(['role' => 'Teacher']);
