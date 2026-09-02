@@ -699,12 +699,10 @@ class ScheduleService
         }
     }
 
-    public function updateSchedulePattern(Enrollment $enrollment, array $data, ?Carbon $targetMonth = null)
+    public function updateSchedulePattern(Enrollment $enrollment, array $data, ?Carbon $applyFromDate = null)
     {
-        $useScopedMonth = $targetMonth !== null;
-        $targetMonth = $targetMonth ? $targetMonth->copy()->startOfMonth() : now()->startOfMonth();
-        $monthStart = $targetMonth->copy()->startOfMonth();
-        $monthEnd = $targetMonth->copy()->endOfMonth();
+        $applyFromDate = $applyFromDate ? $applyFromDate->copy()->startOfDay() : now()->startOfDay();
+        $monthStart = $applyFromDate->copy();
 
         $days = array_keys($data['day_active'] ?? $data['schedule_times'] ?? []);
         if (empty($days)) {
@@ -750,40 +748,23 @@ class ScheduleService
                 'session_duration' => $sessionDuration,
             ]);
 
-            $scheduleQuery = Schedule::where('enrollment_id', $enrollment->id);
-            if ($useScopedMonth) {
-                $scheduleQuery->whereBetween('starts_at', [$monthStart, $monthEnd->copy()->endOfDay()]);
-            }
+            $scheduleQuery = Schedule::where('enrollment_id', $enrollment->id)
+                ->where('starts_at', '>=', $applyFromDate)
+                ->where('status', 'scheduled');
 
             $schedulesToRefresh = $scheduleQuery->get();
+            $maxGeneratedDate = $schedulesToRefresh->max('starts_at');
+            $monthEnd = $maxGeneratedDate ? Carbon::parse($maxGeneratedDate)->endOfDay() : $applyFromDate->copy()->endOfMonth();
 
             if ($schedulesToRefresh->isEmpty()) {
-                if ($useScopedMonth) {
-                    \Illuminate\Support\Facades\DB::commit();
-                    return ['success' => true, 'message' => 'Pattern updated for ' . $targetMonth->format('F Y') . '. No schedules found to modify.'];
-                }
-
                 $enrollment->setSchedulePattern($schedulePattern);
                 \Illuminate\Support\Facades\DB::commit();
-                return ['success' => true, 'message' => 'Pattern updated. No schedules found to modify.'];
+                return ['success' => true, 'message' => 'Pattern updated. No existing future schedules found to modify.'];
             }
 
-            if ($useScopedMonth) {
-                foreach ($schedulesToRefresh as $schedule) {
-                    $schedule->delete();
-                    $deletedCount++;
-                }
-            } else {
-                $maxDate = $schedulesToRefresh->max('starts_at');
-                $minDate = $schedulesToRefresh->min('starts_at')->copy()->startOfDay();
-
-                foreach ($schedulesToRefresh as $schedule) {
-                    $schedule->delete();
-                    $deletedCount++;
-                }
-
-                $monthStart = $minDate;
-                $monthEnd = $maxDate;
+            foreach ($schedulesToRefresh as $schedule) {
+                $schedule->delete();
+                $deletedCount++;
             }
 
             $sessionDates = [];
@@ -877,9 +858,7 @@ class ScheduleService
 
         return [
             'success' => true,
-            'message' => $useScopedMonth
-                ? "Pattern updated successfully for {$targetMonth->format('F Y')}. Deleted {$deletedCount} old sessions and created {$createdCount} new sessions."
-                : "Pattern updated successfully. Deleted {$deletedCount} old sessions and created {$createdCount} new sessions."
+            'message' => "Pattern updated successfully. Deleted {$deletedCount} old sessions and created {$createdCount} new sessions starting from {$applyFromDate->format('M d, Y')}."
         ];
     }
 

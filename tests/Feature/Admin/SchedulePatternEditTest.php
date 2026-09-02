@@ -100,11 +100,12 @@ test('updateSchedulePattern successfully replaces upcoming schedules', function 
     expect($pattern['Thursday']['active'])->toBeTrue();
     expect($pattern['Thursday']['slots'])->toContain(['time' => '12:00', 'duration' => 60]);
 
-    // Past schedules matching old pattern should be gone
+    // Past completed schedules matching old pattern should NOT be gone
     $oldPastSchedules = Schedule::where('enrollment_id', $this->enrollment->id)
         ->whereTime('starts_at', '10:00:00')
+        ->where('status', 'completed')
         ->count();
-    expect($oldPastSchedules)->toBe(0);
+    expect($oldPastSchedules)->toBe(1);
 
     // New schedules (past and future) should be created
     $newSchedules = Schedule::where('enrollment_id', $this->enrollment->id)

@@ -32,7 +32,7 @@
             <div>
                 <p class="font-semibold">Important Information</p>
                 <p class="text-sm mt-1">
-                    Changing the schedule pattern here will update <strong>only the current month</strong> for this enrollment and generate new sessions for <strong>{{ now()->format('F Y') }}</strong>. Other months will stay unchanged.
+                    Changing the schedule pattern will regenerate upcoming scheduled sessions starting from the date you select below. Past, completed, and cancelled sessions before that date will remain untouched.
                 </p>
             </div>
         </div>
@@ -42,10 +42,31 @@
         @csrf
         @method('PUT')
 
-        <!-- Step 1: Select Teacher -->
+        <!-- Step 1: Apply Changes From -->
         <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
             <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
                 <span class="w-8 h-8 bg-vibrant-green text-white rounded-full flex items-center justify-center mr-3 text-sm">1</span>
+                Apply Changes From
+            </h2>
+            <p class="text-sm text-gray-600 mb-4">
+                Select the date from which these changes should take effect.
+            </p>
+            <div>
+                <label for="apply_from_date" class="block text-sm font-semibold text-gray-700 mb-2">
+                    Start Date <span class="text-red-500">*</span>
+                </label>
+                <input type="date" name="apply_from_date" id="apply_from_date" value="{{ old('apply_from_date', now()->format('Y-m-d')) }}" required
+                    class="w-full md:w-1/2 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vibrant-green focus:border-transparent">
+                @error('apply_from_date')
+                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                @enderror
+            </div>
+        </div>
+
+        <!-- Step 2: Select Teacher -->
+        <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
+            <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                <span class="w-8 h-8 bg-vibrant-green text-white rounded-full flex items-center justify-center mr-3 text-sm">2</span>
                 Select Teacher
             </h2>
 
@@ -68,10 +89,10 @@
             </div>
         </div>
 
-        <!-- Step 2: Select Days & Times -->
+        <!-- Step 3: Select Days & Times -->
         <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
             <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
-                <span class="w-8 h-8 bg-vibrant-green text-white rounded-full flex items-center justify-center mr-3 text-sm">2</span>
+                <span class="w-8 h-8 bg-vibrant-green text-white rounded-full flex items-center justify-center mr-3 text-sm">3</span>
                 Select Days & Times
             </h2>
 

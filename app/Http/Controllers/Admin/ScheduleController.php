@@ -125,8 +125,8 @@ class ScheduleController extends Controller
 
     public function updatePattern(Request $request, Enrollment $enrollment)
     {
-        $targetMonth = Carbon::now()->startOfMonth();
         $request->validate([
+            'apply_from_date' => 'nullable|date',
             'teacher_id' => 'required|exists:users,id',
             'day_active' => 'required|array|min:1',
             'day_active.*' => 'nullable|boolean',
@@ -138,8 +138,12 @@ class ScheduleController extends Controller
             'durations.*.*' => 'required|integer|min:15|max:240',
         ]);
 
+        $applyFromDate = $request->input('apply_from_date') 
+            ? Carbon::parse($request->input('apply_from_date'))->startOfDay() 
+            : Carbon::now()->startOfDay();
+
         try {
-            $result = $this->scheduleService->updateSchedulePattern($enrollment, $request->all(), $targetMonth);
+            $result = $this->scheduleService->updateSchedulePattern($enrollment, $request->all(), $applyFromDate);
 
             return redirect()->route('admin.schedules.index', ['view' => 'list'])
                 ->with('success', $result['message']);
