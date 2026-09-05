@@ -488,9 +488,9 @@
                                                         <td class="px-6 py-4">
                                                             @php
                                                                 $pattern = $enrollment->getSchedulePattern() ?? [];
-                                                                $isEnabled = !empty($pattern) 
-                                                                    ? collect($pattern)->contains(fn ($dayData) => !empty($dayData['active']))
-                                                                    : $schedule->status !== 'cancelled';
+                                                                $scheduleDay = $schedule->starts_at->format('l');
+                                                                $isDayActive = !empty($pattern) ? !empty($pattern[$scheduleDay]['active'] ?? false) : true;
+                                                                $isEnabled = $schedule->status !== 'cancelled' && $isDayActive;
                                                             @endphp
                                                             <span class="px-4 py-2 rounded-lg text-sm font-bold
                                                                 {{ $isEnabled ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' }}">
