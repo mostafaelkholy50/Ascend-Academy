@@ -702,6 +702,7 @@ class ScheduleService
     public function updateSchedulePattern(Enrollment $enrollment, array $data, ?Carbon $applyFromDate = null)
     {
         $applyFromDate = $applyFromDate ? $applyFromDate->copy()->startOfDay() : now()->startOfDay();
+        $now = now();
         $monthStart = $applyFromDate->copy();
 
         $days = array_keys($data['day_active'] ?? $data['schedule_times'] ?? []);
@@ -744,7 +745,7 @@ class ScheduleService
         \Illuminate\Support\Facades\DB::beginTransaction();
         try {
             $enrollment->update([
-                'days_per_week' => count($days),
+                'days_per_week' => count($schedulePattern),
                 'session_duration' => $sessionDuration,
             ]);
 
@@ -767,12 +768,30 @@ class ScheduleService
                 $deletedCount++;
             }
 
+            // Collect existing schedules (any status) from applyFromDate onward to avoid exact datetime duplicates
+            // This includes completed/cancelled that were not deleted, to prevent duplicate on day 1
+            $existingStarts = Schedule::where('enrollment_id', $enrollment->id)
+                ->where('starts_at', '>=', $applyFromDate)
+                ->pluck('starts_at')
+                ->map(fn ($dt) => Carbon::parse($dt)->format('Y-m-d H:i:s'))
+                ->flip()
+                ->toArray();
+
+            // Also collect existing dates (Y-m-d) for past duplicate prevention: if a past date already has any schedule, don't create another on same date
+            $existingDates = Schedule::where('enrollment_id', $enrollment->id)
+                ->where('starts_at', '>=', $applyFromDate)
+                ->pluck('starts_at')
+                ->map(fn ($dt) => Carbon::parse($dt)->format('Y-m-d'))
+                ->unique()
+                ->flip()
+                ->toArray();
+
             $sessionDates = [];
             $currentDate = $monthStart->copy();
 
             while ($currentDate->lte($monthEnd)) {
                 $dayName = $currentDate->format('l');
-                if (!empty($schedulePattern[$dayName]['active']) && in_array($dayName, $days)) {
+                if (!empty($schedulePattern[$dayName]['active'])) {
                     $sessionDates[] = [
                         'date' => $currentDate->copy(),
                         'times' => $schedulePattern[$dayName]['slots'] ?? [],
@@ -792,6 +811,18 @@ class ScheduleService
 
                     $startsAt = Carbon::parse($session['date']->format('Y-m-d') . ' ' . $time);
                     $endsAt = $startsAt->copy()->addMinutes($durationMinutes);
+
+                    // Skip if exact datetime already exists (any status) to prevent duplicates on day 1
+                    if (isset($existingStarts[$startsAt->format('Y-m-d H:i:s')])) {
+                        continue;
+                    }
+
+                    // Prevent duplicate on same past date: if this date is in the past and already has a schedule (completed/cancelled), skip creating another on same date
+                    // This handles the reported bug where day 1 (past) gets duplicated with old time + new time
+                    $dateKey = $startsAt->format('Y-m-d');
+                    if ($startsAt->lessThan($now->copy()->startOfDay()) && isset($existingDates[$dateKey])) {
+                        continue;
+                    }
 
                     if ($conflict = Schedule::getTeacherConflict($teacherId, $startsAt, $endsAt, null, $enrollment->student_id, $enrollment->course_id)) {
                         $studentName = $conflict->student ? $conflict->student->name : 'Unknown Student';
