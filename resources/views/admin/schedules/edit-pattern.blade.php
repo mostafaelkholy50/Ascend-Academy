@@ -32,7 +32,7 @@
             <div>
                 <p class="font-semibold">Important Information</p>
                 <p class="text-sm mt-1">
-                    Changing the schedule pattern will regenerate upcoming scheduled sessions starting from the date you select below. Past, completed, and cancelled sessions before that date will remain untouched.
+                    Changing the schedule pattern will regenerate upcoming scheduled sessions starting from the date you select below. You can pick any date, including a past date. Past, completed, and cancelled sessions before that date will remain untouched.
                 </p>
             </div>
         </div>

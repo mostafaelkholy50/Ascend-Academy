@@ -247,6 +247,108 @@ test('edit pattern page shows all days to allow adding new ones', function () {
     $response->assertSee('Thursday');
 });
 
+test('editing pattern from the selected date updates only sessions from that date onward', function () {
+    \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'Admin']);
+    $admin = User::factory()->create(['role' => 'Admin']);
+    $admin->assignRole('Admin');
+
+    Carbon::setTestNow(Carbon::create(2026, 9, 5, 12, 0, 0));
+
+    $teacher = User::factory()->create(['role' => 'Teacher', 'name' => 'Ms. Samar Ali Al-Shamy']);
+    $student = User::factory()->create(['role' => 'Student', 'name' => 'Test Student']);
+    $course = Course::create([
+        'title' => 'Quran Pattern Course',
+        'description' => 'Test',
+        'level' => 'Beginner',
+        'age_group' => 'Kids',
+        'language' => 'English'
+    ]);
+
+    $enrollment = Enrollment::create([
+        'student_id' => $student->id,
+        'course_id' => $course->id,
+        'start_date' => Carbon::create(2026, 8, 1),
+        'status' => 'active',
+        'days_per_week' => 2,
+        'session_duration' => 90,
+        'currency' => 'USD',
+        'admin_price' => 10,
+        'schedule_pattern' => [
+            'Wednesday' => ['active' => true, 'slots' => [['time' => '02:30', 'duration' => 90]]],
+            'Friday' => ['active' => true, 'slots' => [['time' => '02:30', 'duration' => 90]]],
+        ],
+    ]);
+
+    collect([
+        '2026-08-28 02:30:00',
+        '2026-09-02 02:30:00',
+        '2026-09-04 02:30:00',
+        '2026-09-09 02:30:00',
+        '2026-09-11 02:30:00',
+    ])->each(function (string $datetime) use ($enrollment, $student, $teacher, $course) {
+        $start = Carbon::parse($datetime);
+
+        Schedule::create([
+            'enrollment_id' => $enrollment->id,
+            'student_id' => $student->id,
+            'teacher_id' => $teacher->id,
+            'course_id' => $course->id,
+            'starts_at' => $start,
+            'ends_at' => $start->copy()->addMinutes(90),
+            'status' => 'scheduled',
+        ]);
+    });
+
+    $this->actingAs($admin);
+
+    $response = $this->put(route('admin.schedules.update-pattern', $enrollment->id), [
+        'apply_from_date' => '2026-09-01',
+        'teacher_id' => $teacher->id,
+        'day_active' => [
+            'Sunday' => 0,
+            'Monday' => 0,
+            'Tuesday' => 0,
+            'Wednesday' => 1,
+            'Thursday' => 0,
+            'Friday' => 1,
+            'Saturday' => 0,
+        ],
+        'schedule_times' => [
+            'Sunday' => ['02:30'],
+            'Monday' => ['02:30'],
+            'Tuesday' => ['02:30'],
+            'Wednesday' => ['02:30'],
+            'Thursday' => ['02:30'],
+            'Friday' => ['02:30'],
+            'Saturday' => ['02:30'],
+        ],
+        'durations' => [
+            'Sunday' => [30],
+            'Monday' => [30],
+            'Tuesday' => [30],
+            'Wednesday' => [30],
+            'Thursday' => [30],
+            'Friday' => [30],
+            'Saturday' => [30],
+        ],
+    ]);
+
+    $response->assertRedirect(route('admin.schedules.index', ['view' => 'list']));
+    $response->assertSessionHas('success');
+
+    $aug28 = Schedule::where('enrollment_id', $enrollment->id)->whereDate('starts_at', '2026-08-28')->first();
+    $sep2 = Schedule::where('enrollment_id', $enrollment->id)->whereDate('starts_at', '2026-09-02')->first();
+    $sep4 = Schedule::where('enrollment_id', $enrollment->id)->whereDate('starts_at', '2026-09-04')->first();
+    $sep9 = Schedule::where('enrollment_id', $enrollment->id)->whereDate('starts_at', '2026-09-09')->first();
+
+    expect($aug28->getDurationInMinutes())->toBe(90);
+    expect($sep2->getDurationInMinutes())->toBe(30);
+    expect($sep4->getDurationInMinutes())->toBe(30);
+    expect($sep9->getDurationInMinutes())->toBe(30);
+
+    Carbon::setTestNow();
+});
+
 test('updateSchedulePattern ignores days that are not checked in the form', function () {
     $service = app(ScheduleService::class);
     
