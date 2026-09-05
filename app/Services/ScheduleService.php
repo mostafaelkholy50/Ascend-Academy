@@ -931,7 +931,7 @@ class ScheduleService
         int $deletedCount,
         string $message
     ): void {
-        Log::info('Schedule pattern updated', [
+        Log::channel('schedule_daily')->info('Schedule pattern updated', [
             'enrollment_id' => $enrollment->id,
             'student_id' => $enrollment->student_id,
             'course_id' => $enrollment->course_id,

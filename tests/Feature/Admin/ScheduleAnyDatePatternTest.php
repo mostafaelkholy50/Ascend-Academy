@@ -215,15 +215,14 @@ test('can update pattern to any weekday from any date', function () {
 test('update pattern writes detailed schedule change log', function () {
     Carbon::setTestNow(Carbon::create(2026, 9, 5, 12, 0, 0));
 
-    $originalLog = app('log');
     $logger = \Mockery::mock(\Psr\Log\LoggerInterface::class);
+    Log::shouldReceive('channel')->once()->with('schedule_daily')->andReturn($logger);
     $logger->shouldReceive('info')->once()->with(
         'Schedule pattern updated',
         \Mockery::on(function (array $context) {
             return is_array($context);
         })
     );
-    Log::swap($logger);
 
     try {
         $teacher = User::factory()->create([
@@ -335,7 +334,6 @@ test('update pattern writes detailed schedule change log', function () {
             })
         );
     } finally {
-        Log::swap($originalLog);
         Carbon::setTestNow();
     }
 });
@@ -343,8 +341,8 @@ test('update pattern writes detailed schedule change log', function () {
 test('update pattern logs added and removed days separately', function () {
     Carbon::setTestNow(Carbon::create(2026, 9, 5, 12, 0, 0));
 
-    $originalLog = app('log');
     $logger = \Mockery::mock(\Psr\Log\LoggerInterface::class);
+    Log::shouldReceive('channel')->once()->with('schedule_daily')->andReturn($logger);
     $logger->shouldReceive('info')->once()->with(
         'Schedule pattern updated',
         \Mockery::on(function (array $context) {
@@ -362,7 +360,6 @@ test('update pattern logs added and removed days separately', function () {
                 && (($context['pattern_changes'][1]['after']['slots'][0]['time'] ?? null) === '15:00');
         })
     );
-    Log::swap($logger);
 
     try {
         $teacher = User::factory()->create([
@@ -436,7 +433,6 @@ test('update pattern logs added and removed days separately', function () {
 
         expect($result['success'])->toBeTrue();
     } finally {
-        Log::swap($originalLog);
         Carbon::setTestNow();
     }
 });
