@@ -748,6 +748,7 @@ class ScheduleService
         $deletedCount = 0;
         $firstSchedule = null;
 
+        $existingPatternBefore = $enrollment->getSchedulePattern() ?? [];
         \Illuminate\Support\Facades\DB::beginTransaction();
         try {
             $enrollment->update([
@@ -772,7 +773,7 @@ class ScheduleService
             if ($schedulesToRefresh->isEmpty()) {
                 $enrollment->setSchedulePattern($schedulePattern);
                 \Illuminate\Support\Facades\DB::commit();
-                $this->logSchedulePatternUpdate($enrollment, $applyFromDate, $teacherTimezone, $enteredPatternLog, $changedDays, $patternChangeLog, $affectedScheduleDays, $createdCount, $deletedCount, 'Pattern updated. No existing future schedules found to modify.', [], [], []);
+                $this->logSchedulePatternUpdate($enrollment, $applyFromDate, $teacherTimezone, $enteredPatternLog, $changedDays, $patternChangeLog, $affectedScheduleDays, $createdCount, $deletedCount, 'Pattern updated. No existing future schedules found to modify.', [], [], [], $existingPatternBefore, $schedulePattern);
                 return ['success' => true, 'message' => 'Pattern updated. No existing future schedules found to modify.'];
             }
 
@@ -890,7 +891,9 @@ class ScheduleService
                 "Pattern updated successfully. Deleted {$deletedCount} old sessions and created {$createdCount} new sessions starting from {$applyFromDate->format('M d, Y')}.",
                 $affectedDatesFromApplyDate,
                 $deletedSessionDates,
-                $createdSessionDates
+                $createdSessionDates,
+                $existingPatternBefore,
+                $schedulePattern
             );
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\DB::rollBack();
@@ -940,7 +943,9 @@ class ScheduleService
         string $message,
         array $affectedDatesFromApplyDate = [],
         array $deletedSessionDates = [],
-        array $createdSessionDates = []
+        array $createdSessionDates = [],
+        array $existingPatternBefore = [],
+        array $newPatternAfter = []
     ): void {
         Log::channel('schedule_daily')->info('Schedule pattern updated', [
             'enrollment_id' => $enrollment->id,
@@ -950,6 +955,8 @@ class ScheduleService
             'teacher_timezone' => $teacherTimezone,
             'app_timezone' => config('app.timezone'),
             'entered_pattern' => $enteredPatternLog,
+            'existing_pattern_before' => $existingPatternBefore,
+            'new_pattern_after' => $newPatternAfter,
             'changed_days' => $changedDays,
             'pattern_changes' => $patternChangeLog['pattern_changes'],
             'added_days' => $patternChangeLog['added_days'],
