@@ -508,6 +508,13 @@
                                                                     class="text-blue-600 hover:text-blue-800 transition font-medium" title="Edit">
                                                                     <i class="fa-solid fa-edit"></i>
                                                                 </a>
+                                                                <form action="{{ route('admin.schedules.destroy', $schedule->id) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this session on {{ $schedule->getStartsAtInTimezone(auth()->user()->getUserTimezone())->format('Y-m-d g:i A') }}? It will be cancelled and hidden from the schedule.')">
+                                                                    @csrf
+                                                                    @method('DELETE')
+                                                                    <button type="submit" class="text-red-600 hover:text-red-800 transition font-medium" title="Delete this session">
+                                                                        <i class="fa-solid fa-trash"></i>
+                                                                    </button>
+                                                                </form>
                                                                 @endcan
                                                                 @if($schedule->zoom_link)
                                                                     <a href="{{ $schedule->zoom_link }}" target="_blank"

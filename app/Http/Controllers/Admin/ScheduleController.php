@@ -156,8 +156,7 @@ class ScheduleController extends Controller
     public function destroy(Schedule $schedule)
     {
         $this->scheduleService->deleteSchedule($schedule);
-        return redirect()->route('admin.schedules.index')
-            ->with('success', 'Schedule cancelled successfully.');
+        return back()->with('success', 'Schedule cancelled successfully.');
     }
 
     public function bulkCancel(Request $request, Enrollment $enrollment)
