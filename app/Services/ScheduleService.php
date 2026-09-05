@@ -704,6 +704,9 @@ class ScheduleService
         $applyFromDate = $applyFromDate ? $applyFromDate->copy()->startOfDay() : now()->startOfDay();
         $now = now();
         $monthStart = $applyFromDate->copy();
+        $teacher = User::find($data['teacher_id']);
+        $teacherTimezone = $teacher?->getUserTimezone() ?? config('app.timezone');
+        $existingPattern = $enrollment->getSchedulePattern() ?? [];
 
         $days = array_keys($data['day_active'] ?? $data['schedule_times'] ?? []);
         if (empty($days)) {
@@ -727,6 +730,9 @@ class ScheduleService
             ];
         }
         $schedulePattern = $finalPattern;
+        $changedDays = $this->getChangedPatternDays($existingPattern, $schedulePattern);
+        $patternChangeLog = $this->buildPatternChangeLogPayload($existingPattern, $schedulePattern, $teacherTimezone);
+        $enteredPatternLog = $this->buildPatternLogPayload($schedulePattern, $teacherTimezone);
 
         $sessionDuration = 60;
         if (!empty($durations)) {
@@ -754,12 +760,19 @@ class ScheduleService
                 ->where('status', 'scheduled');
 
             $schedulesToRefresh = $scheduleQuery->get();
+            $affectedScheduleDays = $schedulesToRefresh
+                ->map(fn (Schedule $schedule) => $schedule->starts_at->format('l'))
+                ->unique()
+                ->values()
+                ->all();
+            $affectedScheduleDays = $this->sortWeekdays($affectedScheduleDays);
             $maxGeneratedDate = $schedulesToRefresh->max('starts_at');
             $monthEnd = $maxGeneratedDate ? Carbon::parse($maxGeneratedDate)->endOfDay() : $applyFromDate->copy()->endOfMonth();
 
             if ($schedulesToRefresh->isEmpty()) {
                 $enrollment->setSchedulePattern($schedulePattern);
                 \Illuminate\Support\Facades\DB::commit();
+                $this->logSchedulePatternUpdate($enrollment, $applyFromDate, $teacherTimezone, $enteredPatternLog, $changedDays, $patternChangeLog, $affectedScheduleDays, $createdCount, $deletedCount, 'Pattern updated. No existing future schedules found to modify.');
                 return ['success' => true, 'message' => 'Pattern updated. No existing future schedules found to modify.'];
             }
 
@@ -858,6 +871,19 @@ class ScheduleService
 
             $enrollment->setSchedulePattern($schedulePattern);
             \Illuminate\Support\Facades\DB::commit();
+
+            $this->logSchedulePatternUpdate(
+                $enrollment,
+                $applyFromDate,
+                $teacherTimezone,
+                $enteredPatternLog,
+                $changedDays,
+                $patternChangeLog,
+                $affectedScheduleDays,
+                $createdCount,
+                $deletedCount,
+                "Pattern updated successfully. Deleted {$deletedCount} old sessions and created {$createdCount} new sessions starting from {$applyFromDate->format('M d, Y')}."
+            );
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\DB::rollBack();
             throw new \Exception($e->getMessage());
@@ -891,6 +917,211 @@ class ScheduleService
             'success' => true,
             'message' => "Pattern updated successfully. Deleted {$deletedCount} old sessions and created {$createdCount} new sessions starting from {$applyFromDate->format('M d, Y')}."
         ];
+    }
+
+    protected function logSchedulePatternUpdate(
+        Enrollment $enrollment,
+        Carbon $applyFromDate,
+        string $teacherTimezone,
+        array $enteredPatternLog,
+        array $changedDays,
+        array $patternChangeLog,
+        array $affectedScheduleDays,
+        int $createdCount,
+        int $deletedCount,
+        string $message
+    ): void {
+        Log::info('Schedule pattern updated', [
+            'enrollment_id' => $enrollment->id,
+            'student_id' => $enrollment->student_id,
+            'course_id' => $enrollment->course_id,
+            'apply_from_date' => $applyFromDate->toDateString(),
+            'teacher_timezone' => $teacherTimezone,
+            'app_timezone' => config('app.timezone'),
+            'entered_pattern' => $enteredPatternLog,
+            'changed_days' => $changedDays,
+            'pattern_changes' => $patternChangeLog['pattern_changes'],
+            'added_days' => $patternChangeLog['added_days'],
+            'removed_days' => $patternChangeLog['removed_days'],
+            'updated_days' => $patternChangeLog['updated_days'],
+            'affected_schedule_days' => $affectedScheduleDays,
+            'deleted_sessions' => $deletedCount,
+            'created_sessions' => $createdCount,
+            'result' => $message,
+        ]);
+    }
+
+    protected function buildPatternLogPayload(array $pattern, string $timezone): array
+    {
+        return collect($pattern)->map(function (array $dayData, string $day) use ($timezone) {
+            return [
+                'day' => $day,
+                'active' => !empty($dayData['active']),
+                'slots' => collect($dayData['slots'] ?? [])
+                    ->map(function (array $slot) use ($timezone) {
+                        return [
+                            'time' => $slot['time'] ?? null,
+                            'duration_minutes' => isset($slot['duration']) ? (int) $slot['duration'] : 60,
+                            'timezone' => $timezone,
+                        ];
+                    })
+                    ->values()
+                    ->all(),
+            ];
+        })->values()->all();
+    }
+
+    protected function buildPatternChangeLogPayload(array $existingPattern, array $newPattern, string $timezone): array
+    {
+        $days = $this->sortWeekdays(array_values(array_unique(array_merge(array_keys($existingPattern), array_keys($newPattern)))));
+
+        $patternChanges = [];
+        $addedDays = [];
+        $removedDays = [];
+        $updatedDays = [];
+
+        foreach ($days as $day) {
+            $before = $this->normalizePatternForLogging($existingPattern[$day] ?? null, $timezone);
+            $after = $this->normalizePatternForLogging($newPattern[$day] ?? null, $timezone);
+
+            if ($before === $after) {
+                continue;
+            }
+
+            $status = 'updated';
+            if ($before === null && $after !== null) {
+                $status = 'added';
+                $addedDays[] = $day;
+            } elseif ($before !== null && $after === null) {
+                $status = 'removed';
+                $removedDays[] = $day;
+            } else {
+                $updatedDays[] = $day;
+            }
+
+            $patternChanges[] = [
+                'day' => $day,
+                'status' => $status,
+                'before' => $before,
+                'after' => $after,
+            ];
+        }
+
+        return [
+            'pattern_changes' => $patternChanges,
+            'added_days' => $addedDays,
+            'removed_days' => $removedDays,
+            'updated_days' => $updatedDays,
+        ];
+    }
+
+    protected function getChangedPatternDays(array $existingPattern, array $newPattern): array
+    {
+        $days = array_values(array_unique(array_merge(array_keys($existingPattern), array_keys($newPattern))));
+        $dayOrder = [
+            'Sunday' => 0,
+            'Monday' => 1,
+            'Tuesday' => 2,
+            'Wednesday' => 3,
+            'Thursday' => 4,
+            'Friday' => 5,
+            'Saturday' => 6,
+        ];
+
+        usort($days, function (string $a, string $b) use ($dayOrder) {
+            return ($dayOrder[$a] ?? 99) <=> ($dayOrder[$b] ?? 99);
+        });
+
+        $changedDays = [];
+
+        foreach ($days as $day) {
+            $old = $existingPattern[$day] ?? null;
+            $new = $newPattern[$day] ?? null;
+
+            if ($this->normalizePatternForComparison($old) !== $this->normalizePatternForComparison($new)) {
+                $changedDays[] = $day;
+            }
+        }
+
+        return $changedDays;
+    }
+
+    protected function normalizePatternForComparison($dayData): ?array
+    {
+        if ($dayData === null) {
+            return null;
+        }
+
+        if (!is_array($dayData)) {
+            return ['value' => $dayData];
+        }
+
+        $slots = $dayData['slots'] ?? [];
+        $slots = collect($slots)->map(function ($slot) {
+            return [
+                'time' => $slot['time'] ?? null,
+                'duration' => isset($slot['duration']) ? (int) $slot['duration'] : 60,
+            ];
+        })->values()->all();
+
+        usort($slots, function (array $a, array $b) {
+            $timeComparison = strcmp((string) ($a['time'] ?? ''), (string) ($b['time'] ?? ''));
+
+            if ($timeComparison !== 0) {
+                return $timeComparison;
+            }
+
+            return ($a['duration'] ?? 0) <=> ($b['duration'] ?? 0);
+        });
+
+        return [
+            'active' => !empty($dayData['active']),
+            'slots' => $slots,
+        ];
+    }
+
+    protected function normalizePatternForLogging($dayData, string $timezone): ?array
+    {
+        if ($dayData === null) {
+            return null;
+        }
+
+        if (!is_array($dayData)) {
+            return ['value' => $dayData];
+        }
+
+        return [
+            'active' => !empty($dayData['active']),
+            'slots' => collect($dayData['slots'] ?? [])
+                ->map(function ($slot) use ($timezone) {
+                    return [
+                        'time' => $slot['time'] ?? null,
+                        'duration_minutes' => isset($slot['duration']) ? (int) $slot['duration'] : 60,
+                        'timezone' => $timezone,
+                    ];
+                })
+                ->values()
+                ->all(),
+        ];
+    }
+
+    protected function sortWeekdays(array $days): array
+    {
+        $dayOrder = [
+            'Sunday' => 0,
+            'Monday' => 1,
+            'Tuesday' => 2,
+            'Wednesday' => 3,
+            'Thursday' => 4,
+            'Friday' => 5,
+            'Saturday' => 6,
+        ];
+
+        usort($days, function (string $a, string $b) use ($dayOrder) {
+            return ($dayOrder[$a] ?? 99) <=> ($dayOrder[$b] ?? 99);
+        });
+
+        return $days;
     }
 
     protected function mergeSchedulePatterns(array $existingPattern, array $newPattern): array

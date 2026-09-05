@@ -6,6 +6,7 @@ use App\Models\Enrollment;
 use App\Models\Schedule;
 use App\Services\ScheduleService;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Tests for editing schedule pattern from any date (including past).
@@ -209,4 +210,233 @@ test('can update pattern to any weekday from any date', function () {
     expect($pattern)->toHaveKey('Tuesday');
     expect($pattern['Tuesday']['slots'][0]['time'])->toBe('15:00');
     expect(isset($pattern['Monday']))->toBeFalse();
+});
+
+test('update pattern writes detailed schedule change log', function () {
+    Carbon::setTestNow(Carbon::create(2026, 9, 5, 12, 0, 0));
+
+    $originalLog = app('log');
+    $logger = \Mockery::mock(\Psr\Log\LoggerInterface::class);
+    $logger->shouldReceive('info')->once()->with(
+        'Schedule pattern updated',
+        \Mockery::on(function (array $context) {
+            return is_array($context);
+        })
+    );
+    Log::swap($logger);
+
+    try {
+        $teacher = User::factory()->create([
+            'role' => 'Teacher',
+            'timezone' => 'Asia/Riyadh',
+        ]);
+        $student = User::factory()->create(['role' => 'Student']);
+        $course = Course::create([
+            'title' => 'Logging Course',
+            'description' => 'desc',
+            'level' => 'Beginner',
+            'age_group' => 'Kids',
+            'language' => 'English',
+        ]);
+
+        $enrollment = Enrollment::create([
+            'student_id' => $student->id,
+            'course_id' => $course->id,
+            'start_date' => Carbon::create(2026, 8, 1),
+            'status' => 'active',
+            'days_per_week' => 2,
+            'session_duration' => 90,
+            'currency' => 'USD',
+            'admin_price' => 100,
+            'schedule_pattern' => [
+                'Wednesday' => ['active' => true, 'slots' => [['time' => '02:30', 'duration' => 90]]],
+                'Friday' => ['active' => true, 'slots' => [['time' => '02:30', 'duration' => 90]]],
+            ],
+        ]);
+
+        $service = app(ScheduleService::class);
+
+        collect([
+            '2026-09-02 02:30:00',
+            '2026-09-04 02:30:00',
+            '2026-09-09 02:30:00',
+            '2026-09-11 02:30:00',
+            '2026-09-16 02:30:00',
+        ])->each(function (string $datetime) use ($enrollment, $student, $teacher, $course) {
+            $start = Carbon::parse($datetime);
+
+            Schedule::create([
+                'enrollment_id' => $enrollment->id,
+                'student_id' => $student->id,
+                'teacher_id' => $teacher->id,
+                'course_id' => $course->id,
+                'starts_at' => $start,
+                'ends_at' => $start->copy()->addMinutes(90),
+                'status' => 'scheduled',
+            ]);
+        });
+
+        $result = $service->updateSchedulePattern($enrollment, [
+            'teacher_id' => $teacher->id,
+            'day_active' => [
+                'Sunday' => 0,
+                'Monday' => 0,
+                'Tuesday' => 0,
+                'Wednesday' => 1,
+                'Thursday' => 0,
+                'Friday' => 1,
+                'Saturday' => 0,
+            ],
+            'schedule_times' => [
+                'Sunday' => ['02:30'],
+                'Monday' => ['02:30'],
+                'Tuesday' => ['02:30'],
+                'Wednesday' => ['02:30'],
+                'Thursday' => ['02:30'],
+                'Friday' => ['02:30'],
+                'Saturday' => ['02:30'],
+            ],
+            'durations' => [
+                'Sunday' => [30],
+                'Monday' => [30],
+                'Tuesday' => [30],
+                'Wednesday' => [30],
+                'Thursday' => [30],
+                'Friday' => [30],
+                'Saturday' => [30],
+            ],
+        ], Carbon::create(2026, 9, 1));
+
+        expect($result['success'])->toBeTrue();
+
+        $logger->shouldHaveReceived('info')->once()->with(
+            'Schedule pattern updated',
+            \Mockery::on(function (array $context) use ($enrollment) {
+                return ($context['enrollment_id'] ?? null) === $enrollment->id
+                    && ($context['apply_from_date'] ?? null) === '2026-09-01'
+                    && ($context['teacher_timezone'] ?? null) === 'Asia/Riyadh'
+                    && ($context['changed_days'] ?? []) === ['Wednesday', 'Friday']
+                    && ($context['added_days'] ?? []) === []
+                    && ($context['removed_days'] ?? []) === []
+                    && ($context['updated_days'] ?? []) === ['Wednesday', 'Friday']
+                    && ($context['affected_schedule_days'] ?? []) === ['Wednesday', 'Friday']
+                    && ($context['deleted_sessions'] ?? null) === 5
+                    && ($context['created_sessions'] ?? null) === 5
+                    && collect($context['entered_pattern'] ?? [])->pluck('day')->all() === ['Wednesday', 'Friday']
+                    && (($context['pattern_changes'][0]['day'] ?? null) === 'Wednesday')
+                    && (($context['pattern_changes'][0]['status'] ?? null) === 'updated')
+                    && (($context['pattern_changes'][0]['before']['slots'][0]['duration_minutes'] ?? null) === 90)
+                    && (($context['pattern_changes'][0]['after']['slots'][0]['duration_minutes'] ?? null) === 30)
+                    && (($context['pattern_changes'][1]['day'] ?? null) === 'Friday')
+                    && (($context['pattern_changes'][1]['status'] ?? null) === 'updated')
+                    && (($context['entered_pattern'][0]['slots'][0]['time'] ?? null) === '02:30')
+                    && (($context['entered_pattern'][0]['slots'][0]['duration_minutes'] ?? null) === 30)
+                    && (($context['entered_pattern'][0]['slots'][0]['timezone'] ?? null) === 'Asia/Riyadh');
+            })
+        );
+    } finally {
+        Log::swap($originalLog);
+        Carbon::setTestNow();
+    }
+});
+
+test('update pattern logs added and removed days separately', function () {
+    Carbon::setTestNow(Carbon::create(2026, 9, 5, 12, 0, 0));
+
+    $originalLog = app('log');
+    $logger = \Mockery::mock(\Psr\Log\LoggerInterface::class);
+    $logger->shouldReceive('info')->once()->with(
+        'Schedule pattern updated',
+        \Mockery::on(function (array $context) {
+            return ($context['added_days'] ?? []) === ['Tuesday']
+                && ($context['removed_days'] ?? []) === ['Monday']
+                && ($context['updated_days'] ?? []) === []
+                && ($context['changed_days'] ?? []) === ['Monday', 'Tuesday']
+                && (($context['pattern_changes'][0]['day'] ?? null) === 'Monday')
+                && (($context['pattern_changes'][0]['status'] ?? null) === 'removed')
+                && (($context['pattern_changes'][0]['before']['slots'][0]['time'] ?? null) === '09:00')
+                && (($context['pattern_changes'][0]['after'] ?? null) === null)
+                && (($context['pattern_changes'][1]['day'] ?? null) === 'Tuesday')
+                && (($context['pattern_changes'][1]['status'] ?? null) === 'added')
+                && (($context['pattern_changes'][1]['before'] ?? null) === null)
+                && (($context['pattern_changes'][1]['after']['slots'][0]['time'] ?? null) === '15:00');
+        })
+    );
+    Log::swap($logger);
+
+    try {
+        $teacher = User::factory()->create([
+            'role' => 'Teacher',
+            'timezone' => 'Asia/Riyadh',
+        ]);
+        $student = User::factory()->create(['role' => 'Student']);
+        $course = Course::create([
+            'title' => 'Added Removed Logging Course',
+            'description' => 'desc',
+            'level' => 'Beginner',
+            'age_group' => 'Kids',
+            'language' => 'English',
+        ]);
+
+        $enrollment = Enrollment::create([
+            'student_id' => $student->id,
+            'course_id' => $course->id,
+            'start_date' => Carbon::create(2026, 8, 1),
+            'status' => 'active',
+            'days_per_week' => 1,
+            'session_duration' => 60,
+            'currency' => 'USD',
+            'admin_price' => 100,
+            'schedule_pattern' => [
+                'Monday' => ['active' => true, 'slots' => [['time' => '09:00', 'duration' => 60]]],
+            ],
+        ]);
+
+        Schedule::create([
+            'enrollment_id' => $enrollment->id,
+            'student_id' => $student->id,
+            'teacher_id' => $teacher->id,
+            'course_id' => $course->id,
+            'starts_at' => Carbon::create(2026, 9, 1, 9, 0, 0),
+            'ends_at' => Carbon::create(2026, 9, 1, 10, 0, 0),
+            'status' => 'scheduled',
+        ]);
+
+        $service = app(ScheduleService::class);
+        $result = $service->updateSchedulePattern($enrollment, [
+            'teacher_id' => $teacher->id,
+            'day_active' => [
+                'Sunday' => 0,
+                'Monday' => 0,
+                'Tuesday' => 1,
+                'Wednesday' => 0,
+                'Thursday' => 0,
+                'Friday' => 0,
+                'Saturday' => 0,
+            ],
+            'schedule_times' => [
+                'Sunday' => ['12:00'],
+                'Monday' => ['09:00'],
+                'Tuesday' => ['15:00'],
+                'Wednesday' => ['12:00'],
+                'Thursday' => ['12:00'],
+                'Friday' => ['12:00'],
+                'Saturday' => ['12:00'],
+            ],
+            'durations' => [
+                'Sunday' => [60],
+                'Monday' => [60],
+                'Tuesday' => [45],
+                'Wednesday' => [60],
+                'Thursday' => [60],
+                'Friday' => [60],
+                'Saturday' => [60],
+            ],
+        ], Carbon::create(2026, 9, 1));
+
+        expect($result['success'])->toBeTrue();
+    } finally {
+        Log::swap($originalLog);
+        Carbon::setTestNow();
+    }
 });
