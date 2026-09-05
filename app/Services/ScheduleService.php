@@ -772,9 +772,11 @@ class ScheduleService
             if ($schedulesToRefresh->isEmpty()) {
                 $enrollment->setSchedulePattern($schedulePattern);
                 \Illuminate\Support\Facades\DB::commit();
-                $this->logSchedulePatternUpdate($enrollment, $applyFromDate, $teacherTimezone, $enteredPatternLog, $changedDays, $patternChangeLog, $affectedScheduleDays, $createdCount, $deletedCount, 'Pattern updated. No existing future schedules found to modify.');
+                $this->logSchedulePatternUpdate($enrollment, $applyFromDate, $teacherTimezone, $enteredPatternLog, $changedDays, $patternChangeLog, $affectedScheduleDays, $createdCount, $deletedCount, 'Pattern updated. No existing future schedules found to modify.', [], [], []);
                 return ['success' => true, 'message' => 'Pattern updated. No existing future schedules found to modify.'];
             }
+
+            $deletedSessionDates = $schedulesToRefresh->map(fn (Schedule $s) => $s->starts_at->format('Y-m-d H:i:s').' ('.$s->starts_at->format('l').')')->values()->all();
 
             foreach ($schedulesToRefresh as $schedule) {
                 $schedule->delete();
@@ -813,6 +815,8 @@ class ScheduleService
                 $currentDate->addDay();
             }
 
+            $affectedDatesFromApplyDate = collect($sessionDates)->map(fn ($s) => $s['date']->format('Y-m-d').' ('.$s['date']->format('l').')')->values()->all();
+            $createdSessionDates = [];
             foreach ($sessionDates as $session) {
                 foreach ($session['times'] as $timeSlot) {
                     if (is_array($timeSlot) && !isset($timeSlot['time'])) {
@@ -866,6 +870,7 @@ class ScheduleService
                     }
 
                     $createdCount++;
+                    $createdSessionDates[] = $startsAt->format('Y-m-d H:i:s').' ('.$startsAt->format('l').')';
                 }
             }
 
@@ -882,7 +887,10 @@ class ScheduleService
                 $affectedScheduleDays,
                 $createdCount,
                 $deletedCount,
-                "Pattern updated successfully. Deleted {$deletedCount} old sessions and created {$createdCount} new sessions starting from {$applyFromDate->format('M d, Y')}."
+                "Pattern updated successfully. Deleted {$deletedCount} old sessions and created {$createdCount} new sessions starting from {$applyFromDate->format('M d, Y')}.",
+                $affectedDatesFromApplyDate,
+                $deletedSessionDates,
+                $createdSessionDates
             );
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\DB::rollBack();
@@ -929,7 +937,10 @@ class ScheduleService
         array $affectedScheduleDays,
         int $createdCount,
         int $deletedCount,
-        string $message
+        string $message,
+        array $affectedDatesFromApplyDate = [],
+        array $deletedSessionDates = [],
+        array $createdSessionDates = []
     ): void {
         Log::channel('schedule_daily')->info('Schedule pattern updated', [
             'enrollment_id' => $enrollment->id,
@@ -945,6 +956,9 @@ class ScheduleService
             'removed_days' => $patternChangeLog['removed_days'],
             'updated_days' => $patternChangeLog['updated_days'],
             'affected_schedule_days' => $affectedScheduleDays,
+            'affected_dates_from_apply_date' => $affectedDatesFromApplyDate,
+            'deleted_session_dates' => $deletedSessionDates,
+            'created_session_dates' => $createdSessionDates,
             'deleted_sessions' => $deletedCount,
             'created_sessions' => $createdCount,
             'result' => $message,
